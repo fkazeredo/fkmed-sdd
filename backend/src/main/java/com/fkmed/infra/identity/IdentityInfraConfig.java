@@ -32,6 +32,7 @@ public class IdentityInfraConfig {
   IdentitySettings identitySettings(AppIdentityProperties identity, AppLegalProperties legal) {
     return new IdentitySettings(
         Duration.ofHours(identity.verificationTtlHours()),
+        Duration.ofMinutes(identity.passwordResetTtlMinutes()),
         legal.termsVersion(),
         legal.privacyVersion());
   }

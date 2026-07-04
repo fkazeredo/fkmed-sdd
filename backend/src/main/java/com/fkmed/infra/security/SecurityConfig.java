@@ -13,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.session.security.web.authentication.SpringSessionRememberMeServices;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
@@ -62,9 +63,13 @@ public class SecurityConfig {
                 authorize
                     .requestMatchers("/api/system/health", "/api/system/version")
                     .permitAll()
-                    // Public first-access + verification endpoints (SPEC-0002): the visitor is
-                    // unauthenticated during registration and e-mail verification.
-                    .requestMatchers("/api/auth/first-access/**", "/api/auth/verification/**")
+                    // Public first-access + verification + recovery endpoints (SPEC-0002): the
+                    // visitor is unauthenticated during registration, e-mail verification and
+                    // password recovery (BR10).
+                    .requestMatchers(
+                        "/api/auth/first-access/**",
+                        "/api/auth/verification/**",
+                        "/api/auth/recovery/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
@@ -81,7 +86,8 @@ public class SecurityConfig {
   SecurityFilterChain formLoginChain(
       HttpSecurity http,
       UnverifiedAwareAuthenticationFailureHandler failureHandler,
-      LogoutAuditRecorder logoutAuditRecorder)
+      LogoutAuditRecorder logoutAuditRecorder,
+      SpringSessionRememberMeServices rememberMeServices)
       throws Exception {
     http.authorizeHttpRequests(
             authorize ->
@@ -98,6 +104,9 @@ public class SecurityConfig {
                     .anyRequest()
                     .authenticated())
         .formLogin(form -> form.loginPage("/login").failureHandler(failureHandler).permitAll())
+        // BR12 "Manter conectado" (ADR-0005): the checkbox posts the remember-me parameter, which
+        // extends this session to 7 days and makes its cookie persistent.
+        .rememberMe(remember -> remember.rememberMeServices(rememberMeServices))
         .logout(logout -> logout.addLogoutHandler(logoutAuditRecorder).permitAll());
     return http.build();
   }
