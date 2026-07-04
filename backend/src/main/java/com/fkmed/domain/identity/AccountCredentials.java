@@ -12,6 +12,13 @@ import java.util.UUID;
  * @param passwordHash the stored (delegating-encoder) password hash.
  * @param status the lifecycle state — only {@link AccountStatus#ACTIVE} may authenticate (BR6).
  * @param beneficiaryId the linked beneficiary (for the card claim and audit target).
+ * @param locked whether a lock is currently in force (BR8) — the provider refuses login even with
+ *     the correct password while {@code true}.
  */
 public record AccountCredentials(
-    UUID accountId, String email, String passwordHash, AccountStatus status, UUID beneficiaryId) {}
+    UUID accountId,
+    String email,
+    String passwordHash,
+    AccountStatus status,
+    UUID beneficiaryId,
+    boolean locked) {}

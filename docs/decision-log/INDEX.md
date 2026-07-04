@@ -16,3 +16,5 @@ old one.
 | DL | Date | Phase/Slice | Spec(s) | Confidence | Reversibility | Title |
 |---|---|---|---|---|---|---|
 | [0001](DL-0001-first-access-contract-shape.md) | 2026-07-04 | 1 / 1.1 | 0002 | Medium | Cheap | First-access contract shape (acceptance, registration token, resend neutrality) |
+| [0002](DL-0002-lockout-counter-and-window-semantics.md) | 2026-07-04 | 1 / 1.2 | 0002 | Medium | Cheap | Account-lockout counter and window semantics (BR8 edge cases) |
+| [0003](DL-0003-recovery-and-password-change-shape.md) | 2026-07-04 | 1 / 1.2 | 0002 | Medium | Cheap | Recovery / reset / password-change event and audit shape |
