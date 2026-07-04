@@ -84,6 +84,9 @@ Inherited architecture decisions live in `docs/DECISIONS-BASELINE.md` (pre-accep
 
 Report: files changed, behavior implemented, specs/ADRs updated, tests, migrations,
 contract impacts, commands executed, verification result, risks and pending items.
+Slice work also persists two reports: the approved plan (with acceptance criteria) in
+`docs/reports/plans/` (not versioned) and the conclusion report (AC evidence + workflow
+retrospective, pt-BR) in `docs/reports/final/` (versioned) — see `docs/reports/README.md`.
 
 ## Communication during autonomous execution (owner rule)
 

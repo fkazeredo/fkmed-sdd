@@ -29,12 +29,19 @@ going to do, report AFTER what you did (CLAUDE.md §Comunicação).
    `git checkout -b feature/<slice-slug>` (history convention: short kebab slug).
 5. **Plan** in the `docs/architecture/workflow.md` §Large tasks format: goal, specs, affected
    modules, backend/frontend files, migrations, tests, docs, risks, implementation order,
-   validation commands, open questions. Use **plan mode** to present it and get the owner's
-   approval.
-6. **TodoWrite checklist** mirroring the loop from `docs/TUTORIAL.md` §3:
+   validation commands, open questions — and a **Critérios de aceite** section: numbered
+   (AC-1, AC-2, …), testable, each mapped to the spec's BRs/examples and stating its
+   verification method (test name, command, API call). These ACs are re-verified one by one
+   at `/dod`, with evidence and the detailed why. Use **plan mode** to present it and get
+   the owner's approval.
+6. **Persist the approved plan** to `docs/reports/plans/YYYY-MM-DD-<slice-slug>-plan.md`
+   (NOT versioned — the folder is gitignored; see `docs/reports/README.md`). When the
+   architect will run devs in parallel, the plan also names the sub-branches
+   (`feature/<slice>--<scope>`) each dev will use.
+7. **TodoWrite checklist** mirroring the loop from `docs/TUTORIAL.md` §3:
    `0 PERGUNTAS → 1 PLAN → 2 RED → 3 SKELETON → 4 GREEN → 5 REFACTOR → 6 GATES + DoD`.
-7. **Method reminders** (non-negotiable):
+8. **Method reminders** (non-negotiable):
    - RED test (acceptance/integration derived from the spec's examples) BEFORE implementation.
    - Skeleton only to compile; minimal green; refactor under green tests.
    - Gates are never weakened to make code pass (invariant 5).
-8. **End of the slice** = `/dod` (gates + Definition of Done + PR).
+9. **End of the slice** = `/dod` (gates + Definition of Done + AC evidence + retrospective + PR).
