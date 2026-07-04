@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "comment": "Git safety for team work (DECISIONS-BASELINE §0023). ALLOW: push feature/bugfix/hotfix branches + open PRs to develop (owner's standing authorization) — the normal end of a slice. ASK: create a git tag (only on the owner's explicit request; never automatic). DENY: merge to develop/main, PR merge, release publish, force-push — protected branches change only via reviewed PR; the server-side branch protection is the real enforcement.",
+    "allow": [
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)"
+    ],
+    "ask": [
+      "Bash(git tag)",
+      "Bash(git tag:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git merge)",
+      "Bash(git merge:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh release create:*)",
+      "Bash(gh release delete:*)"
+    ]
+  }
+}
