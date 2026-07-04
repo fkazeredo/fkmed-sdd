@@ -10,6 +10,27 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/auth/password" : {
+      "put" : {
+        "tags" : [ "password-controller" ],
+        "operationId" : "change",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/auth/verification/resend" : {
       "post" : {
         "tags" : [ "verification-controller" ],
@@ -48,6 +69,48 @@
         "responses" : {
           "200" : {
             "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/recovery/reset" : {
+      "post" : {
+        "tags" : [ "recovery-controller" ],
+        "operationId" : "reset",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/recovery/request" : {
+      "post" : {
+        "tags" : [ "recovery-controller" ],
+        "operationId" : "request",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordRecoveryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
           }
         }
       }
@@ -158,6 +221,20 @@
   },
   "components" : {
     "schemas" : {
+      "ChangePasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "currentPassword" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "newPassword" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "currentPassword", "newPassword" ]
+      },
       "ResendVerificationRequest" : {
         "type" : "object",
         "properties" : {
@@ -178,6 +255,31 @@
           }
         },
         "required" : [ "token" ]
+      },
+      "PasswordResetRequest" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "newPassword" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "newPassword", "token" ]
+      },
+      "PasswordRecoveryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "email" ]
       },
       "VerifyFirstAccessRequest" : {
         "type" : "object",

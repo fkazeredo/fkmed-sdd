@@ -52,9 +52,11 @@ class IdentityServiceTest {
 
   @Mock private UserAccountRepository accounts;
   @Mock private EmailVerificationTokenRepository verificationTokens;
+  @Mock private PasswordResetTokenRepository resetTokens;
   @Mock private TermAcceptanceRepository termAcceptances;
   @Mock private Beneficiaries beneficiaries;
   @Mock private PasswordEncoder passwordEncoder;
+  @Mock private ActiveSessions activeSessions;
   @Mock private AuditRecorder auditRecorder;
   @Mock private ApplicationEventPublisher events;
 
@@ -67,20 +69,30 @@ class IdentityServiceTest {
         new RegistrationTokenService(
             "secret".getBytes(StandardCharsets.UTF_8), CLOCK, Duration.ofMinutes(30));
     PasswordPolicy passwordPolicy = new PasswordPolicy(password -> false);
-    IdentitySettings settings = new IdentitySettings(Duration.ofHours(24), "1.0", "1.0");
+    IdentitySettings settings =
+        new IdentitySettings(Duration.ofHours(24), Duration.ofMinutes(30), "1.0", "1.0");
     service =
         new IdentityService(
             accounts,
             verificationTokens,
+            resetTokens,
             termAcceptances,
             beneficiaries,
             passwordPolicy,
             passwordEncoder,
             registrationTokens,
+            activeSessions,
             auditRecorder,
             events,
             settings,
             CLOCK);
+  }
+
+  private static UserAccount activeAccount(String email) {
+    UserAccount account =
+        UserAccount.register(BENEFICIARY, email, "{bcrypt}current-hash", CLOCK.instant());
+    account.activate();
+    return account;
   }
 
   private void matchReturns(BeneficiaryRole role, LocalDate birthDate) {
@@ -312,6 +324,253 @@ class IdentityServiceTest {
 
     service.resendVerification("user@fkmed.local");
 
+    verify(events, never()).publishEvent(any());
+  }
+
+  // ---- SPEC-0002 BR8 lockout accounting (DL-0002) ----
+
+  @Test
+  void recordFailedLogin_locksAndAuditsOnce_onTheFifthConsecutiveFailure() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    for (int i = 0; i < 4; i++) {
+      account.registerFailedLogin(CLOCK.instant());
+    }
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.of(account));
+
+    service.recordFailedLogin("user@fkmed.local", CONTEXT);
+
+    assertThat(account.isLocked(CLOCK.instant())).isTrue();
+    ArgumentCaptor<AuditEntry> audit = ArgumentCaptor.forClass(AuditEntry.class);
+    verify(auditRecorder).record(audit.capture());
+    assertThat(audit.getValue().eventType()).isEqualTo(AuditEventTypes.ACCOUNT_LOCKED);
+    assertThat(audit.getValue().targetBeneficiaryId()).isEqualTo(BENEFICIARY);
+  }
+
+  @Test
+  void recordFailedLogin_belowThreshold_incrementsWithoutLockingOrAuditing() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.of(account));
+
+    service.recordFailedLogin("user@fkmed.local", CONTEXT);
+
+    assertThat(account.getFailedAttempts()).isEqualTo(1);
+    assertThat(account.isLocked(CLOCK.instant())).isFalse();
+    verify(auditRecorder, never()).record(any());
+  }
+
+  @Test
+  void recordFailedLogin_whileAlreadyLocked_isANoOp_andDoesNotReAudit() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    for (int i = 0; i < 5; i++) {
+      account.registerFailedLogin(CLOCK.instant());
+    }
+    assertThat(account.isLocked(CLOCK.instant())).isTrue();
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.of(account));
+
+    service.recordFailedLogin("user@fkmed.local", CONTEXT);
+
+    // The 15-minute window is measured from the 5th failure, never extended by later attempts.
+    assertThat(account.getFailedAttempts()).isEqualTo(5);
+    verify(auditRecorder, never()).record(any());
+  }
+
+  @Test
+  void recordFailedLogin_nonexistentEmail_touchesNoRow_forBr7Neutrality() {
+    when(accounts.findByEmail("ghost@fkmed.local")).thenReturn(Optional.empty());
+
+    service.recordFailedLogin("ghost@fkmed.local", CONTEXT);
+
+    verify(auditRecorder, never()).record(any());
+  }
+
+  @Test
+  void recordSuccessfulLogin_clearsTheFailureCounter() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    for (int i = 0; i < 3; i++) {
+      account.registerFailedLogin(CLOCK.instant());
+    }
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.of(account));
+
+    service.recordSuccessfulLogin("user@fkmed.local");
+
+    assertThat(account.getFailedAttempts()).isZero();
+    assertThat(account.getLockedUntil()).isNull();
+  }
+
+  // ---- SPEC-0002 BR10 recovery request (DL-0003) ----
+
+  @Test
+  void requestPasswordRecovery_forAnActiveAccount_issuesASingleUseLink_auditsAndPublishes() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.of(account));
+
+    service.requestPasswordRecovery("user@fkmed.local", CONTEXT);
+
+    verify(resetTokens).invalidateOpenTokens(eq(account.getId()), any());
+    verify(resetTokens).save(any(PasswordResetToken.class));
+    ArgumentCaptor<AuditEntry> audit = ArgumentCaptor.forClass(AuditEntry.class);
+    verify(auditRecorder).record(audit.capture());
+    assertThat(audit.getValue().eventType()).isEqualTo(AuditEventTypes.PASSWORD_RECOVERY_REQUESTED);
+    ArgumentCaptor<PasswordRecoveryRequested> event =
+        ArgumentCaptor.forClass(PasswordRecoveryRequested.class);
+    verify(events).publishEvent(event.capture());
+    assertThat(event.getValue().email()).isEqualTo("user@fkmed.local");
+    assertThat(event.getValue().resetToken()).isNotBlank();
+  }
+
+  @Test
+  void requestPasswordRecovery_forAnUnverifiedAccount_isASilentNoOp() {
+    UserAccount account =
+        UserAccount.register(BENEFICIARY, "user@fkmed.local", "{bcrypt}hash", CLOCK.instant());
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.of(account));
+
+    service.requestPasswordRecovery("user@fkmed.local", CONTEXT);
+
+    verify(resetTokens, never()).save(any());
+    verify(events, never()).publishEvent(any());
+  }
+
+  @Test
+  void requestPasswordRecovery_forANonexistentEmail_isASilentNoOp() {
+    when(accounts.findByEmail("ghost@fkmed.local")).thenReturn(Optional.empty());
+
+    service.requestPasswordRecovery("ghost@fkmed.local", CONTEXT);
+
+    verify(resetTokens, never()).save(any());
+    verify(events, never()).publishEvent(any());
+  }
+
+  // ---- SPEC-0002 BR10 reset (DL-0003) ----
+
+  @Test
+  void resetPassword_withAValidLink_setsThePassword_consumesTheLink_terminatesSessions() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    String rawToken = "raw-reset-token";
+    String hash = SecureTokens.sha256Hex(rawToken);
+    PasswordResetToken token =
+        PasswordResetToken.issue(account.getId(), hash, CLOCK.instant(), Duration.ofMinutes(30));
+    when(resetTokens.findByTokenHash(hash)).thenReturn(Optional.of(token));
+    when(accounts.findById(account.getId())).thenReturn(Optional.of(account));
+    when(passwordEncoder.encode("BrandNew123")).thenReturn("{bcrypt}new-hash");
+    when(activeSessions.terminateAllFor("user@fkmed.local")).thenReturn(2);
+
+    service.resetPassword(rawToken, "BrandNew123", CONTEXT);
+
+    assertThat(account.getPasswordHash()).isEqualTo("{bcrypt}new-hash");
+    assertThat(token.getUsedAt()).isNotNull();
+    verify(activeSessions).terminateAllFor("user@fkmed.local");
+    ArgumentCaptor<AuditEntry> audit = ArgumentCaptor.forClass(AuditEntry.class);
+    verify(auditRecorder).record(audit.capture());
+    assertThat(audit.getValue().eventType()).isEqualTo(AuditEventTypes.PASSWORD_CHANGED);
+    assertThat(audit.getValue().details())
+        .containsEntry("flow", PasswordChanged.RECOVERY_RESET)
+        .containsEntry("sessionsTerminated", "2");
+    ArgumentCaptor<PasswordChanged> event = ArgumentCaptor.forClass(PasswordChanged.class);
+    verify(events).publishEvent(event.capture());
+    assertThat(event.getValue().flow()).isEqualTo(PasswordChanged.RECOVERY_RESET);
+  }
+
+  @Test
+  void resetPassword_withAPolicyViolatingPassword_isRefused_withoutTouchingSessions() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    String rawToken = "raw-reset-token";
+    String hash = SecureTokens.sha256Hex(rawToken);
+    PasswordResetToken token =
+        PasswordResetToken.issue(account.getId(), hash, CLOCK.instant(), Duration.ofMinutes(30));
+    when(resetTokens.findByTokenHash(hash)).thenReturn(Optional.of(token));
+    when(accounts.findById(account.getId())).thenReturn(Optional.of(account));
+
+    // BR9 applies to the reset too (DL-0003): the base policy is enforced before anything changes.
+    assertThatExceptionOfType(PasswordPolicyViolationException.class)
+        .isThrownBy(() -> service.resetPassword(rawToken, "short", CONTEXT));
+    assertThat(token.getUsedAt()).isNull();
+    verify(activeSessions, never()).terminateAllFor(any());
+    verify(events, never()).publishEvent(any());
+  }
+
+  @Test
+  void resetPassword_withAnUnknownToken_isRejected() {
+    when(resetTokens.findByTokenHash(anyString())).thenReturn(Optional.empty());
+
+    assertThatExceptionOfType(ResetLinkInvalidException.class)
+        .isThrownBy(() -> service.resetPassword("nope", "BrandNew123", CONTEXT));
+    verify(events, never()).publishEvent(any());
+  }
+
+  @Test
+  void resetPassword_withAnAlreadyUsedToken_isRejected_beforeReachingTheAccount() {
+    String rawToken = "raw-reset-token";
+    String hash = SecureTokens.sha256Hex(rawToken);
+    PasswordResetToken token =
+        PasswordResetToken.issue(UUID.randomUUID(), hash, CLOCK.instant(), Duration.ofMinutes(30));
+    token.markUsed(CLOCK.instant());
+    when(resetTokens.findByTokenHash(hash)).thenReturn(Optional.of(token));
+
+    assertThatExceptionOfType(ResetLinkInvalidException.class)
+        .isThrownBy(() -> service.resetPassword(rawToken, "BrandNew123", CONTEXT));
+    // The "already used" filter short-circuits: the account is never loaded, nothing is terminated.
+    verify(accounts, never()).findById(any());
+    verify(activeSessions, never()).terminateAllFor(any());
+  }
+
+  // ---- SPEC-0002 BR11 authenticated change (DL-0003) ----
+
+  @Test
+  void changePassword_withTheCorrectCurrent_setsANewPassword_auditsSelfChange_keepsSessions() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.of(account));
+    when(passwordEncoder.matches("current", account.getPasswordHash())).thenReturn(true);
+    when(passwordEncoder.matches("BrandNew123", account.getPasswordHash())).thenReturn(false);
+    when(passwordEncoder.encode("BrandNew123")).thenReturn("{bcrypt}new-hash");
+
+    service.changePassword("user@fkmed.local", "current", "BrandNew123", CONTEXT);
+
+    assertThat(account.getPasswordHash()).isEqualTo("{bcrypt}new-hash");
+    // BR10/BR11 division (DL-0003): the self-change does NOT mass-terminate sessions.
+    verify(activeSessions, never()).terminateAllFor(any());
+    ArgumentCaptor<AuditEntry> audit = ArgumentCaptor.forClass(AuditEntry.class);
+    verify(auditRecorder).record(audit.capture());
+    assertThat(audit.getValue().details())
+        .containsEntry("flow", PasswordChanged.SELF_CHANGE)
+        .containsEntry("sessionsTerminated", "0");
+    ArgumentCaptor<PasswordChanged> event = ArgumentCaptor.forClass(PasswordChanged.class);
+    verify(events).publishEvent(event.capture());
+    assertThat(event.getValue().flow()).isEqualTo(PasswordChanged.SELF_CHANGE);
+  }
+
+  @Test
+  void changePassword_forAnUnknownEmail_isCurrentPasswordIncorrect() {
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.empty());
+
+    assertThatExceptionOfType(CurrentPasswordIncorrectException.class)
+        .isThrownBy(
+            () -> service.changePassword("user@fkmed.local", "current", "BrandNew123", CONTEXT));
+    verify(events, never()).publishEvent(any());
+  }
+
+  @Test
+  void changePassword_withAWrongCurrentPassword_isCurrentPasswordIncorrect() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.of(account));
+    when(passwordEncoder.matches("wrong", account.getPasswordHash())).thenReturn(false);
+
+    assertThatExceptionOfType(CurrentPasswordIncorrectException.class)
+        .isThrownBy(
+            () -> service.changePassword("user@fkmed.local", "wrong", "BrandNew123", CONTEXT));
+    verify(events, never()).publishEvent(any());
+  }
+
+  @Test
+  void changePassword_whenTheNewPasswordEqualsTheCurrent_isAPolicyViolation() {
+    UserAccount account = activeAccount("user@fkmed.local");
+    when(accounts.findByEmail("user@fkmed.local")).thenReturn(Optional.of(account));
+    // Correct current password AND the differ-from-current check both match the stored hash.
+    when(passwordEncoder.matches("SamePass123", account.getPasswordHash())).thenReturn(true);
+
+    assertThatExceptionOfType(PasswordPolicyViolationException.class)
+        .isThrownBy(
+            () ->
+                service.changePassword("user@fkmed.local", "SamePass123", "SamePass123", CONTEXT));
     verify(events, never()).publishEvent(any());
   }
 }

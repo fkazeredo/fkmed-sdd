@@ -36,7 +36,7 @@ class ProdReadinessValidatorIT extends AbstractIntegrationTest {
 
   private static AppIdentityProperties productionIdentity() {
     return new AppIdentityProperties(
-        "a-real-registration-secret", "https://fkmed.example.com", 24, 30);
+        "a-real-registration-secret", "https://fkmed.example.com", 24, 30, 30);
   }
 
   @Test
