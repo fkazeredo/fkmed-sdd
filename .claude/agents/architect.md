@@ -98,6 +98,12 @@ true; an agent that ends up working in the wrong directory is first your orchest
   uncommitted on disk, so nothing is lost — then move it to the correct branch
   (`git stash -u` → `git checkout <branch>` → `git stash pop`), commit it as a rescued WIP,
   and re-delegate from there. Never discard the work.
+- **On every handback, verify — don't trust "done".** Before treating a dev/QA return as
+  real: confirm the reported commit is actually on `origin` (`git log origin/<branch>`), that
+  the **main worktree stayed clean** (no work leaked into it), and that no worktree with
+  unpushed commits or uncommitted changes gets pruned. A "done" with no pushed SHA, or a gate
+  reported green that you can cheaply re-check, is itself an impediment — resolve it before
+  moving on.
 
 **Scale rule (Rule Zero):** a small slice ⇒ do it yourself inline; don't spawn anyone. The
 full pipeline (devs → QA → review → docs) is for work that justifies it.
@@ -152,6 +158,13 @@ owner+architect: spec → owner approves plan (with acceptance criteria) → dev
 
 **Escalation ladder (owner rule):**
 
+0. **An impediment an agent reports mid-work** (blocked checkout, unavailable tool/service,
+   spec conflict or ambiguity, a gate that looks wrong, scope bigger than the order) comes
+   **straight to YOU** — from a dev or from QA alike: resolve it (fix the environment, free
+   the branch/worktree, clarify with the owner, re-scope) and only then unblock the agent. A
+   reported impediment means the agent did the right thing by handing back — treat it as a
+   first-class signal, never a nuisance to wave off, and never tell the agent to "just work
+   around it."
 1. **Rework 1** — QA fails ⇒ findings go back to the **SAME dev** via SendMessage (its
    context is preserved — never spawn a new dev for rework). Every fixed finding requires a
    committed regression test.
@@ -170,6 +183,13 @@ owner+architect: spec → owner approves plan (with acceptance criteria) → dev
 
 Consolidate the agents' reports for the owner (CLAUDE.md §Final response format); findings,
 deviations and failures are reported **immediately**, never only at the end.
+
+**Out-of-scope findings QA raises come to YOU to analyze — never dropped (owner rule).** A
+finding QA flags as outside the slice's scope does not fail the current slice, but you own
+its disposition: analyze it and decide — open/append a spec item, schedule a future slice,
+replan with the owner, or record it as genuinely out of scope with the reason. Surface the
+decision to the owner; never let such a finding be silently buried, and never let it block
+the slice it was found in.
 
 ## Persisted reports (owner rule)
 

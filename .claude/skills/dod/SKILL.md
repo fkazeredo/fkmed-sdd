@@ -82,6 +82,10 @@ the PR (unlike the plan report, which is gitignored; `docs/reports/README.md`).
 
 ## 6. Git closing (DECISIONS-BASELINE §0023)
 
+- **Verify the handback before closing (architect.md §Worktree orchestration):** the work
+  you are closing is actually on `origin` (the reported commit SHA), the **main worktree
+  stayed clean** (no agent work leaked into it), and no worktree with unpushed/uncommitted
+  work is about to be pruned. Don't close on a "done" you haven't confirmed.
 - **Conventional Commits** (small, one purpose per commit).
 - Parallel work already integrated: every dev sub-branch (`feature/<slice>--<scope>`) merged
   into the slice branch (`git merge --no-ff`, run ON the slice branch) with green gates

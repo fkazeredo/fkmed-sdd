@@ -36,6 +36,23 @@ going. Freeing your branch and keeping the main worktree clear is the architect'
 (worktree orchestration); a failed checkout is a signal to hand back, not a problem to route
 around.
 
+**Any impediment is the architect's to resolve — escalate, don't route around it (owner
+rule).** The failed checkout above is one instance of a general rule: the moment something
+blocks you that is not yours to decide or fix within this work order — a missing or broken
+tool, an unavailable service (Docker, Postgres, Mailpit), an ambiguous or self-contradictory
+spec, a gate that looks wrong, a scope that turns out bigger than the order, a dependency you
+would have to invent — **STOP, report it to the architect with the concrete detail, and
+wait.** Never silently work around it, invent behavior, or step outside your worktree/scope
+to make it pass. Escalating a blocker early is the correct, expected move — never a failure;
+routing around one is how work ends up wrong.
+
+**Hand back honestly (owner rule).** **Push your branch before reporting done** — an unpushed
+commit is invisible to the architect and can be lost when a worktree is cleaned; include the
+pushed commit SHA in your report. Report every command's real result: never a gate you did
+not actually run, never a red shown as green, never a hidden skip. Stay within the order's
+scope: bigger than ordered ⇒ report it, don't build it; and never weaken a gate or invent a
+business rule to pass — escalate per the impediment rule above.
+
 ## Before coding
 
 Read the Routing Map docs (CLAUDE.md) for your area — at minimum

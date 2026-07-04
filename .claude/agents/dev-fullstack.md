@@ -30,6 +30,15 @@ another agent's worktree. If checking out your declared branch fails — e.g.
 with the exact error; do **not** `cd` elsewhere or write files outside your worktree to work
 around it. Freeing your branch and keeping the main worktree clear is the architect's job.
 
+**Escalate any impediment; hand back honestly (owner rule).** Any blocker not yours to fix
+within the order — unavailable tool/service, ambiguous or conflicting spec, a gate that looks
+wrong, a scope bigger than the order, a dependency you'd have to invent — means **STOP and
+report to the architect**, never route around it. And never fake a handback: **push your
+branch before reporting done** (an unpushed commit is invisible and can be lost when a
+worktree is cleaned), report every command's real result (never a gate you didn't actually
+run, never a red shown as green, never a hidden skip), and stay within scope (bigger than
+ordered ⇒ report, don't build; never weaken a gate or invent a rule to pass — escalate).
+
 ## Rules
 
 **All** the rules of both roles apply — read and follow:

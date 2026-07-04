@@ -114,10 +114,18 @@ porque cada handoff anuncia a branch (ver §5).
 **Cada agente trabalha na própria cópia isolada (worktree), e quem orquestra isso é o
 arquiteto.** Cada dev/QA recebe uma pasta de trabalho separada, para nunca pisar no trabalho
 de outro nem no diretório principal. Garantir que a branch de cada um esteja livre antes de
-começar — e manter o diretório principal fora do caminho — é responsabilidade do arquiteto;
-se um agente não consegue assumir sua branch, ele **para e devolve ao arquiteto** em vez de
-contornar. (Você não precisa se preocupar com isso — é mecânica interna; está aqui só para
-transparência.)
+começar — e manter o diretório principal fora do caminho — é responsabilidade do arquiteto.
+
+**E a regra que vale para qualquer impedimento:** se um agente esbarra em algo que não é dele
+resolver — não consegue assumir a branch, uma ferramenta/serviço indisponível, uma spec
+ambígua, um teste que parece errado, uma tarefa maior que o combinado — ele **para e devolve
+ao arquiteto**, nunca contorna, nunca inventa, nunca finge um resultado. O arquiteto resolve
+(conserta o ambiente, libera a branch, esclarece com você, replaneja) e só então destrava. O
+QA segue a mesma disciplina: julga contra a spec (não por preferência), aponta achados
+concretos com evidência, nunca conserta o código ele mesmo, e **um achado fora do escopo da
+fatia volta para o arquiteto analisar** — vira item de spec, fatia futura ou replanejamento,
+nunca é descartado. (Você não precisa acionar nada disso — é mecânica interna; está aqui só
+para transparência.)
 
 ## 5. O fluxo de uma fatia, ponta a ponta
 

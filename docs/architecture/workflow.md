@@ -48,6 +48,28 @@ order, validation commands, open questions and **acceptance criteria** — numbe
 testable, mapped to the spec's BRs/examples, each with its verification method. At the end of
 the slice (`/dod`) every AC is re-verified with evidence and a detailed why.
 
+## Team orchestration & agent discipline
+
+When the architect delegates to sub-agents (devs, QA), the orchestration rules that keep the
+process from bottlenecking live in `.claude/agents/architect.md` (owner-facing summary in
+`docs/GUIA-TIME-CLAUDE.md`). In short:
+
+- **Worktree orchestration** — each agent works in **its own worktree**, never the main repo
+  or another's. The **architect owns the lifecycle**: free the target branch and keep the
+  main worktree on `develop` before spawning (a branch held elsewhere makes the agent's
+  checkout fail); prune stale worktrees after; rescue any misplaced work via `git stash -u`
+  without losing it.
+- **Visibility** — a milestone-ping cadence (RED committed → gates green → completion) for
+  devs, QA and flow work; the architect surfaces observable state, never invented progress;
+  periodic stall checks.
+- **Impediments escalate, never route around** — any blocker not the agent's to fix (failed
+  checkout, unavailable tool/service, ambiguous/conflicting spec, a gate that looks wrong,
+  scope bigger than the order) is **reported to the architect and waits**; agents never fake
+  a result, weaken a gate, invent a rule, or work outside their scope/worktree to force a
+  pass. A reported impediment comes to the architect to resolve (escalation ladder rung 0).
+- **Out-of-scope findings** QA raises don't fail the slice but are **not dropped** — they come
+  to the architect to analyze and disposition (spec item, future slice, replan, or noted).
+
 ## Slice reports (`docs/reports`)
 
 Two per-slice reports, written by the architect (naming and gitignore rule in
