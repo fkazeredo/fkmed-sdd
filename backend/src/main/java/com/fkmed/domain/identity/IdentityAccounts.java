@@ -2,6 +2,7 @@ package com.fkmed.domain.identity;
 
 import com.fkmed.domain.plan.Beneficiaries;
 import com.fkmed.domain.plan.BeneficiaryMatch;
+import java.time.Clock;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,8 +20,9 @@ public class IdentityAccounts {
 
   private final UserAccountRepository accounts;
   private final Beneficiaries beneficiaries;
+  private final Clock clock;
 
-  /** Credentials for the given login e-mail, if an account exists. */
+  /** Credentials for the given login e-mail, if an account exists (lock state as of now, BR8). */
   public Optional<AccountCredentials> findByEmail(String email) {
     return accounts
         .findByEmail(Emails.normalize(email))
@@ -31,7 +33,8 @@ public class IdentityAccounts {
                     account.getEmail(),
                     account.getPasswordHash(),
                     account.getStatus(),
-                    account.getBeneficiaryId()));
+                    account.getBeneficiaryId(),
+                    account.isLocked(clock.instant())));
   }
 
   /** The 9-digit beneficiary card bound to the account's login e-mail (for the JWT claim). */

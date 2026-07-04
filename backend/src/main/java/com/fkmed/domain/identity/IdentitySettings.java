@@ -7,8 +7,12 @@ import java.time.Duration;
  * app.legal} and injected into {@link IdentityService} (so the domain never imports infra config).
  *
  * @param verificationTokenTtl how long an e-mail verification link is valid (SPEC-0002 BR5 — 24h).
+ * @param passwordResetTokenTtl how long a password-reset link is valid (SPEC-0002 BR10 — 30 min).
  * @param termsVersion the current Terms of Use version recorded at acceptance (BR15).
  * @param privacyVersion the current Privacy Policy version recorded at acceptance (BR15).
  */
 public record IdentitySettings(
-    Duration verificationTokenTtl, String termsVersion, String privacyVersion) {}
+    Duration verificationTokenTtl,
+    Duration passwordResetTokenTtl,
+    String termsVersion,
+    String privacyVersion) {}

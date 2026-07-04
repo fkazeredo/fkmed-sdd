@@ -29,6 +29,7 @@
     <span th:text="#{login.unverified}">Não verificado</span>
     <a href="/verificar-email" th:text="#{login.unverified.action}">Reenviar</a>
   </div>
+  <div class="error" th:if="${param.locked}" th:text="#{login.locked}">Conta bloqueada</div>
   <div class="info" th:if="${param.logout}" th:text="#{login.logout}">Logout</div>
   <form th:action="@{/login}" method="post">
     <label for="username" th:text="#{login.email}">E-mail</label>
@@ -36,9 +37,16 @@
     <label for="password" th:text="#{login.password}">Senha</label>
     <input type="password" id="password" name="password"
            autocomplete="current-password" required/>
+    <label style="display:flex;align-items:center;gap:.5rem;font-weight:normal;">
+      <input type="checkbox" name="remember-me" style="width:auto;margin:0;"/>
+      <span th:text="#{login.keep-connected}">Manter conectado</span>
+    </label>
     <button type="submit" th:text="#{login.submit}">Entrar</button>
   </form>
   <p style="margin-top:1rem;font-size:.875rem;text-align:center;">
+    <a href="/recuperar-senha" th:text="#{login.forgot-password}">Esqueceu sua senha?</a>
+  </p>
+  <p style="margin-top:.5rem;font-size:.875rem;text-align:center;">
     <a href="/primeiro-acesso" th:text="#{login.first-access}">Primeiro acesso</a>
   </p>
 </main>

@@ -13,10 +13,12 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  *     {@code /verificar-email}).
  * @param verificationTtlHours lifetime of the e-mail verification link in hours (BR5 — 24).
  * @param registrationTokenTtlMinutes lifetime of the registration token in minutes (DL-0001 — 30).
+ * @param passwordResetTtlMinutes lifetime of the password-reset link in minutes (BR10 — 30).
  */
 @ConfigurationProperties(prefix = "app.identity")
 public record AppIdentityProperties(
     @DefaultValue("") String registrationTokenSecret,
     @DefaultValue("http://localhost:4200") String verificationBaseUrl,
     @DefaultValue("24") int verificationTtlHours,
-    @DefaultValue("30") int registrationTokenTtlMinutes) {}
+    @DefaultValue("30") int registrationTokenTtlMinutes,
+    @DefaultValue("30") int passwordResetTtlMinutes) {}

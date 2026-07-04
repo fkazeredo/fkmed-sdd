@@ -5,11 +5,26 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-/** SPEC-0002 BR9 / RN-AUTH-01: the registration password policy, rule by rule. */
+/** SPEC-0002 BR9 / RN-AUTH-01: the registration and change password policy, rule by rule. */
 class PasswordPolicyTest {
 
   private static final Set<String> DENYLIST = Set.of("senha123", "password1");
+
+  /** Deterministic encoder so the differ-from-current check is exercised without BCrypt cost. */
+  private static final PasswordEncoder ENCODER =
+      new PasswordEncoder() {
+        @Override
+        public String encode(CharSequence raw) {
+          return "{enc}" + raw;
+        }
+
+        @Override
+        public boolean matches(CharSequence raw, String encoded) {
+          return encoded.equals("{enc}" + raw);
+        }
+      };
 
   private final PasswordPolicy policy =
       new PasswordPolicy(password -> DENYLIST.contains(password.toLowerCase()));
@@ -60,5 +75,30 @@ class PasswordPolicyTest {
   void rejects_aCommonPassword() {
     assertThatExceptionOfType(PasswordPolicyViolationException.class)
         .isThrownBy(() -> policy.validate("user@fkmed.local", "senha123"));
+  }
+
+  // ---- BR9 last clause: an authenticated change must differ from the current password ----
+
+  @Test
+  void validateChange_acceptsACompliantNewPasswordDifferentFromTheCurrent() {
+    String currentHash = ENCODER.encode("OldPass123");
+    assertThatCode(
+            () -> policy.validateChange("user@fkmed.local", "NewPass123", currentHash, ENCODER))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  void validateChange_rejectsANewPasswordEqualToTheCurrentOne() {
+    String currentHash = ENCODER.encode("SamePass123");
+    assertThatExceptionOfType(PasswordPolicyViolationException.class)
+        .isThrownBy(
+            () -> policy.validateChange("user@fkmed.local", "SamePass123", currentHash, ENCODER));
+  }
+
+  @Test
+  void validateChange_stillEnforcesTheBasePolicy() {
+    String currentHash = ENCODER.encode("OldPass123");
+    assertThatExceptionOfType(PasswordPolicyViolationException.class)
+        .isThrownBy(() -> policy.validateChange("user@fkmed.local", "short", currentHash, ENCODER));
   }
 }

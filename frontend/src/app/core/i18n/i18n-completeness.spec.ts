@@ -8,18 +8,32 @@ import { Shell } from '../layout/shell';
 import { MyPlan } from '../../features/my-plan/my-plan';
 import { FirstAccess } from '../../features/first-access/first-access';
 import { EmailVerification } from '../../features/email-verification/email-verification';
+import { ForgotPassword } from '../../features/password-recovery/forgot-password';
+import { ResetPassword } from '../../features/password-recovery/reset-password';
+import { Security } from '../../features/security/security';
+import { SessionExpired } from '../../features/session-expired/session-expired';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
 
 /**
  * SPEC-0001 AC5 / SPEC-0002 BR16: every visible UI string of the slice resolves from the pt-BR
- * bundle. Renders every screen of the slice — including all branches of the first-access and
- * verification flows — with a recording MissingTranslationHandler; a single missing key fails.
+ * bundle. Renders every screen of the slice — including all branches of the first-access,
+ * verification, password-recovery, Segurança and session-expiry flows — with a recording
+ * MissingTranslationHandler; a single missing key fails.
  */
 describe('i18n completeness (pt-BR)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Shell, MyPlan, FirstAccess, EmailVerification],
+      imports: [
+        Shell,
+        MyPlan,
+        FirstAccess,
+        EmailVerification,
+        ForgotPassword,
+        ResetPassword,
+        Security,
+        SessionExpired,
+      ],
       providers: [
         provideRouter([]),
         provideHttpClient(),
@@ -92,6 +106,49 @@ describe('i18n completeness (pt-BR)', () => {
     verification.componentInstance.status.set('invalid');
     verification.componentInstance.resendDone.set(true);
     verification.detectChanges();
+
+    // Esqueci minha senha: form + validation message, then the neutral confirmation (BR7).
+    const forgotPassword = TestBed.createComponent(ForgotPassword);
+    forgotPassword.detectChanges();
+    forgotPassword.componentInstance.email = 'invalido';
+    forgotPassword.detectChanges();
+    forgotPassword.componentInstance.done.set(true);
+    forgotPassword.detectChanges();
+
+    // Redefinir senha: no token → invalid by default; force the form, error and success states.
+    const resetPassword = TestBed.createComponent(ResetPassword);
+    resetPassword.detectChanges();
+    expect(resetPassword.componentInstance.status()).toBe('invalid');
+    resetPassword.componentInstance.status.set('form');
+    resetPassword.componentInstance.newPassword = 'x';
+    resetPassword.componentInstance.confirmPassword = 'y';
+    resetPassword.componentInstance.togglePassword();
+    resetPassword.componentInstance.errorKey.set('redefinirSenha.erro.senhaFraca');
+    resetPassword.detectChanges();
+    resetPassword.componentInstance.status.set('success');
+    resetPassword.detectChanges();
+
+    // Segurança: validation messages, both inline error fields and the success banner.
+    const security = TestBed.createComponent(Security);
+    security.detectChanges();
+    security.componentInstance.newPassword = 'x';
+    security.componentInstance.confirmPassword = 'y';
+    security.componentInstance.toggleCurrent();
+    security.componentInstance.toggleNew();
+    security.detectChanges();
+    security.componentInstance.errorKey.set('seguranca.erro.senhaAtualIncorreta');
+    security.componentInstance.errorField.set('currentPassword');
+    security.detectChanges();
+    security.componentInstance.errorKey.set('seguranca.erro.senhaFraca');
+    security.componentInstance.errorField.set('newPassword');
+    security.detectChanges();
+    security.componentInstance.errorField.set(null);
+    security.componentInstance.success.set(true);
+    security.detectChanges();
+
+    // Sessão expirada: static notice.
+    const sessionExpired = TestBed.createComponent(SessionExpired);
+    sessionExpired.detectChanges();
 
     expect(
       Array.from(handler.missing),

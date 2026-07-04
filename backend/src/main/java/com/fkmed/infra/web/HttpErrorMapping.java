@@ -2,10 +2,12 @@ package com.fkmed.infra.web;
 
 import com.fkmed.domain.error.DomainException;
 import com.fkmed.domain.identity.AccountAlreadyExistsException;
+import com.fkmed.domain.identity.CurrentPasswordIncorrectException;
 import com.fkmed.domain.identity.DependentUnderageException;
 import com.fkmed.domain.identity.EmailAlreadyUsedException;
 import com.fkmed.domain.identity.PasswordPolicyViolationException;
 import com.fkmed.domain.identity.RegistrationNotFoundException;
+import com.fkmed.domain.identity.ResetLinkInvalidException;
 import com.fkmed.domain.identity.VerificationLinkInvalidException;
 import com.fkmed.domain.plan.PlanNotFoundException;
 import java.util.Map;
@@ -31,7 +33,9 @@ public final class HttpErrorMapping {
           Map.entry(DependentUnderageException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(EmailAlreadyUsedException.class, HttpStatus.CONFLICT),
           Map.entry(PasswordPolicyViolationException.class, HttpStatus.UNPROCESSABLE_CONTENT),
-          Map.entry(VerificationLinkInvalidException.class, HttpStatus.GONE));
+          Map.entry(VerificationLinkInvalidException.class, HttpStatus.GONE),
+          Map.entry(ResetLinkInvalidException.class, HttpStatus.GONE),
+          Map.entry(CurrentPasswordIncorrectException.class, HttpStatus.UNPROCESSABLE_CONTENT));
 
   private HttpErrorMapping() {}
 

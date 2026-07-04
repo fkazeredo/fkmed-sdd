@@ -42,12 +42,12 @@ class ProdReadinessValidatorTest {
   }
 
   private static AppIdentityProperties devIdentity() {
-    return new AppIdentityProperties("", "http://localhost:4200", 24, 30);
+    return new AppIdentityProperties("", "http://localhost:4200", 24, 30, 30);
   }
 
   private static AppIdentityProperties productionIdentity() {
     return new AppIdentityProperties(
-        "a-real-registration-secret", "https://fkmed.example.com", 24, 30);
+        "a-real-registration-secret", "https://fkmed.example.com", 24, 30, 30);
   }
 
   @SuppressWarnings("unchecked")

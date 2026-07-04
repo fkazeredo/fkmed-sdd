@@ -35,11 +35,13 @@ public class IdentityService {
 
   private final UserAccountRepository accounts;
   private final EmailVerificationTokenRepository verificationTokens;
+  private final PasswordResetTokenRepository resetTokens;
   private final TermAcceptanceRepository termAcceptances;
   private final Beneficiaries beneficiaries;
   private final PasswordPolicy passwordPolicy;
   private final PasswordEncoder passwordEncoder;
   private final RegistrationTokenService registrationTokens;
+  private final ActiveSessions activeSessions;
   private final AuditRecorder auditRecorder;
   private final ApplicationEventPublisher events;
   private final IdentitySettings settings;
@@ -163,6 +165,156 @@ public class IdentityService {
         .findByEmail(Emails.normalize(email))
         .filter(account -> !account.isActive())
         .ifPresent(this::reissueVerification);
+  }
+
+  /**
+   * Records a failed login for lockout accounting (SPEC-0002 BR8). No-op for a non-existent e-mail
+   * — no row is created or touched, keeping the failure indistinguishable from a wrong password on
+   * a real account (BR7). The 5th consecutive failure locks the account for 15 minutes and audits
+   * it once; attempts made while already locked are ignored (DL-0002).
+   */
+  @Transactional
+  public void recordFailedLogin(String email, AuditContext auditContext) {
+    accounts
+        .findByEmail(Emails.normalize(email))
+        .ifPresent(account -> lockIfThresholdReached(account, auditContext));
+  }
+
+  private void lockIfThresholdReached(UserAccount account, AuditContext auditContext) {
+    Instant now = clock.instant();
+    boolean wasLocked = account.isLocked(now);
+    account.registerFailedLogin(now);
+    if (!wasLocked && account.isLocked(now)) {
+      auditRecorder.record(
+          new AuditEntry(
+              AuditEventTypes.ACCOUNT_LOCKED,
+              account.getId(),
+              account.getBeneficiaryId(),
+              Map.of("email", Masking.email(account.getEmail())),
+              auditContext));
+    }
+  }
+
+  /** Resets the failure counter and clears any lock after a successful login (SPEC-0002 BR8). */
+  @Transactional
+  public void recordSuccessfulLogin(String email) {
+    accounts.findByEmail(Emails.normalize(email)).ifPresent(UserAccount::registerSuccessfulLogin);
+  }
+
+  /**
+   * Requests a password recovery link (SPEC-0002 BR10). Neutral by design (BR7, DL-0003): always
+   * succeeds silently, issuing a fresh 30-minute single-use link and auditing the request only for
+   * an existing ACTIVE account — never revealing whether the e-mail is registered. A prior open
+   * link is invalidated.
+   */
+  @Transactional
+  public void requestPasswordRecovery(String email, AuditContext auditContext) {
+    accounts
+        .findByEmail(Emails.normalize(email))
+        .filter(UserAccount::isActive)
+        .ifPresent(account -> issuePasswordReset(account, auditContext));
+  }
+
+  private void issuePasswordReset(UserAccount account, AuditContext auditContext) {
+    Instant now = clock.instant();
+    resetTokens.invalidateOpenTokens(account.getId(), now);
+    String rawToken = SecureTokens.newRawToken();
+    resetTokens.save(
+        PasswordResetToken.issue(
+            account.getId(),
+            SecureTokens.sha256Hex(rawToken),
+            now,
+            settings.passwordResetTokenTtl()));
+    auditRecorder.record(
+        new AuditEntry(
+            AuditEventTypes.PASSWORD_RECOVERY_REQUESTED,
+            account.getId(),
+            account.getBeneficiaryId(),
+            Map.of("email", Masking.email(account.getEmail())),
+            auditContext));
+    events.publishEvent(
+        new PasswordRecoveryRequested(
+            account.getId(), account.getEmail(), account.getBeneficiaryId(), rawToken));
+  }
+
+  /**
+   * Resets a password behind a valid reset link (SPEC-0002 BR10): validates the base password
+   * policy, sets the new password, consumes the single-use link and terminates ALL active sessions
+   * of the user. Publishes {@link PasswordChanged} for the security notice.
+   *
+   * @throws ResetLinkInvalidException when the link is unknown, expired or already used.
+   * @throws PasswordPolicyViolationException when the new password violates the policy.
+   */
+  @Transactional
+  public void resetPassword(String rawToken, String newPassword, AuditContext auditContext) {
+    Instant now = clock.instant();
+    PasswordResetToken token =
+        resetTokens
+            .findByTokenHash(SecureTokens.sha256Hex(rawToken))
+            .filter(candidate -> candidate.isUsable(now))
+            .orElseThrow(ResetLinkInvalidException::new);
+    UserAccount account =
+        accounts.findById(token.getAccountId()).orElseThrow(ResetLinkInvalidException::new);
+    passwordPolicy.validate(account.getEmail(), newPassword);
+    account.changePassword(passwordEncoder.encode(newPassword));
+    token.markUsed(now);
+    int terminated = activeSessions.terminateAllFor(account.getEmail());
+    recordPasswordChanged(account, PasswordChanged.RECOVERY_RESET, terminated, auditContext);
+    events.publishEvent(
+        new PasswordChanged(
+            account.getId(),
+            account.getEmail(),
+            account.getBeneficiaryId(),
+            PasswordChanged.RECOVERY_RESET));
+  }
+
+  /**
+   * Changes the password of the authenticated user (SPEC-0002 BR11): requires the correct current
+   * password and enforces the full policy including "differ from the current one" (BR9). Does NOT
+   * terminate other sessions — that mass-invalidation is specific to the recovery reset (BR10,
+   * DL-0003). Publishes {@link PasswordChanged} for the security notice.
+   *
+   * @throws CurrentPasswordIncorrectException when the current password does not match.
+   * @throws PasswordPolicyViolationException when the new password violates the policy or equals
+   *     the current one.
+   */
+  @Transactional
+  public void changePassword(
+      String email, String currentPassword, String newPassword, AuditContext auditContext) {
+    UserAccount account =
+        accounts
+            .findByEmail(Emails.normalize(email))
+            .orElseThrow(CurrentPasswordIncorrectException::new);
+    if (!passwordEncoder.matches(currentPassword, account.getPasswordHash())) {
+      throw new CurrentPasswordIncorrectException();
+    }
+    passwordPolicy.validateChange(
+        account.getEmail(), newPassword, account.getPasswordHash(), passwordEncoder);
+    account.changePassword(passwordEncoder.encode(newPassword));
+    recordPasswordChanged(account, PasswordChanged.SELF_CHANGE, 0, auditContext);
+    events.publishEvent(
+        new PasswordChanged(
+            account.getId(),
+            account.getEmail(),
+            account.getBeneficiaryId(),
+            PasswordChanged.SELF_CHANGE));
+  }
+
+  private void recordPasswordChanged(
+      UserAccount account, String flow, int sessionsTerminated, AuditContext auditContext) {
+    auditRecorder.record(
+        new AuditEntry(
+            AuditEventTypes.PASSWORD_CHANGED,
+            account.getId(),
+            account.getBeneficiaryId(),
+            Map.of(
+                "email",
+                Masking.email(account.getEmail()),
+                "flow",
+                flow,
+                "sessionsTerminated",
+                String.valueOf(sessionsTerminated)),
+            auditContext));
   }
 
   private void reissueVerification(UserAccount account) {

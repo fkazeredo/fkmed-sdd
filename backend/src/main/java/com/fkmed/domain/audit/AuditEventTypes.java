@@ -22,5 +22,14 @@ public final class AuditEventTypes {
   /** A user logged out. */
   public static final String LOGOUT = "identity.logout";
 
+  /** An account was locked after 5 consecutive failed logins (SPEC-0002 BR8). */
+  public static final String ACCOUNT_LOCKED = "identity.account-locked";
+
+  /** A password recovery was requested for an existing account (SPEC-0002 BR10). */
+  public static final String PASSWORD_RECOVERY_REQUESTED = "identity.password-recovery-requested";
+
+  /** An account's password changed via recovery reset or authenticated change (BR10/BR11). */
+  public static final String PASSWORD_CHANGED = "identity.password-changed";
+
   private AuditEventTypes() {}
 }
