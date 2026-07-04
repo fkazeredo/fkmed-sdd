@@ -9,8 +9,8 @@ slice (`/slice` gate).
 | Spec | Title | Module / area | Status |
 |---|---|---|---|
 | [0001](0001-walking-skeleton.md) | Walking Skeleton — "Meu Plano" | platform / plan | Approved |
-| [0002](0002-identity-and-access.md) | Identity and Access | identity | Draft |
-| [0003](0003-beneficiary-context-and-authorization.md) | Beneficiary Context and Authorization | cross-cutting | Draft |
+| [0002](0002-identity-and-access.md) | Identity and Access | identity | Approved |
+| [0003](0003-beneficiary-context-and-authorization.md) | Beneficiary Context and Authorization | cross-cutting | Approved |
 | [0004](0004-notifications.md) | Notifications | notifications | Draft |
 | [0005](0005-home.md) | Home | home / content | Draft |
 | [0006](0006-profile-and-account.md) | Profile and Account | profile | Draft |

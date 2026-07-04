@@ -1,6 +1,6 @@
 # 0003 - Beneficiary Context and Authorization
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -57,6 +57,9 @@ dependents' sensitive data must be auditable.
   request, reimbursement preview) MUST generate a unique protocol in the format
   `<PREFIX>-AAAAMMDD-####` (prefix per module: `AG`, `RE`, `PV`), displayed to the user and
   usable in service channels. Uniqueness MUST hold under concurrent generation.
+- **BR10** — Audit entries MUST be retained for **12 months** and then purged by an
+  automatic scheduled job; the purge MUST remove only entries older than the retention
+  window and MUST itself leave no gap that hides tampering (owner decision, 2026-07-04).
 
 ## Input/Output Examples
 
@@ -86,7 +89,8 @@ Migration (number at implementation): `audit_event` (id, occurred_at, author_acc
 target_beneficiary_id nullable, event_type, details JSONB with masked values, ip,
 user_agent) — append-only, indexed by target and occurred_at; `protocol_sequence` (prefix,
 date, counter) with atomic increment. Audit event types are constants (`*Codes` class),
-not an enum (baseline §0019 — technical classification kept as validated codes).
+not an enum (baseline §0019 — technical classification kept as validated codes). A scheduled
+job purges `audit_event` rows older than the 12-month retention window (BR10).
 
 ## Validation Rules
 
@@ -127,11 +131,13 @@ audit writes logged at debug level without personal data.
   author, target and timestamp.
 - **AC5** (BR9) — Given two simultaneous protocol generations for the same prefix and day,
   then both succeed with distinct sequential numbers.
+- **AC6** (BR10) — Given an audit entry older than 12 months and one within the window, when
+  the purge job runs, then only the older entry is removed and the recent one remains.
 
 ## Open Questions
 
-- **OQ1** — Audit-trail retention period · affects storage and LGPD posture · proposed
-  default: no purge in the POC (retention policy decided before production).
+- ~~**OQ1** — Audit-trail retention period~~ — **answered by the owner (2026-07-04): 12
+  months with an automatic purge job** (folded into BR10).
 
 ## Out of Scope
 
