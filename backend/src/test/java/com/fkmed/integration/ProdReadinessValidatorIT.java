@@ -45,7 +45,8 @@ class ProdReadinessValidatorIT extends AbstractIntegrationTest {
     // delete every OTHER user_account for isolation, but preserve MARIA), so it is the safe fixture
     // for exercising the guard against the REAL bcrypt hash + SQL + encoder. The disposable-account
     // guard (V7, débito B) reuses the exact same seedAccountPresent(...) path and is proven by
-    // ProdReadinessValidatorTest (its own real row is ephemeral here because those cleaners drop it).
+    // ProdReadinessValidatorTest (its own real row is ephemeral here because those cleaners drop
+    // it).
     MockEnvironment environment = new MockEnvironment();
     environment.setActiveProfiles("prod");
     environment.setProperty("spring.datasource.password", "a-real-secret-from-env");

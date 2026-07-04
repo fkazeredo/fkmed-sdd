@@ -10,6 +10,7 @@ import com.fkmed.domain.identity.PasswordPolicyViolationException;
 import com.fkmed.domain.identity.RegistrationNotFoundException;
 import com.fkmed.domain.identity.ResetLinkInvalidException;
 import com.fkmed.domain.identity.VerificationLinkInvalidException;
+import com.fkmed.domain.plan.BeneficiaryNotAccessibleException;
 import com.fkmed.domain.plan.PlanNotFoundException;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +29,9 @@ public final class HttpErrorMapping {
   private static final Map<Class<? extends DomainException>, HttpStatus> MAPPINGS =
       Map.ofEntries(
           Map.entry(PlanNotFoundException.class, HttpStatus.NOT_FOUND),
+          // SPEC-0003 BR2/BR3: an out-of-scope beneficiary is a not-found — existence is not
+          // revealed.
+          Map.entry(BeneficiaryNotAccessibleException.class, HttpStatus.NOT_FOUND),
           // SPEC-0002 §Error Behavior.
           Map.entry(RegistrationNotFoundException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(AccountAlreadyExistsException.class, HttpStatus.CONFLICT),
