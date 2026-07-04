@@ -99,6 +99,12 @@ the PR (unlike the plan report, which is gitignored; `docs/reports/README.md`).
 - Before the PR, run the **architect's review checklist** over the diff (see
   `.claude/agents/architect.md` §Review function) — with a fresh-eyes pass when the work was
   self-directed. Recommended, not mandatory.
+- **Clean up after closing (owner rule — architect.md §Worktree orchestration).** Once the
+  branch is pushed and the PR is open (work is safe on `origin`), remove the slice's dev/QA
+  **worktrees physically** — `git worktree remove`, or `rm -rf .claude/worktrees/<id>` in Git
+  Bash when Windows path length blocks it — then `git worktree prune`; delete merged local
+  branches and any scratch/temp branches or watcher scripts. Verify `ls .claude/worktrees/`
+  shows only active worktrees. Leave nothing you created on the owner's machine.
 
 ## 7. Final report (chat)
 

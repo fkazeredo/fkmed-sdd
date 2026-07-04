@@ -121,9 +121,17 @@ true; an agent that ends up working in the wrong directory is first your orchest
   same branch at once. Parallel devs get disjoint sub-branches (§Delegation).
 - **A failed checkout an agent reports is a stall YOU fix**, not the agent: correct the
   branch/worktree state, then let it retry — never accept work produced outside its worktree.
-- **After a slice, prune stale worktrees** (`git worktree prune`; remove merged ones). On
-  Windows, deep `node_modules`/`target` paths can block removal — cosmetic, not a correctness
-  problem.
+- **Clean up the file junk you create — everywhere, every slice (owner rule).** You are
+  accountable for leaving the owner's machine clean: when a dev/QA worktree is done (branch
+  integrated or the run finished), **actually remove it** — not just `git worktree prune` the
+  tracking, but delete the physical directory. On Windows `git worktree remove` often fails on
+  deep `node_modules`/`target` paths (`Filename too long`); when it does, fall back to
+  `rm -rf` in Git Bash (it handles the long paths) or, if that resists, `cmd //c "rmdir /s /q
+  <path>"`. Verify with `ls .claude/worktrees/` that only active worktrees remain — a stale
+  directory is real GBs of clutter, never "cosmetic". This extends beyond worktrees: delete
+  merged local branches, remove any scratch/temp branches and watcher scripts, and keep
+  throwaway files in the session scratchpad (not the repo). At `/dod` the slice's worktrees
+  and temporaries are gone; nothing you created is left behind.
 - **If work lands in the wrong worktree anyway** (an agent misbehaved): stop it — the work is
   uncommitted on disk, so nothing is lost — then move it to the correct branch
   (`git stash -u` → `git checkout <branch>` → `git stash pop`), commit it as a rescued WIP,
