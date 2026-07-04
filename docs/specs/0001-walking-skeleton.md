@@ -1,6 +1,6 @@
 # 0001 - Walking Skeleton — "Meu Plano"
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -128,9 +128,8 @@ by the logging layer).
 
 ## Open Questions
 
-- **OQ1** — Confirm the walking-skeleton journey is "Meu Plano" (view plan + family) ·
-  wrong guess reworks only this thin screen · proposed default: **yes** — it seeds the data
-  every other spec depends on.
+- ~~**OQ1** — Confirm the walking-skeleton journey is "Meu Plano"~~ — **answered by the
+  owner (2026-07-04): confirmed**; the journey is BR6 as written.
 
 ## Out of Scope
 
