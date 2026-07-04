@@ -15,7 +15,7 @@
   <artifactId>fkmed-backend</artifactId>
   <!-- SemVer source of truth (DECISIONS-BASELINE §0015). Kept in lockstep with
        com.fkmed.infra.openapi.OpenApiConfig and the committed OpenAPI snapshot. -->
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <name>fkmed-backend</name>
   <description>FKMed — health plan beneficiary portal (backend)</description>
 
@@ -90,6 +90,10 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-mail</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>

@@ -10,3 +10,4 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 | [0001](0001-modulith-module-map.md) | Initial Modulith Module Map — plan module + error kernel | Proposed |
 | [0002](0002-csrf-disabled-on-stateless-api.md) | CSRF disabled on the stateless JWT `/api/**` chain | Proposed |
 | [0003](0003-single-tenant-per-build.md) | Single-tenant per build — drop the multi-tenant seam (revises baseline §0003) | Proposed |
+| [0004](0004-dev-email-delivery-mailpit.md) | Dev e-mail delivery — Mailpit + Spring Mail behind a `MailSender` port | Proposed |

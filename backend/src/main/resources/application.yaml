@@ -20,6 +20,18 @@ spring:
     locale: pt_BR
     locale-resolver: fixed
 
+  # SMTP is optional (ADR-0004): spring.mail.host is UNSET here, so no adapter is wired and the
+  # LoggingMailSender fallback runs (tests + any host without SMTP). Dev/E2E/prod set it via the
+  # SPRING_MAIL_HOST env var (Mailpit locally, a real host in prod — presence required there).
+  mail:
+    port: ${SPRING_MAIL_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_AUTH:false}
+          starttls:
+            enable: ${SPRING_MAIL_STARTTLS:false}
+
 app:
   security:
     issuer: ${APP_ISSUER:http://localhost:8080}
@@ -27,6 +39,18 @@ app:
     redirect-uris: ${APP_OIDC_REDIRECT_URIS:http://localhost:4200/}
     post-logout-redirect-uris: ${APP_OIDC_POST_LOGOUT_REDIRECT_URIS:http://localhost:4200/}
     jwk-private-key: ${OIDC_JWK_PRIVATE_KEY:}
+  identity:
+    # HMAC secret for the stateless registration token (DL-0001). Blank ⇒ ephemeral dev key;
+    # prod must set it (ProdReadinessValidator). Verification link points at the SPA origin.
+    registration-token-secret: ${REGISTRATION_TOKEN_SECRET:}
+    verification-base-url: ${APP_WEB_BASE_URL:http://localhost:4200}
+    verification-ttl-hours: 24
+    registration-token-ttl-minutes: 30
+  legal:
+    terms-version: ${LEGAL_TERMS_VERSION:1.0}
+    privacy-version: ${LEGAL_PRIVACY_VERSION:1.0}
+  mail:
+    from: ${MAIL_FROM:nao-responder@fkmed.local}
 
 server:
   port: 8080

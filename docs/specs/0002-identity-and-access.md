@@ -1,6 +1,6 @@
 # 0002 - Identity and Access
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -55,9 +55,10 @@ titular's login.
   first use; a successful reset MUST terminate **all** active sessions of the user.
 - **BR11** — Authenticated password change MUST require the correct current password.
 - **BR12** — With "keep me connected" checked, the session survives browser restarts for up
-  to **7 days** of inactivity; unchecked, the session ends when the browser closes. A
-  session expiring mid-use MUST redirect to login with the notice "Sua sessão expirou",
-  preserving the return route.
+  to **7 days** of inactivity; unchecked, the session ends when the browser closes and, even
+  within the same browsing session, expires after **30 minutes** of inactivity. A session
+  expiring mid-use MUST redirect to login with the notice "Sua sessão expirou", preserving
+  the return route.
 - **BR13** — Internal routes MUST require authentication; a visitor hitting one is sent to
   login and, after authenticating, returns to the original route.
 - **BR14** — All identity events MUST be audited (SPEC-0003 trail): account created, e-mail
@@ -110,6 +111,14 @@ locked_until, created_at), `email_verification_token` and `password_reset_token`
 token, expires_at, used_at), `term_acceptance` (account_id, document type, version,
 accepted_at — shared with SPEC-0006). Common-passwords denylist as a seeded resource.
 Sessions via Spring Session JDBC (baseline).
+
+**Seed (owner decision, 2026-07-04):** the titular **MARIA** is seeded with a **real ACTIVE
+account** (email verified) whose password is a **dev-only default** — enumerated in
+`SECURITY.md`, allowlisted in `.gitleaks.toml`, and **refused under the prod profile** by the
+fail-fast `ProdReadinessValidator`. **PEDRO is seeded with NO account** so the first-access
+journey is exercised end-to-end. This retires the in-memory dev-login seam of SPEC-0001
+(`DevLoginConfig`/`NoAccountsConfig`): the embedded Authorization Server now authenticates
+against `user_account`.
 
 ## Validation Rules
 
@@ -173,8 +182,8 @@ success/failure counters, lockout counter, verification/recovery e-mails request
 
 ## Open Questions
 
-- **OQ1** — Session inactivity timeout within the same day when "keep me connected" is off
-  · too short annoys users, too long is a security smell · proposed default: **30 minutes**.
+- ~~**OQ1** — Session inactivity timeout when "keep me connected" is off~~ — **answered by
+  the owner (2026-07-04): 30 minutes** of inactivity (folded into BR12).
 
 ## Out of Scope
 

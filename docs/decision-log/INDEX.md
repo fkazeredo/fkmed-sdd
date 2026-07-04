@@ -15,4 +15,4 @@ old one.
 
 | DL | Date | Phase/Slice | Spec(s) | Confidence | Reversibility | Title |
 |---|---|---|---|---|---|---|
-| — | | | | | | *(none yet)* |
+| [0001](DL-0001-first-access-contract-shape.md) | 2026-07-04 | 1 / 1.1 | 0002 | Medium | Cheap | First-access contract shape (acceptance, registration token, resend neutrality) |

@@ -3,13 +3,104 @@
   "info" : {
     "title" : "FKMed",
     "description" : "FKMed — health plan beneficiary portal API",
-    "version" : "0.1.0"
+    "version" : "0.2.0"
   },
   "servers" : [ {
     "url" : "http://localhost",
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/auth/verification/resend" : {
+      "post" : {
+        "tags" : [ "verification-controller" ],
+        "operationId" : "resend",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ResendVerificationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
+          }
+        }
+      }
+    },
+    "/api/auth/verification/confirm" : {
+      "post" : {
+        "tags" : [ "verification-controller" ],
+        "operationId" : "confirm",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConfirmVerificationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/first-access/verify" : {
+      "post" : {
+        "tags" : [ "first-access-controller" ],
+        "operationId" : "verify",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerifyFirstAccessRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VerifyFirstAccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/first-access/complete" : {
+      "post" : {
+        "tags" : [ "first-access-controller" ],
+        "operationId" : "complete",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CompleteFirstAccessRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created"
+          }
+        }
+      }
+    },
     "/api/system/version" : {
       "get" : {
         "tags" : [ "system-controller" ],
@@ -67,6 +158,81 @@
   },
   "components" : {
     "schemas" : {
+      "ResendVerificationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "email" ]
+      },
+      "ConfirmVerificationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "token" ]
+      },
+      "VerifyFirstAccessRequest" : {
+        "type" : "object",
+        "properties" : {
+          "cpf" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "\\d{11}"
+          },
+          "cardNumber" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "\\d{9}"
+          },
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        },
+        "required" : [ "birthDate", "cardNumber", "cpf" ]
+      },
+      "VerifyFirstAccessResponse" : {
+        "type" : "object",
+        "properties" : {
+          "registrationToken" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CompleteFirstAccessRequest" : {
+        "type" : "object",
+        "properties" : {
+          "registrationToken" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 160,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "acceptedTerms" : {
+            "type" : "boolean"
+          },
+          "acceptedPrivacy" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "email", "password", "registrationToken" ]
+      },
       "SystemVersionResponse" : {
         "type" : "object",
         "properties" : {

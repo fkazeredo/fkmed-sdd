@@ -15,8 +15,6 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param jwkPrivateKey PEM (PKCS#8) RSA private key used to sign tokens. Blank generates an
  *     ephemeral dev-only key; production requires a persisted key (baseline §0020) — enforced by
  *     {@code ProdReadinessValidator}.
- * @param devLoginCard beneficiary card bound to the dev-profile login seam (SPEC-0001 BR8; replaced
- *     by SPEC-0002).
  */
 @ConfigurationProperties(prefix = "app.security")
 public record AppSecurityProperties(
@@ -24,5 +22,4 @@ public record AppSecurityProperties(
     @DefaultValue List<String> allowedOrigins,
     @DefaultValue("http://localhost:4200") List<String> redirectUris,
     @DefaultValue("http://localhost:4200") List<String> postLogoutRedirectUris,
-    @DefaultValue("") String jwkPrivateKey,
-    @DefaultValue("") String devLoginCard) {}
+    @DefaultValue("") String jwkPrivateKey) {}

@@ -25,15 +25,22 @@
 <main class="card">
   <h1 th:text="#{login.heading}">Entrar</h1>
   <div class="error" th:if="${param.error}" th:text="#{login.error}">Erro</div>
+  <div class="error" th:if="${param.unverified}">
+    <span th:text="#{login.unverified}">Não verificado</span>
+    <a href="/verificar-email" th:text="#{login.unverified.action}">Reenviar</a>
+  </div>
   <div class="info" th:if="${param.logout}" th:text="#{login.logout}">Logout</div>
   <form th:action="@{/login}" method="post">
-    <label for="username" th:text="#{login.username}">Usuário</label>
-    <input type="text" id="username" name="username" autocomplete="username" autofocus required/>
+    <label for="username" th:text="#{login.email}">E-mail</label>
+    <input type="email" id="username" name="username" autocomplete="username" autofocus required/>
     <label for="password" th:text="#{login.password}">Senha</label>
     <input type="password" id="password" name="password"
            autocomplete="current-password" required/>
     <button type="submit" th:text="#{login.submit}">Entrar</button>
   </form>
+  <p style="margin-top:1rem;font-size:.875rem;text-align:center;">
+    <a href="/primeiro-acesso" th:text="#{login.first-access}">Primeiro acesso</a>
+  </p>
 </main>
 </body>
 </html>

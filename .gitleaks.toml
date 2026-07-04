@@ -8,7 +8,10 @@ useDefault = true
 [allowlist]
 description = "Enumerated dev-only defaults (SECURITY.md); blocked in prod by ProdReadinessValidator"
 regexes = [
-  # dev login seam (SPEC-0001 BR8 — replaced by SPEC-0002)
+  # MARIA seeded dev account password (SPEC-0002; refused in prod by ProdReadinessValidator)
+  '''maria12345''',
+  # retired in-memory dev-login seam (SPEC-0001 BR8 — replaced by SPEC-0002); still referenced
+  # in historical docs (README, architecture, skills)
   '''dev12345''',
   # dev database password default
   '''POSTGRES_PASSWORD[=:]\s*\$?\{?POSTGRES_PASSWORD:?-?fkmed\}?''',

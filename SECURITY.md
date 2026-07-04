@@ -23,9 +23,14 @@ allowlisted in `.gitleaks.toml`. Each row lists what blocks it in production:
 
 | Credential | Value | Where | Blocked in prod by |
 |---|---|---|---|
-| Dev login seam (SPEC-0001 BR8, replaced by SPEC-0002) | `maria` / `dev12345` | `DevLoginConfig` (dev profile only) | `ProdReadinessValidator` (refuses the dev profile/seam) |
+| MARIA dev account (SPEC-0002, replaces the retired in-memory seam) | `maria@fkmed.local` / `maria12345` | Flyway `V3` seed (all envs) | `ProdReadinessValidator` (refuses to boot when the seeded account + dev password are present) |
 | Postgres dev password | `fkmed` | `.env.example`, compose dev/E2E | `ProdReadinessValidator` (refuses the dev DB password) |
 | Grafana dev admin | `admin` / `admin` | `.env.example`, compose dev | `compose.prod.yaml`: `GRAFANA_ADMIN_*` are mandatory `:?` variables (the app validator never sees Grafana) |
+
+> The former `DevLoginConfig` in-memory seam (`maria` / `dev12345`) was **retired** in the
+> SPEC-0002 slice; real DB-backed accounts replace it. The registration-token HMAC secret
+> (`REGISTRATION_TOKEN_SECRET`, DL-0001) is empty in dev (ephemeral) and **mandatory in prod**
+> (also refused empty by `ProdReadinessValidator`).
 
 ## Production posture
 

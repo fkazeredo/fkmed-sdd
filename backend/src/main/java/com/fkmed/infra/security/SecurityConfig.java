@@ -62,6 +62,10 @@ public class SecurityConfig {
                 authorize
                     .requestMatchers("/api/system/health", "/api/system/version")
                     .permitAll()
+                    // Public first-access + verification endpoints (SPEC-0002): the visitor is
+                    // unauthenticated during registration and e-mail verification.
+                    .requestMatchers("/api/auth/first-access/**", "/api/auth/verification/**")
+                    .permitAll()
                     .anyRequest()
                     .authenticated())
         .csrf(csrf -> csrf.disable())
@@ -74,7 +78,11 @@ public class SecurityConfig {
 
   @Bean
   @Order(3)
-  SecurityFilterChain formLoginChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain formLoginChain(
+      HttpSecurity http,
+      UnverifiedAwareAuthenticationFailureHandler failureHandler,
+      LogoutAuditRecorder logoutAuditRecorder)
+      throws Exception {
     http.authorizeHttpRequests(
             authorize ->
                 authorize
@@ -89,8 +97,8 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
-        .formLogin(form -> form.loginPage("/login").permitAll())
-        .logout(Customizer.withDefaults());
+        .formLogin(form -> form.loginPage("/login").failureHandler(failureHandler).permitAll())
+        .logout(logout -> logout.addLogoutHandler(logoutAuditRecorder).permitAll());
     return http.build();
   }
 
