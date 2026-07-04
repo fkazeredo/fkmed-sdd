@@ -26,3 +26,5 @@ Walking skeleton (SPEC-0001) — the whole architecture path runs end to end.
   ArchUnit + teeth tests, Modulith verify + diagram snapshot, OpenAPI snapshot, i18n and
   HTTP-mapping completeness) + PIT mutation profile; frontend lint/test/build gates;
   Playwright E2E on the isolated stack; the 5 CI workflows; Docker Compose dev/E2E/prod.
+  The jqwik property-test gate (BOOTSTRAP §2 gate 10) is deliberately deferred: this slice
+  has no money/critical arithmetic; it arms with the first value-bearing spec (Rule Zero).

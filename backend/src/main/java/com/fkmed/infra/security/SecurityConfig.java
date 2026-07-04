@@ -25,8 +25,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  *
  * <p>SPEC-0001 BR1/BR3: only {@code /api/system/health} and {@code /api/system/version} are public;
  * every other API route answers {@code 401} to unauthenticated calls. {@code /actuator/prometheus}
- * is app-level public but never routed by the production proxy (internal network only — see
- * SECURITY.md); role-gating arrives with SPEC-0002's role catalogue.
+ * and {@code /v3/api-docs/**} are app-level public but never routed by the production proxy
+ * (internal network only — see SECURITY.md): the OpenAPI document is the committed, public contract
+ * ({@code docs/api/openapi.json}) and the snapshot gate reads it unauthenticated; role-gating
+ * arrives with SPEC-0002's role catalogue.
  */
 @Configuration
 @EnableWebSecurity

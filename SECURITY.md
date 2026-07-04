@@ -19,19 +19,19 @@ acknowledgement within 72 hours.
 ## Enumerated dev-only defaults
 
 The ONLY credentials in this repository are the following **fictitious dev defaults**,
-allowlisted in `.gitleaks.toml` and **refused in production** by the fail-fast
-`ProdReadinessValidator` (`prod` profile will not boot with any of them):
+allowlisted in `.gitleaks.toml`. Each row lists what blocks it in production:
 
-| Credential | Value | Where |
-|---|---|---|
-| Dev login seam (SPEC-0001 BR8, replaced by SPEC-0002) | `maria` / `dev12345` | `DevLoginConfig` (dev profile only) |
-| Postgres dev password | `fkmed` | `.env.example`, compose dev/E2E |
-| Grafana dev admin | `admin` / `admin` | `.env.example`, compose dev |
+| Credential | Value | Where | Blocked in prod by |
+|---|---|---|---|
+| Dev login seam (SPEC-0001 BR8, replaced by SPEC-0002) | `maria` / `dev12345` | `DevLoginConfig` (dev profile only) | `ProdReadinessValidator` (refuses the dev profile/seam) |
+| Postgres dev password | `fkmed` | `.env.example`, compose dev/E2E | `ProdReadinessValidator` (refuses the dev DB password) |
+| Grafana dev admin | `admin` / `admin` | `.env.example`, compose dev | `compose.prod.yaml`: `GRAFANA_ADMIN_*` are mandatory `:?` variables (the app validator never sees Grafana) |
 
 ## Production posture
 
 - TLS terminates at the nginx proxy (`compose.prod.yaml`); Postgres has no public port;
-  Grafana binds to loopback; `/actuator/*` is never routed by the proxy (internal network
-  only).
+  Grafana binds to loopback; `/actuator/*` and `/v3/api-docs/**` are never routed by the
+  proxy (internal network only — the OpenAPI document is the committed public contract
+  `docs/api/openapi.json`, so exposing it app-level leaks nothing).
 - The OIDC signing key is a persisted PKCS#8 RSA key injected via `OIDC_JWK_PRIVATE_KEY`
   (DECISIONS-BASELINE §0020) — never generated ephemeral in prod.
