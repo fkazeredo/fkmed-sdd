@@ -1,0 +1,22 @@
+# Gitleaks configuration (DECISIONS-BASELINE §0023).
+# Default rules + an allowlist of ONLY the enumerated dev-only defaults (see SECURITY.md).
+# Every allowlisted value is refused in production by ProdReadinessValidator.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Enumerated dev-only defaults (SECURITY.md); blocked in prod by ProdReadinessValidator"
+regexes = [
+  # dev login seam (SPEC-0001 BR8 — replaced by SPEC-0002)
+  '''dev12345''',
+  # dev database password default
+  '''POSTGRES_PASSWORD[=:]\s*\$?\{?POSTGRES_PASSWORD:?-?fkmed\}?''',
+  '''DB_PASSWORD[=:]\s*\$?\{?(DB_PASSWORD|POSTGRES_PASSWORD):?-?fkmed\}?''',
+  # dev Grafana admin default
+  '''GRAFANA_ADMIN_PASSWORD[=:]\s*\$?\{?GRAFANA_ADMIN_PASSWORD:?-?admin\}?''',
+]
+paths = [
+  # committed example env with dev defaults only
+  '''\.env\.example$''',
+]

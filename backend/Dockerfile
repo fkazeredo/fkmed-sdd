@@ -10,7 +10,11 @@ COPY backend/pom.xml backend/pom.xml
 RUN chmod +x backend/mvnw && cd backend && ./mvnw -B -q dependency:go-offline || true
 COPY backend backend
 COPY .git .git
-RUN cd backend && ./mvnw -B -DskipTests -Dspotless.check.skip=true -Dcheckstyle.skip=true package
+# git metadata resolves in real clones/CI (.git directory); a linked worktree's .git pointer
+# is host-specific, so local worktree builds skip it and /api/system/version reports the
+# commit as "unknown" (the AC4 gate runs on the host build, where git always resolves).
+RUN cd backend && ./mvnw -B -DskipTests -Dspotless.check.skip=true -Dcheckstyle.skip=true \
+    -Dmaven.gitcommitid.skip=$([ -d /workspace/.git ] && echo false || echo true) package
 
 FROM eclipse-temurin:21-jre
 RUN apt-get update \

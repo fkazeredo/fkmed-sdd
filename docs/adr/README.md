@@ -7,4 +7,4 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 
 | ADR | Title | Status |
 |---|---|---|
-| — | *(none yet)* | |
+| [0001](0001-modulith-module-map.md) | Initial Modulith Module Map — plan module + error kernel | Proposed |

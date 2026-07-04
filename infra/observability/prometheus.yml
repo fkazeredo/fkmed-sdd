@@ -1,0 +1,13 @@
+# Prometheus scrape config (docs/architecture/observability.md).
+# /actuator/prometheus is reachable on the internal network only in prod (the TLS proxy
+# never routes /actuator); role-gating arrives with SPEC-0002's role catalogue.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: fkmed-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['app:8080']

@@ -1,0 +1,8 @@
+# Pre-commit hooks (DECISIONS-BASELINE §0023): blocking secret scan before every commit.
+# Install once: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.3
+    hooks:
+      - id: gitleaks
