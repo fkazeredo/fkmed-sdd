@@ -119,6 +119,6 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'contexto.papel.TITULAR': 'Responsável',
     'contexto.papel.DEPENDENT': 'Dependente',
     'contexto.seletor.label': 'Beneficiário ativo',
-    'contexto.erro.beneficiarioNaoAcessivel': 'Você não tem acesso a este beneficiário.',
+    'contexto.erro.beneficiarioNaoAcessivel': 'Beneficiário não encontrado.',
   },
 };
