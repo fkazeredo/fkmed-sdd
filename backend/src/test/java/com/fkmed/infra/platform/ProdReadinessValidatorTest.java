@@ -97,6 +97,29 @@ class ProdReadinessValidatorTest {
   }
 
   @Test
+  void refusesToBoot_whenTheDisposableE2eAccountIsPresent() {
+    // Débito técnico B (SPEC-0003 slice 1.3): the disposable account-security E2E identity (V7) is
+    // just as dev-only as MARIA and must equally block a prod boot.
+    MockEnvironment environment = new MockEnvironment();
+    environment.setActiveProfiles("prod");
+    environment.setProperty("spring.datasource.password", "a-real-secret-from-env");
+
+    JdbcTemplate jdbc = mock(JdbcTemplate.class);
+    when(jdbc.queryForList(anyString(), eq(String.class), eq("maria@fkmed.local")))
+        .thenReturn(List.of());
+    when(jdbc.queryForList(anyString(), eq(String.class), eq("seguranca-e2e@fkmed.local")))
+        .thenReturn(List.of(ENCODER.encode("seguranca12345")));
+
+    ProdReadinessValidator validator =
+        new ProdReadinessValidator(
+            productionSecurity(), productionIdentity(), environment, jdbc, ENCODER);
+
+    assertThatIllegalStateException()
+        .isThrownBy(() -> validator.run(null))
+        .withMessageContaining("seguranca-e2e@fkmed.local");
+  }
+
+  @Test
   void boots_withProductionValues() {
     MockEnvironment environment = new MockEnvironment();
     environment.setActiveProfiles("prod");
