@@ -32,7 +32,8 @@ public class SessionConfig {
   @Bean
   DefaultCookieSerializer cookieSerializer() {
     DefaultCookieSerializer serializer = new DefaultCookieSerializer();
-    serializer.setRememberMeRequestAttribute(SpringSessionRememberMeServices.REMEMBER_ME_LOGIN_ATTR);
+    serializer.setRememberMeRequestAttribute(
+        SpringSessionRememberMeServices.REMEMBER_ME_LOGIN_ATTR);
     serializer.setSameSite("Lax");
     return serializer;
   }

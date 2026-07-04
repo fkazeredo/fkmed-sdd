@@ -38,8 +38,8 @@ public class PasswordPolicy {
   }
 
   /**
-   * Validates a password change: the base policy PLUS the BR9 last clause that the new password MUST
-   * differ from the current one. The comparison is against the stored hash (never a plaintext
+   * Validates a password change: the base policy PLUS the BR9 last clause that the new password
+   * MUST differ from the current one. The comparison is against the stored hash (never a plaintext
    * current password), so it also rejects a "new" password that merely re-encodes to the same
    * credential.
    *

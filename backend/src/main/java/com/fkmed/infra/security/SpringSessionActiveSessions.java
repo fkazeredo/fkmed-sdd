@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 /**
  * {@link ActiveSessions} adapter over Spring Session JDBC (SPEC-0002 BR10). Form-login sessions are
  * indexed by principal name (the login e-mail) in {@code spring_session}; this looks them up via
- * {@link FindByIndexNameSessionRepository#findByPrincipalName} and deletes each, so a password reset
- * terminates every browser the user is signed into. Runs in the caller's transaction (same
+ * {@link FindByIndexNameSessionRepository#findByPrincipalName} and deletes each, so a password
+ * reset terminates every browser the user is signed into. Runs in the caller's transaction (same
  * datasource), so the deletes commit atomically with the password change.
  */
 @Component

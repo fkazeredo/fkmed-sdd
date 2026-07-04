@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
  * Drives the lockout counter (SPEC-0002 BR8) off the form-login outcome events. Scoped to {@link
  * UsernamePasswordAuthenticationToken} so per-request resource-server (JWT) authentications never
  * touch it. Only {@link AuthenticationFailureBadCredentialsEvent} increments — the event Spring
- * publishes for BOTH a wrong password on a real account AND a non-existent e-mail (which is hidden as
- * bad credentials): {@link IdentityService#recordFailedLogin} is a no-op for a non-existent e-mail,
- * preserving BR7 neutrality (no row created or touched). A {@code DisabledException} (unverified) or
- * {@code LockedException} (already locked) is deliberately NOT counted.
+ * publishes for BOTH a wrong password on a real account AND a non-existent e-mail (which is hidden
+ * as bad credentials): {@link IdentityService#recordFailedLogin} is a no-op for a non-existent
+ * e-mail, preserving BR7 neutrality (no row created or touched). A {@code DisabledException}
+ * (unverified) or {@code LockedException} (already locked) is deliberately NOT counted.
  */
 @Component
 @RequiredArgsConstructor

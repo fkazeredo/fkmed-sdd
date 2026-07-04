@@ -10,10 +10,10 @@ import java.util.UUID;
 import lombok.Getter;
 
 /**
- * A one-time password-reset link (SPEC-0002 BR10). Only the SHA-256 hash of the token is stored; the
- * raw token travels in the reset e-mail. Usable while unused and unexpired (30-min TTL); consuming
- * it resets the password, requesting a new one invalidates the previous one. Mirrors {@link
- * EmailVerificationToken}.
+ * A one-time password-reset link (SPEC-0002 BR10). Only the SHA-256 hash of the token is stored;
+ * the raw token travels in the reset e-mail. Usable while unused and unexpired (30-min TTL);
+ * consuming it resets the password, requesting a new one invalidates the previous one. Mirrors
+ * {@link EmailVerificationToken}.
  */
 @Entity
 @Table(name = "password_reset_token")

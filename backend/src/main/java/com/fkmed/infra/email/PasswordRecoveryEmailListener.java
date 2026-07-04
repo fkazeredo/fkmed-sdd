@@ -12,9 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * Identity-scoped password-recovery-e-mail seam (ADR-0004; SPEC-0004 will centralize it). Listens to
- * {@link PasswordRecoveryRequested} AFTER_COMMIT (baseline §0009) and sends the 30-minute reset link
- * via the {@link MailSender} port. Best-effort: a mail outage is logged, never propagated.
+ * Identity-scoped password-recovery-e-mail seam (ADR-0004; SPEC-0004 will centralize it). Listens
+ * to {@link PasswordRecoveryRequested} AFTER_COMMIT (baseline §0009) and sends the 30-minute reset
+ * link via the {@link MailSender} port. Best-effort: a mail outage is logged, never propagated.
  */
 @Component
 @RequiredArgsConstructor

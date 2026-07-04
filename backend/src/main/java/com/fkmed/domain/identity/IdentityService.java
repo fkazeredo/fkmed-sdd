@@ -168,10 +168,10 @@ public class IdentityService {
   }
 
   /**
-   * Records a failed login for lockout accounting (SPEC-0002 BR8). No-op for a non-existent e-mail —
-   * no row is created or touched, keeping the failure indistinguishable from a wrong password on a
-   * real account (BR7). The 5th consecutive failure locks the account for 15 minutes and audits it
-   * once; attempts made while already locked are ignored (DL-0002).
+   * Records a failed login for lockout accounting (SPEC-0002 BR8). No-op for a non-existent e-mail
+   * — no row is created or touched, keeping the failure indistinguishable from a wrong password on
+   * a real account (BR7). The 5th consecutive failure locks the account for 15 minutes and audits
+   * it once; attempts made while already locked are ignored (DL-0002).
    */
   @Transactional
   public void recordFailedLogin(String email, AuditContext auditContext) {
@@ -204,8 +204,8 @@ public class IdentityService {
   /**
    * Requests a password recovery link (SPEC-0002 BR10). Neutral by design (BR7, DL-0003): always
    * succeeds silently, issuing a fresh 30-minute single-use link and auditing the request only for
-   * an existing ACTIVE account — never revealing whether the e-mail is registered. A prior open link
-   * is invalidated.
+   * an existing ACTIVE account — never revealing whether the e-mail is registered. A prior open
+   * link is invalidated.
    */
   @Transactional
   public void requestPasswordRecovery(String email, AuditContext auditContext) {
@@ -221,7 +221,10 @@ public class IdentityService {
     String rawToken = SecureTokens.newRawToken();
     resetTokens.save(
         PasswordResetToken.issue(
-            account.getId(), SecureTokens.sha256Hex(rawToken), now, settings.passwordResetTokenTtl()));
+            account.getId(),
+            SecureTokens.sha256Hex(rawToken),
+            now,
+            settings.passwordResetTokenTtl()));
     auditRecorder.record(
         new AuditEntry(
             AuditEventTypes.PASSWORD_RECOVERY_REQUESTED,
@@ -235,9 +238,9 @@ public class IdentityService {
   }
 
   /**
-   * Resets a password behind a valid reset link (SPEC-0002 BR10): validates the base password policy,
-   * sets the new password, consumes the single-use link and terminates ALL active sessions of the
-   * user. Publishes {@link PasswordChanged} for the security notice.
+   * Resets a password behind a valid reset link (SPEC-0002 BR10): validates the base password
+   * policy, sets the new password, consumes the single-use link and terminates ALL active sessions
+   * of the user. Publishes {@link PasswordChanged} for the security notice.
    *
    * @throws ResetLinkInvalidException when the link is unknown, expired or already used.
    * @throws PasswordPolicyViolationException when the new password violates the policy.
@@ -272,8 +275,8 @@ public class IdentityService {
    * DL-0003). Publishes {@link PasswordChanged} for the security notice.
    *
    * @throws CurrentPasswordIncorrectException when the current password does not match.
-   * @throws PasswordPolicyViolationException when the new password violates the policy or equals the
-   *     current one.
+   * @throws PasswordPolicyViolationException when the new password violates the policy or equals
+   *     the current one.
    */
   @Transactional
   public void changePassword(

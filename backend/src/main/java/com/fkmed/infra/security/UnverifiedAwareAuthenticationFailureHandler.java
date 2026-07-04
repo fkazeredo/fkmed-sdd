@@ -13,11 +13,11 @@ import org.springframework.stereotype.Component;
 
 /**
  * Form-login failure routing (SPEC-0002): an unverified account ({@link DisabledException}) is sent
- * to {@code /login?unverified} to show the specific "verify your e-mail" message + resend affordance
- * (BR6); a locked account ({@link LockedException}, BR8) is sent to {@code /login?locked} to show
- * the "conta bloqueada" message — a distinct state raised even with the correct password; every
- * other failure goes to the neutral {@code /login?error} (BR7 — never reveals whether the e-mail
- * exists or which credential failed).
+ * to {@code /login?unverified} to show the specific "verify your e-mail" message + resend
+ * affordance (BR6); a locked account ({@link LockedException}, BR8) is sent to {@code
+ * /login?locked} to show the "conta bloqueada" message — a distinct state raised even with the
+ * correct password; every other failure goes to the neutral {@code /login?error} (BR7 — never
+ * reveals whether the e-mail exists or which credential failed).
  */
 @Component
 public class UnverifiedAwareAuthenticationFailureHandler implements AuthenticationFailureHandler {
