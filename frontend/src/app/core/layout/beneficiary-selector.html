@@ -1,0 +1,38 @@
+<div
+  class="flex items-center gap-2"
+  data-testid="beneficiary-selector"
+  [attr.aria-label]="'contexto.seletor.label' | translate"
+>
+  <span
+    class="flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-xs font-semibold text-white"
+    aria-hidden="true"
+  >
+    {{ initialOf(context.active()?.firstName) }}
+  </span>
+
+  @if (hasChoice()) {
+    <p-select
+      [options]="context.accessible()"
+      optionLabel="firstName"
+      optionValue="beneficiaryId"
+      [ngModel]="context.active()?.beneficiaryId ?? null"
+      (onChange)="onChange($event)"
+      [ariaLabel]="'contexto.seletor.label' | translate"
+    >
+      <ng-template #selectedItem let-selected>
+        <span data-testid="active-beneficiary-name">
+          {{ selected?.firstName }} · {{ roleLabel(selected?.role) }}
+        </span>
+      </ng-template>
+      <ng-template #item let-option>
+        <div data-testid="beneficiary-option">
+          {{ option.firstName }} · {{ roleLabel(option.role) }}
+        </div>
+      </ng-template>
+    </p-select>
+  } @else if (context.active(); as active) {
+    <span class="text-sm font-medium" data-testid="active-beneficiary-name">
+      {{ active.firstName }} · {{ roleLabel(active.role) }}
+    </span>
+  }
+</div>
