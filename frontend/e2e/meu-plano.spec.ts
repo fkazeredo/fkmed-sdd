@@ -19,6 +19,11 @@ test('dev login → Meu Plano shows the seeded plan and family', async ({ page }
   await expect(page.getByTestId('brand')).toHaveText('FKMed');
   await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
 
+  // Regression (review finding I2, BR7/AC5): the SPA document is pt-BR branded —
+  // fails with the scaffold's lang="en" / <title>Frontend</title>.
+  await expect(page).toHaveTitle('FKMed');
+  expect(await page.locator('html').getAttribute('lang')).toBe('pt-BR');
+
   // Plan data (BR4) — served by the API from the V1 seed, nothing hardcoded (BR6).
   await expect(page.getByTestId('plan-name')).toHaveText(
     'PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP',
