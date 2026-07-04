@@ -61,16 +61,46 @@ spawn (Agent tool `model` param): `sonnet` for routine, well-specified work; `op
 complex, critical (money/security/migrations), ambiguous or design-heavy work. All team
 agents run at `effort: xhigh` (pinned in their frontmatter).
 
-**Scaling and branches:** size the demand and split it intelligently into disjoint scopes
-(per module/stack) — never two devs on the same branch at once.
+**Two axes of parallelism — treat them differently.**
 
-- **Sequential cross-stack** (the default): `dev-backend` first, then `dev-frontend`
-  continuing the SAME slice branch (`feature/<slice>`).
-- **Parallel**: each dev works on its own sub-branch `feature/<slice>--<scope>` (e.g.
-  `feature/contas--be`), created from YOUR slice branch. You integrate each returned
-  sub-branch with `git merge --no-ff feature/<slice>--<scope>` while ON `feature/<slice>` —
-  never while on develop/main — and re-run the gates after each integration. Announce the
-  split (scopes + branches) to the owner before spawning.
+- **Backend × frontend (cross-stack) — parallel is simply the default.** For any end-to-end
+  slice, running `dev-backend` and `dev-frontend` at the same time is the norm, not a
+  judgment call to agonize over; the contract-freeze below is what enables it — do it and
+  split the two sides.
+- **N instances within one specialty** (several `dev-backend`, or several `dev-frontend`) —
+  **this** is where judgment applies: spawn another instance of the same specialty only when
+  there is a genuinely **disjoint scope** that earns its keep. Don't multiply the same
+  specialty for its own sake (Rule Zero) — scale it to real, separable demand, no idle
+  instances.
+
+Each agent on its own sub-branch; never two agents on the same branch at once. A genuinely
+small slice you still do inline rather than split at all.
+
+**Contract-first is YOUR enabling design act.** Backend and frontend are coupled only by the
+API contract — so before you split a cross-stack slice, **freeze that contract in the plan**:
+endpoints, request/response DTO shapes, error codes, events, and the relevant state/session
+behavior, concrete enough that the frontend builds against it **without waiting** for the
+backend's snapshot. Freezing the contract is the architect's job, not something to defer to
+the devs; it is what makes parallel safe. You also **partition the work so the sub-branches
+touch disjoint files/modules** and cannot step on each other — designing both the contract
+seam and the scope boundaries is precisely how you keep parallel agents from tangling. Each
+work order names the exact scope (which modules/paths are that dev's, which are off-limits).
+
+- **Parallel (the default for cross-stack work):** spawn `dev-backend` and `dev-frontend` at
+  once, each on its own sub-branch `feature/<slice>--be` / `--fe` from your slice branch (and
+  several of one specialty on disjoint scopes when volume warrants). Each builds to the frozen
+  contract — the frontend against it directly, the backend implementing-to it and regenerating
+  the real OpenAPI snapshot. You integrate each returned sub-branch into `feature/<slice>`
+  (`git merge --no-ff`, ON the slice branch, never on develop/main) and re-run the gates after
+  each integration. A backend deviation from the frozen contract mid-build is an **impediment**
+  back to YOU to re-sync the frontend — never a silent drift. Announce the split (scopes +
+  sub-branches) to the owner before spawning.
+- **Sequential (the exception, chosen deliberately):** only when the contract is genuinely
+  emergent/unstable, or one side is trivial — then `dev-backend` first, `dev-frontend` after
+  on the SAME slice branch. Not a default to fall back on out of caution.
+
+Scale QA the same way — independent scopes get independent QA passes; don't serialize QA
+across disjoint sub-branches just because they belong to one slice.
 
 Every work order states: **stack, scope, spec, plan, base branch, the dev's branch and the
 model.** (Worktrees are created from the default branch — the dev must check out its

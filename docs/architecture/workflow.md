@@ -54,6 +54,18 @@ When the architect delegates to sub-agents (devs, QA), the orchestration rules t
 process from bottlenecking live in `.claude/agents/architect.md` (owner-facing summary in
 `docs/GUIA-TIME-CLAUDE.md`). In short:
 
+- **Parallel by default, contract-first** — two axes, treated differently. (a) **Backend ×
+  frontend:** for any end-to-end slice, running `dev-backend` and `dev-frontend` in parallel
+  is simply the default; the architect **freezes the API contract in the plan** (endpoints,
+  DTO shapes, error codes, events, state/session behavior) and **partitions the work into
+  disjoint files/modules** — that contract + those boundaries are what keep the two sides from
+  colliding — then integrates both sub-branches into the slice branch (`git merge --no-ff`,
+  gates re-run after each). (b) **N instances of one specialty:** spawn another `dev-backend`
+  (or `dev-frontend`) only when there is a genuinely disjoint scope that earns its keep —
+  judgment by real demand, never idle instances (Rule Zero). A genuinely small slice is done
+  inline; sequential cross-stack is the deliberate exception (emergent contract, or a trivial
+  side). A backend deviation from the frozen contract is an impediment back to the architect,
+  never a silent drift.
 - **Worktree orchestration** — each agent works in **its own worktree**, never the main repo
   or another's. The **architect owns the lifecycle**: free the target branch and keep the
   main worktree on `develop` before spawning (a branch held elsewhere makes the agent's

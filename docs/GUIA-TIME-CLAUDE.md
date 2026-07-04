@@ -102,14 +102,22 @@ Cinco arquivos em `.claude/agents/`:
 | `qa` | Bateria pesada de testes depois do dev + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. | **Opus no esforço máximo** (xhigh fixo) |
 
 **A regra de delegação (sua):** **especialista primeiro** — backend com `dev-backend`,
-frontend com `dev-frontend`; o `dev-fullstack` só entra em tarefa pequena. O arquiteto
-aciona **1, 2, 3+ devs conforme o tamanho da demanda — e pode repetir a mesma
-especialidade** (dois `dev-backend` em paralelo, por exemplo), escolhendo o modelo de cada
-um: Sonnet para o rotineiro e bem especificado, Opus para o complexo/crítico. Numa fatia que
-cruza as stacks, backend primeiro e frontend continuando a mesma branch; **em paralelo**,
-cada dev trabalha numa sub-branch da branch da fatia (`feature/<fatia>--<escopo>`) e **o
-arquiteto consolida tudo na branch dele** — você sempre sabe em qual branch cada um está,
-porque cada handoff anuncia a branch (ver §5).
+frontend com `dev-frontend`; o `dev-fullstack` só entra em tarefa pequena. São **dois eixos
+de paralelismo**, tratados de forma diferente:
+
+- **Backend e frontend ao mesmo tempo** numa fatia ponta a ponta é **sempre o padrão** — não
+  é decisão a ponderar. O arquiteto primeiro **desenha e congela o contrato** (endpoints,
+  formatos de dados, erros) e **divide o trabalho em arquivos/módulos que não se cruzam** — é
+  isso que impede os devs de se embolar — e levanta os dois de uma vez, cada um numa sub-branch
+  (`feature/<fatia>--<escopo>`), consolidando na branch da fatia.
+- **Várias instâncias da MESMA especialidade** (dois `dev-backend`, por exemplo) é onde entra
+  o **critério**: só abre outra quando há um escopo de verdade separado que se paga — nunca
+  fragmenta à toa nem deixa instância ociosa. Ele escolhe o modelo de cada um (Sonnet para o
+  rotineiro, Opus para o crítico).
+
+Sequencial vira exceção deliberada (contrato ainda instável, ou um lado trivial); fatia
+pequena de verdade ele faz sozinho. Você sempre sabe em qual branch cada um está, porque cada
+handoff anuncia a branch (ver §5).
 
 **Cada agente trabalha na própria cópia isolada (worktree), e quem orquestra isso é o
 arquiteto.** Cada dev/QA recebe uma pasta de trabalho separada, para nunca pisar no trabalho

@@ -19,7 +19,12 @@ owner-facing communication and reports are in **pt-BR**.
 The spec (`docs/specs/NNNN-*.md`) and the slice plan. A task without a spec or with an Open
 Question that affects behavior: **do not invent** — return the question to the architect. If
 the slice continues a branch where the backend is already done, build on what exists (real
-contracts, not imagined ones).
+contracts, not imagined ones). When you run **in parallel** with the backend (the common
+case), build against the **contract the architect froze in the plan** — endpoints, DTO
+shapes, error codes — not an imagined one; if the real OpenAPI snapshot diverges from that
+frozen contract at integration, that is an **impediment to the architect** (he re-syncs it),
+not something you quietly reshape. Stay within the files/modules your work order assigns —
+another dev may be in a disjoint scope on a sibling sub-branch at the same time.
 
 The work order also states the **base branch, your branch and the model**. Your worktree is
 created from the default branch — before anything else, check out the declared branch

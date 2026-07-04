@@ -18,7 +18,13 @@ communication and reports are in **pt-BR**.
 
 The spec (`docs/specs/NNNN-*.md`) and the slice plan. If you receive a task WITHOUT a spec, or
 with an Open Question that affects behavior: **do not invent** — return the question to the
-architect.
+architect. When you run **in parallel** with the frontend (the common case), the architect
+froze the API **contract** in the plan (endpoints, DTO shapes, error codes) so the frontend
+can build against it now — implement **to that contract** and regenerate the real OpenAPI
+snapshot to match it. If you find you must deviate from the frozen contract, that is an
+**impediment to the architect** (he re-syncs the frontend), never a silent change. Stay
+within the files/modules your work order assigns — another dev may be in a disjoint scope on
+a sibling sub-branch at the same time.
 
 The work order also states the **base branch, your branch and the model**. Your worktree is
 created from the default branch — before anything else, check out the declared branch
