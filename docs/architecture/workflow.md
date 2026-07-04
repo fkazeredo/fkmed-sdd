@@ -69,8 +69,10 @@ process from bottlenecking live in `.claude/agents/architect.md` (owner-facing s
 - **Worktree orchestration** — each agent works in **its own worktree**, never the main repo
   or another's. The **architect owns the lifecycle**: free the target branch and keep the
   main worktree on `develop` before spawning (a branch held elsewhere makes the agent's
-  checkout fail); prune stale worktrees after; rescue any misplaced work via `git stash -u`
-  without losing it.
+  checkout fail); **physically remove finished worktrees** after (not just `git worktree
+  prune` — on Windows `rm -rf .claude/worktrees/<id>` in Git Bash when path length blocks
+  `git worktree remove`), delete merged/scratch branches, and leave no file junk on the
+  owner's machine; rescue any misplaced work via `git stash -u` without losing it.
 - **Visibility** — a milestone-ping cadence (RED committed → gates green → completion) for
   devs, QA and flow work; the architect surfaces observable state, never invented progress;
   periodic stall checks.
