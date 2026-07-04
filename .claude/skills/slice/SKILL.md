@@ -27,6 +27,11 @@ going to do, report AFTER what you did (CLAUDE.md §Comunicação).
    testing…). List for the owner which ones you read.
 4. **Git**: `git checkout develop && git pull --ff-only`, then
    `git checkout -b feature/<slice-slug>` (history convention: short kebab slug).
+   **Worktree orchestration (architect.md):** before you spawn ANY agent, switch the **main
+   worktree back to `develop`** and make sure the slice branch (or the dev's sub-branch) is
+   **not checked out anywhere** — git allows a branch in only one worktree, so a branch you
+   still hold makes the agent's checkout fail and it may fall back to the wrong directory.
+   Keep the main worktree off the agents' branches the whole time they run.
 5. **Plan** in the `docs/architecture/workflow.md` §Large tasks format: goal, specs, affected
    modules, backend/frontend files, migrations, tests, docs, risks, implementation order,
    validation commands, open questions — and a **Critérios de aceite** section: numbered
