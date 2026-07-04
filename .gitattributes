@@ -1,0 +1,9 @@
+# Normalize line endings; POSIX scripts must stay LF everywhere (Docker builds).
+* text=auto
+mvnw text eol=lf
+*.sh text eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.png binary
+*.ico binary
+*.jar binary
