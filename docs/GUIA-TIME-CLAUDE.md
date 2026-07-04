@@ -111,6 +111,14 @@ cada dev trabalha numa sub-branch da branch da fatia (`feature/<fatia>--<escopo>
 arquiteto consolida tudo na branch dele** — você sempre sabe em qual branch cada um está,
 porque cada handoff anuncia a branch (ver §5).
 
+**Cada agente trabalha na própria cópia isolada (worktree), e quem orquestra isso é o
+arquiteto.** Cada dev/QA recebe uma pasta de trabalho separada, para nunca pisar no trabalho
+de outro nem no diretório principal. Garantir que a branch de cada um esteja livre antes de
+começar — e manter o diretório principal fora do caminho — é responsabilidade do arquiteto;
+se um agente não consegue assumir sua branch, ele **para e devolve ao arquiteto** em vez de
+contornar. (Você não precisa se preocupar com isso — é mecânica interna; está aqui só para
+transparência.)
+
 ## 5. O fluxo de uma fatia, ponta a ponta
 
 **Passo 0 — abra a sessão como arquiteto** (no terminal, na pasta do projeto) e ative o

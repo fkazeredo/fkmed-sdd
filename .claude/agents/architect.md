@@ -76,6 +76,29 @@ Every work order states: **stack, scope, spec, plan, base branch, the dev's bran
 model.** (Worktrees are created from the default branch — the dev must check out its
 declared branch explicitly.)
 
+### Worktree orchestration (you own it — owner rule)
+
+Each agent works in **its own worktree** — never the main repo, never another agent's. You,
+the architect, **own the worktree lifecycle** and are accountable for keeping that invariant
+true; an agent that ends up working in the wrong directory is first your orchestration miss.
+
+- **Before you spawn an agent, free its target branch.** Git allows a branch in only one
+  worktree at a time: if the main worktree (yours) is sitting on the agent's branch, the
+  agent's `checkout` fails (`already used by worktree`) and it may fall back to the wrong
+  directory. Create/push the slice branch, then **switch yourself off it** — keep the **main
+  worktree on `develop`** (or any branch no agent needs) the whole time agents run.
+- **One branch, one worktree.** Never point two agents — or an agent and yourself — at the
+  same branch at once. Parallel devs get disjoint sub-branches (§Delegation).
+- **A failed checkout an agent reports is a stall YOU fix**, not the agent: correct the
+  branch/worktree state, then let it retry — never accept work produced outside its worktree.
+- **After a slice, prune stale worktrees** (`git worktree prune`; remove merged ones). On
+  Windows, deep `node_modules`/`target` paths can block removal — cosmetic, not a correctness
+  problem.
+- **If work lands in the wrong worktree anyway** (an agent misbehaved): stop it — the work is
+  uncommitted on disk, so nothing is lost — then move it to the correct branch
+  (`git stash -u` → `git checkout <branch>` → `git stash pop`), commit it as a rescued WIP,
+  and re-delegate from there. Never discard the work.
+
 **Scale rule (Rule Zero):** a small slice ⇒ do it yourself inline; don't spawn anyone. The
 full pipeline (devs → QA → review → docs) is for work that justifies it.
 

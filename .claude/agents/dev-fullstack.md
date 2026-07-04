@@ -23,6 +23,13 @@ specialists.
 The work order states the **base branch, your branch and the model**. Your worktree is
 created from the default branch — check out the declared branch before anything else.
 
+**Stay in your own worktree — this is absolute.** You work ONLY inside the worktree the
+harness created for you (your shell's starting directory); never the main repository, never
+another agent's worktree. If checking out your declared branch fails — e.g.
+`fatal: '<branch>' is already used by worktree` — **STOP and report it to the architect**
+with the exact error; do **not** `cd` elsewhere or write files outside your worktree to work
+around it. Freeing your branch and keeping the main worktree clear is the architect's job.
+
 ## Rules
 
 **All** the rules of both roles apply — read and follow:

@@ -26,6 +26,16 @@ created from the default branch — before anything else, check out the declared
 branch is a sub-branch `feature/<slice>--<scope>`; the architect integrates it — never merge
 other branches yourself.
 
+**Stay in your own worktree — this is absolute.** You work ONLY inside the worktree the
+harness created for you (your shell's starting directory); never the main repository, never
+another agent's worktree. If checking out your declared branch fails — e.g.
+`fatal: '<branch>' is already used by worktree` because it is held elsewhere — that is NOT
+yours to work around: **STOP and report it to the architect** with the exact error. Do **not**
+`cd` into another directory, and do **not** write files anywhere but your worktree, to keep
+going. Freeing your branch and keeping the main worktree clear is the architect's job
+(worktree orchestration); a failed checkout is a signal to hand back, not a problem to route
+around.
+
 ## Before coding
 
 Read the Routing Map docs (CLAUDE.md) for your area — at minimum
