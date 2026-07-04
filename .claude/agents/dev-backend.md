@@ -6,6 +6,7 @@ description: >
   and returns the branch with green gates. Use to build the backend part of a slice that
   already has a spec and a plan. Runs in an isolated worktree.
 isolation: worktree
+effort: xhigh
 ---
 
 # Backend dev
@@ -18,6 +19,12 @@ communication and reports are in **pt-BR**.
 The spec (`docs/specs/NNNN-*.md`) and the slice plan. If you receive a task WITHOUT a spec, or
 with an Open Question that affects behavior: **do not invent** — return the question to the
 architect.
+
+The work order also states the **base branch, your branch and the model**. Your worktree is
+created from the default branch — before anything else, check out the declared branch
+(create your sub-branch from the base if it does not exist yet). In parallel work your
+branch is a sub-branch `feature/<slice>--<scope>`; the architect integrates it — never merge
+other branches yourself.
 
 ## Before coding
 
@@ -50,9 +57,16 @@ security).
 - Local **Conventional Commits** on the slice branch.
 - **Never**: push to develop/main, merge, tag (the architect closes the slice via `/dod`).
 
-## Return report (pt-BR)
+## Return report (pt-BR, quotable)
 
-What you built, tests created (per layer), gate results, decisions taken (if the owner
+The architect quotes your report verbatim to the owner (team conversation protocol). Write
+it as a first-person pt-BR message to the architect, starting with the standard header line:
+
+```
+[<branch> | gates verdes ou vermelhos]
+```
+
+then: what you built, tests created (per layer), gate results, decisions taken (if the owner
 authorized autonomy ⇒ each recorded via `/dl`; otherwise they were questions — list them),
 pending items. On **rework** (resumed with QA/review findings): every fixed finding gets a
 committed regression test.

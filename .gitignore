@@ -30,3 +30,6 @@ Thumbs.db
 
 # --- Claude Code worktrees (agent sandboxes) ---
 .claude/worktrees/
+
+# --- Slice plan reports (working artifacts; only conclusion reports are versioned) ---
+docs/reports/plans/

@@ -93,29 +93,39 @@ invocá-los direto, mas no dia a dia é mais simples pedir ao arquiteto.
 
 Cinco arquivos em `.claude/agents/`:
 
-| Agente | Papel no time |
-|---|---|
-| `architect` | **Seu único interlocutor.** Escreve specs e ADRs com você, planeja, distribui o trabalho, documenta, revisa (com olhos frescos), reporta, media o vai-e-volta. Nunca infere — pergunta. |
-| `dev-backend` | Constrói a parte Java/banco/APIs de uma fatia, com os testes dela (em cópia isolada do repositório) |
-| `dev-frontend` | Constrói a parte Angular/telas, com os testes dela (idem) |
-| `dev-fullstack` | Fatias pequenas que cruzam as duas partes (idem) |
-| `qa` | Bateria pesada de testes depois do dev + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. |
+| Agente | Papel no time | Modelo / esforço |
+|---|---|---|
+| `architect` | **Seu único interlocutor.** Escreve specs e ADRs com você, planeja, distribui o trabalho, documenta, revisa (com olhos frescos), reporta, media o vai-e-volta. Nunca infere — pergunta. | **Opus no esforço máximo** (xhigh fixo; ultracode na sessão — §5 passo 0) |
+| `dev-backend` | Constrói a parte Java/banco/APIs de uma fatia, com os testes dela (em cópia isolada do repositório) | Sonnet ou Opus — **o arquiteto decide** pela complexidade; esforço sempre xhigh |
+| `dev-frontend` | Constrói a parte Angular/telas, com os testes dela (idem) | idem |
+| `dev-fullstack` | **Somente tarefas pequenas** que cruzam as duas partes (um CRUD simples, um ajuste ponta a ponta) — o padrão é especialista primeiro | idem |
+| `qa` | Bateria pesada de testes depois do dev + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. | **Opus no esforço máximo** (xhigh fixo) |
 
-**A regra de delegação (sua):** o arquiteto aciona **1, 2, 3+ devs conforme a demanda — e
-pode repetir a mesma especialidade** (dois `dev-backend` em paralelo, por exemplo). Em
-paralelo, cada um numa fatia/módulo diferente, em branch própria; numa fatia que cruza as
-stacks, backend primeiro e frontend continuando a mesma branch.
+**A regra de delegação (sua):** **especialista primeiro** — backend com `dev-backend`,
+frontend com `dev-frontend`; o `dev-fullstack` só entra em tarefa pequena. O arquiteto
+aciona **1, 2, 3+ devs conforme o tamanho da demanda — e pode repetir a mesma
+especialidade** (dois `dev-backend` em paralelo, por exemplo), escolhendo o modelo de cada
+um: Sonnet para o rotineiro e bem especificado, Opus para o complexo/crítico. Numa fatia que
+cruza as stacks, backend primeiro e frontend continuando a mesma branch; **em paralelo**,
+cada dev trabalha numa sub-branch da branch da fatia (`feature/<fatia>--<escopo>`) e **o
+arquiteto consolida tudo na branch dele** — você sempre sabe em qual branch cada um está,
+porque cada handoff anuncia a branch (ver §5).
 
 ## 5. O fluxo de uma fatia, ponta a ponta
 
-**Passo 0 — abra a sessão como arquiteto** (no terminal, na pasta do projeto):
+**Passo 0 — abra a sessão como arquiteto** (no terminal, na pasta do projeto) e ative o
+esforço máximo:
 
 ```
 claude --agent architect
+/effort ultracode
 ```
 
-(Se esquecer, sem problema: `claude` normal também funciona — o arquiteto é uma "persona"
-que deixa a coordenação mais afiada, não um requisito.)
+(*Ultracode* põe o modelo no esforço máximo e liga os *workflows dinâmicos* — orquestração
+de vários agentes em escala. É configuração **de sessão**: ative a cada sessão nova; o
+arquiteto te lembra se esquecer. E se esquecer do `--agent architect`, sem problema:
+`claude` normal também funciona — o arquiteto é uma "persona" que deixa a coordenação mais
+afiada, não um requisito.)
 
 | Você diz… | O que acontece |
 |---|---|
@@ -129,6 +139,21 @@ que deixa a coordenação mais afiada, não um requisito.)
 | **Você mergeia** (no GitHub) | Essa parte é SÓ SUA. Nenhum agente mergeia, nunca. |
 
 **Seus 4 portões:** spec → plano → merge → tag/release (este último só quando você pedir).
+
+**Você nunca fica às cegas:** cada handoff entre os agentes aparece no seu chat, em
+português, como diálogo de time — sempre com a branch à mostra:
+
+```
+🗣️ Arquiteto → Dev Backend [feature/contas--be | opus/xhigh]: implementa o endpoint de baixa…
+🗣️ Dev Backend → Arquiteto [feature/contas--be | gates verdes]: "entreguei X com N testes…"
+🗣️ QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "encontrei…"
+```
+
+**E cada fatia deixa dois relatórios em `docs/reports/`:** o plano aprovado (com os
+critérios de aceite numerados) em `plans/` — só local, **não vai para o git** — e o
+relatório de conclusão em `final/` — **versionado, entra no PR** — com a evidência e o
+porquê detalhado de cada critério de aceite ter passado, mais a retrospectiva do fluxo
+(linha do tempo dos handoffs, reworks e motivos, gargalos e lições aprendidas).
 
 ## 6. Receitas rápidas do dia a dia
 
@@ -146,25 +171,33 @@ que deixa a coordenação mais afiada, não um requisito.)
 
 ## 7. O vai-e-volta (rework)
 
-Como num time real, o fluxo **não é só para frente**:
+Como num time real, o fluxo **não é só para frente** — e quem media é o arquiteto:
 
 ```
-                    ┌───────────── replaneja (com você) ─────────────┐
-                    ▼                                                 │
-você + arquiteto → spec → plano → dev(s) → qa ─── reprovou? ──────────┤
-                                    ▲                                 │
-                                    └──── rework (mesmo dev) ◄────────┘
-                                              │
-              aprovado → revisão do arquiteto → /dod → PR → briefing → VOCÊ mergeia
+você + arquiteto → spec → plano (com critérios de aceite) → dev(s) → qa
+                                        ▲                        │
+                                        └── rework 1 (mesmo dev) ┤ reprovou
+                                                                 │
+              2ª reprovação / dev travado / CI em ciclo / pós-QA ▼
+                     ARQUITETO analisa a causa raiz e decide:
+       replaneja/divide · reatribui · faz ele mesmo · traz o caso a você
+
+  aprovado → revisão (olhos frescos) → /dod (ACs + retrospectiva) → PR → briefing → VOCÊ mergeia
 ```
 
-- **QA reprovou** → os achados voltam para o MESMO dev (ele não recomeça do zero — a conversa
-  dele fica preservada). Cada correção exige um teste novo que prove o conserto.
-- **Trava de ping-pong**: se o mesmo problema reprovar **2 vezes seguidas**, o arquiteto para
-  de insistir e **traz o caso para você** decidirem juntos (replanejar, aceitar o risco ou
-  mudar de direção).
-- **O problema é de desenho** (a spec/plano estava errado) → volta ao arquiteto, que
-  **replaneja com você** — nunca sozinho.
+- **1ª reprovação do QA** → os achados voltam para o MESMO dev (ele não recomeça do zero — a
+  conversa dele fica preservada). Cada correção exige um teste novo que prove o conserto.
+- **Mais de 1 rework na mesma tarefa** (2ª reprovação), **dev travado ou demorando muito
+  além do combinado** → a tarefa **volta para o arquiteto analisar** a causa raiz: gap de
+  spec? plano ruim? especialidade ou modelo errado? tarefa grande demais? Ele decide:
+  replanejar/dividir, reatribuir (subindo para Opus se for o caso), fazer ele mesmo — ou
+  trazer o caso a você.
+- **CI vermelho no PR ou falha na fase de testes pós-QA (verificação final)** → volta
+  **primeiro ao arquiteto** (diagnóstico via `/ci-triage`), nunca direto a um dev. Se o CI
+  reprovar de novo depois de um conserto (ciclo de erros), a tarefa **fica com o arquiteto**
+  até ele entender a causa raiz.
+- **O problema é de desenho** (a spec/plano estava errado) → o arquiteto **replaneja com
+  você** — nunca sozinho.
 
 ## 8. O que os agentes NUNCA fazem (e por quê)
 
@@ -179,7 +212,9 @@ fisicamente bloqueado, não é só combinado):
 | Commitar segredo/senha/chave | Ninguém — o scanner (gitleaks) bloqueia no CI e no pre-commit |
 
 O que eles **podem** (e é o fim normal de toda fatia): fazer commits na branch da fatia,
-dar push dela e **abrir** o PR para develop.
+integrar as sub-branches dos devs na branch da fatia (merge **local** de `feature/*` — o
+merge de PR em develop/main continua sendo só seu), dar push da branch e **abrir** o PR
+para develop.
 
 ## 9. Criar um projeto novo a partir deste
 

@@ -44,7 +44,20 @@ log (`docs/ROADMAP-STATUS.md`).
 
 Use Claude Code plan mode. The plan **MUST** include: goal, relevant specs, affected modules,
 backend/frontend files, migrations, tests, documentation, architectural risks, implementation
-order, validation commands and open questions.
+order, validation commands, open questions and **acceptance criteria** — numbered (AC-1…),
+testable, mapped to the spec's BRs/examples, each with its verification method. At the end of
+the slice (`/dod`) every AC is re-verified with evidence and a detailed why.
+
+## Slice reports (`docs/reports`)
+
+Two per-slice reports, written by the architect (naming and gitignore rule in
+`docs/reports/README.md`):
+
+- **Plan report** (`docs/reports/plans/`, NOT versioned): the approved plan with its
+  acceptance criteria — written at `/slice`.
+- **Conclusion report** (`docs/reports/final/`, versioned, committed in the slice PR): the
+  AC table with evidence and whys + a workflow retrospective (handoff timeline, reworks,
+  bottlenecks, lessons learned) — written at `/dod`, in pt-BR.
 
 ## Repository context awareness
 
