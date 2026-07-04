@@ -124,6 +124,11 @@ arquiteto.** Cada dev/QA recebe uma pasta de trabalho separada, para nunca pisar
 de outro nem no diretório principal. Garantir que a branch de cada um esteja livre antes de
 começar — e manter o diretório principal fora do caminho — é responsabilidade do arquiteto.
 
+**O arquiteto não deixa lixo na sua máquina.** Cada cópia isolada (worktree) e qualquer
+arquivo temporário que o fluxo cria são removidos ao fechar a fatia — de verdade, não só
+"desregistrados". No Windows, quando o caminho longo trava a remoção normal, ele usa um
+método que dá conta; no fim, só as worktrees ativas ficam no disco.
+
 **E a regra que vale para qualquer impedimento:** se um agente esbarra em algo que não é dele
 resolver — não consegue assumir a branch, uma ferramenta/serviço indisponível, uma spec
 ambígua, um teste que parece errado, uma tarefa maior que o combinado — ele **para e devolve
