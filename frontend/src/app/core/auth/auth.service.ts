@@ -2,18 +2,30 @@ import { inject, Injectable } from '@angular/core';
 import { AuthConfig, OAuthService } from 'angular-oauth2-oidc';
 import { environment } from '../../../environments/environment';
 
+/** The environment facts the OIDC config depends on (pure — unit-testable). */
+export interface AuthEnvironment {
+  production: boolean;
+  oidcIssuer: string;
+}
+
 /** OIDC client configuration against the embedded Authorization Server (SPEC-0001 BR8). */
-export function buildAuthConfig(): AuthConfig {
+export function authConfigFor(env: AuthEnvironment): AuthConfig {
   return {
-    issuer: environment.oidcIssuer,
+    issuer: env.oidcIssuer,
     clientId: 'fkmed-web',
     responseType: 'code',
     scope: 'openid profile',
     redirectUri: window.location.origin + '/',
     postLogoutRedirectUri: window.location.origin + '/',
-    // Same-process AS; silent refresh via SSO session arrives with SPEC-0002's journeys.
-    requireHttps: false,
+    // Production enforces https ('remoteOnly' keeps localhost smoke/E2E over http working);
+    // only the dev build (ng serve against :8080) fully relaxes it (review finding M3).
+    requireHttps: env.production ? 'remoteOnly' : false,
   };
+}
+
+/** The app's OIDC config, bound to the build environment. */
+export function buildAuthConfig(): AuthConfig {
+  return authConfigFor(environment);
 }
 
 /**
