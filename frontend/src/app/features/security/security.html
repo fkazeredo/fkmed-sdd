@@ -1,0 +1,113 @@
+<section class="mx-auto max-w-md p-4" aria-labelledby="security-title">
+  <h1 id="security-title" class="mb-6 text-2xl font-semibold text-teal-800">
+    {{ 'seguranca.title' | translate }}
+  </h1>
+
+  <div class="mb-4 rounded-xl bg-white p-5 shadow">
+    <span class="mb-1 block text-sm text-slate-600">{{ 'seguranca.email.label' | translate }}</span>
+    <p class="text-slate-800" data-testid="security-email">{{ email() }}</p>
+  </div>
+
+  <form class="rounded-xl bg-white p-5 shadow" (ngSubmit)="submit()" data-testid="security-form">
+    @if (success()) {
+      <p class="mb-4 rounded-lg bg-green-50 p-3 text-green-700" role="status" data-testid="security-success">
+        {{ 'seguranca.sucesso' | translate }}
+      </p>
+    }
+    @if (errorKey() && errorField() === null) {
+      <div class="mb-4 rounded-lg bg-red-50 p-4 text-red-700" role="alert" data-testid="security-error">
+        {{ errorKey() | translate }}
+      </div>
+    }
+
+    <label for="currentPassword" class="mb-1 block text-sm text-slate-600">
+      {{ 'seguranca.senhaAtual' | translate }}
+    </label>
+    <div class="mb-1 flex gap-2">
+      <input
+        id="currentPassword"
+        name="currentPassword"
+        [type]="showCurrent() ? 'text' : 'password'"
+        autocomplete="current-password"
+        class="w-full rounded border border-slate-300 px-3 py-2"
+        [(ngModel)]="currentPassword"
+      />
+      <button
+        type="button"
+        class="rounded border border-slate-300 px-3 text-sm text-slate-600"
+        data-testid="toggle-current-password"
+        [attr.aria-pressed]="showCurrent()"
+        (click)="toggleCurrent()"
+      >
+        {{ (showCurrent() ? 'common.password.hide' : 'common.password.show') | translate }}
+      </button>
+    </div>
+    @if (errorField() === 'currentPassword') {
+      <p class="mb-2 text-sm text-red-600" data-testid="error-current-password">
+        {{ errorKey() | translate }}
+      </p>
+    }
+
+    <label for="newPassword" class="mb-1 mt-3 block text-sm text-slate-600">
+      {{ 'seguranca.novaSenha' | translate }}
+    </label>
+    <div class="mb-1 flex gap-2">
+      <input
+        id="newPassword"
+        name="newPassword"
+        [type]="showNew() ? 'text' : 'password'"
+        autocomplete="new-password"
+        class="w-full rounded border border-slate-300 px-3 py-2"
+        [(ngModel)]="newPassword"
+      />
+      <button
+        type="button"
+        class="rounded border border-slate-300 px-3 text-sm text-slate-600"
+        data-testid="toggle-new-password"
+        [attr.aria-pressed]="showNew()"
+        (click)="toggleNew()"
+      >
+        {{ (showNew() ? 'common.password.hide' : 'common.password.show') | translate }}
+      </button>
+    </div>
+    @if (newPassword.length > 0 && !newPasswordValid) {
+      <p class="mb-2 text-sm text-red-600">{{ 'seguranca.validation.senha' | translate }}</p>
+    }
+    @if (errorField() === 'newPassword') {
+      <p class="mb-2 text-sm text-red-600" data-testid="error-new-password">
+        {{ errorKey() | translate }}
+      </p>
+    }
+
+    <label for="confirmPassword" class="mb-1 mt-3 block text-sm text-slate-600">
+      {{ 'seguranca.confirmarSenha' | translate }}
+    </label>
+    <input
+      id="confirmPassword"
+      name="confirmPassword"
+      [type]="showNew() ? 'text' : 'password'"
+      autocomplete="new-password"
+      class="mb-1 w-full rounded border border-slate-300 px-3 py-2"
+      [(ngModel)]="confirmPassword"
+    />
+    @if (confirmPassword.length > 0 && !confirmValid) {
+      <p class="mb-2 text-sm text-red-600">{{ 'seguranca.validation.confirmacao' | translate }}</p>
+    }
+
+    <button
+      type="submit"
+      class="mt-4 w-full rounded bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+      data-testid="security-submit"
+      [disabled]="!formValid || loading()"
+    >
+      {{ (loading() ? 'common.processando' : 'seguranca.submit') | translate }}
+    </button>
+  </form>
+
+  <div class="mt-4 rounded-xl bg-white p-5 shadow" data-testid="security-biometria">
+    <h2 class="mb-1 text-sm font-medium text-slate-700">
+      {{ 'seguranca.biometria.title' | translate }}
+    </h2>
+    <p class="text-sm text-slate-500">{{ 'seguranca.biometria.mensagem' | translate }}</p>
+  </div>
+</section>

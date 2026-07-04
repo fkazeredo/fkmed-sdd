@@ -13,6 +13,24 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/email-verification/email-verification').then((m) => m.EmailVerification),
   },
+  // BR10 password recovery: "Esqueci minha senha" (request) and "Redefinir senha" (reached from
+  // the e-mailed link — /redefinir-senha?token=..., PasswordRecoveryEmailListener on the backend).
+  {
+    path: 'recuperar-senha',
+    loadComponent: () =>
+      import('./features/password-recovery/forgot-password').then((m) => m.ForgotPassword),
+  },
+  {
+    path: 'redefinir-senha',
+    loadComponent: () =>
+      import('./features/password-recovery/reset-password').then((m) => m.ResetPassword),
+  },
+  // BR12: the session-expiry interceptor sends the (now unauthenticated) user here.
+  {
+    path: 'sessao-expirada',
+    loadComponent: () =>
+      import('./features/session-expired/session-expired').then((m) => m.SessionExpired),
+  },
   {
     path: '',
     component: Shell,
@@ -22,6 +40,12 @@ export const routes: Routes = [
       {
         path: 'meu-plano',
         loadComponent: () => import('./features/my-plan/my-plan').then((m) => m.MyPlan),
+      },
+      // Segurança (SPEC-0002 AC-8): reachable via a direct route for now — the full Perfil menu
+      // is SPEC-0006.
+      {
+        path: 'seguranca',
+        loadComponent: () => import('./features/security/security').then((m) => m.Security),
       },
     ],
   },

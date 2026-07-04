@@ -1,0 +1,16 @@
+<section class="mx-auto max-w-md p-4" aria-labelledby="session-expired-title">
+  <div class="rounded-xl bg-white p-5 shadow" data-testid="session-expired">
+    <h1 id="session-expired-title" class="mb-2 text-lg font-medium text-teal-800">
+      {{ 'sessaoExpirada.title' | translate }}
+    </h1>
+    <p class="mb-4 text-slate-600" role="alert">{{ 'sessaoExpirada.mensagem' | translate }}</p>
+    <button
+      type="button"
+      class="rounded bg-teal-700 px-4 py-2 text-white"
+      data-testid="session-expired-login"
+      (click)="login()"
+    >
+      {{ 'sessaoExpirada.entrar' | translate }}
+    </button>
+  </div>
+</section>
