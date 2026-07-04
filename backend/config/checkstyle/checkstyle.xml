@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<!--
+  FKMed Checkstyle gate (BOOTSTRAP §2 gate 2 — fail on warning).
+  Complements google-java-format (Spotless owns formatting); this config focuses on
+  correctness, naming and import hygiene so the two tools never fight.
+-->
+<module name="Checker">
+  <property name="charset" value="UTF-8"/>
+  <property name="severity" value="warning"/>
+  <property name="fileExtensions" value="java"/>
+
+  <module name="LineLength">
+    <property name="max" value="120"/>
+    <property name="ignorePattern" value="^package.*|^import.*|href|http://|https://"/>
+  </module>
+  <module name="FileTabCharacter"/>
+  <module name="NewlineAtEndOfFile">
+    <property name="lineSeparator" value="lf_cr_crlf"/>
+  </module>
+
+  <module name="TreeWalker">
+    <!-- Imports -->
+    <module name="AvoidStarImport"/>
+    <module name="RedundantImport"/>
+    <module name="UnusedImports"/>
+    <module name="IllegalImport"/>
+
+    <!-- Class design -->
+    <module name="OneTopLevelClass"/>
+    <module name="OuterTypeFilename"/>
+    <module name="InterfaceIsType"/>
+    <module name="FinalClass"/>
+    <module name="HideUtilityClassConstructor"/>
+
+    <!-- Coding correctness -->
+    <module name="EmptyBlock">
+      <property name="option" value="TEXT"/>
+    </module>
+    <module name="EqualsHashCode"/>
+    <module name="MissingSwitchDefault"/>
+    <module name="DefaultComesLast"/>
+    <module name="SimplifyBooleanExpression"/>
+    <module name="SimplifyBooleanReturn"/>
+    <module name="StringLiteralEquality"/>
+    <module name="EmptyStatement"/>
+    <module name="IllegalInstantiation"/>
+    <module name="InnerAssignment"/>
+    <module name="ModifiedControlVariable"/>
+    <module name="OneStatementPerLine"/>
+    <module name="UpperEll"/>
+    <module name="ArrayTypeStyle"/>
+    <module name="ModifierOrder"/>
+    <module name="RedundantModifier"/>
+    <module name="MutableException"/>
+
+    <!-- Naming -->
+    <module name="PackageName">
+      <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+    </module>
+    <module name="TypeName"/>
+    <module name="MemberName"/>
+    <module name="MethodName"/>
+    <module name="ParameterName"/>
+    <module name="LocalVariableName"/>
+    <module name="LocalFinalVariableName"/>
+    <module name="ConstantName"/>
+    <module name="StaticVariableName"/>
+  </module>
+</module>

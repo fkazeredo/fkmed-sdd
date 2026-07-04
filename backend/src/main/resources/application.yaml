@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: fkmed
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fkmed}
+    username: ${DB_USERNAME:fkmed}
+    # Enumerated dev default (SECURITY.md); ProdReadinessValidator refuses it in prod.
+    password: ${DB_PASSWORD:fkmed}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  session:
+    jdbc:
+      initialize-schema: never # Flyway owns the schema (docs/architecture/persistence.md)
+  messages:
+    basename: messages
+    encoding: UTF-8
+  web:
+    locale: pt_BR
+    locale-resolver: fixed
+
+app:
+  security:
+    issuer: ${APP_ISSUER:http://localhost:8080}
+    allowed-origins: ${APP_ALLOWED_ORIGINS:}
+    redirect-uris: ${APP_OIDC_REDIRECT_URIS:http://localhost:4200/}
+    post-logout-redirect-uris: ${APP_OIDC_POST_LOGOUT_REDIRECT_URIS:http://localhost:4200/}
+    jwk-private-key: ${OIDC_JWK_PRIVATE_KEY:}
+
+server:
+  port: 8080
+  forward-headers-strategy: framework # honest URLs behind the nginx TLS proxy
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

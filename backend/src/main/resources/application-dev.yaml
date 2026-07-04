@@ -1,0 +1,7 @@
+# Dev profile — enumerated dev defaults only (SECURITY.md); never active in production
+# (ProdReadinessValidator refuses the combination).
+app:
+  security:
+    allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:4200}
+    # Binds the dev login seam to MARIA's seeded beneficiary record (SPEC-0001 BR8).
+    dev-login-card: "001234567"
