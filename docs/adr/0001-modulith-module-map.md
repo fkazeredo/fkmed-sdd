@@ -26,6 +26,32 @@ baseline §0010. `ApplicationModules.verify()` plus the committed diagram snapsh
 (`docs/architecture-diagrams/modules.puml`, drift-gated) keep the map honest; new modules
 enter this map only through their owning specs (0002+).
 
+### Phase 1 · Slice 1.1 revision (SPEC-0002, SPEC-0003)
+
+The map grows by **two modules**, both under `com.fkmed.domain`, keeping the layered layout and
+the `explicitly-annotated` strategy:
+
+- **`domain.identity`** (SPEC-0002) — user accounts, first-access verification, e-mail
+  verification tokens, term acceptances, password policy and the account lifecycle
+  (`EMAIL_NOT_VERIFIED → ACTIVE`). Owns `user_account`, `email_verification_token`,
+  `term_acceptance` (V3). Depends on `domain.error` and on `domain.plan`'s **public facade**
+  (`Beneficiaries`) to match the identity triple and read the beneficiary card — never on the
+  plan module's internals. It publishes the `AccountCreated` event; the verification e-mail is
+  delivered by an infra listener over the `MailSender` port (ADR-0004), not by a notifications
+  module (SPEC-0004 will centralize that).
+- **`domain.audit`** (SPEC-0003 foundation) — the append-only audit trail: `AuditRecorder`
+  application contract, `AuditEventTypes` `*Codes`, and the 12-month retention sweep. Owns
+  `audit_event` (V3). Depends only on `domain.error`; consumed by `domain.identity` and by
+  infra security listeners (login/logout).
+
+The verified map is therefore **four modules**: `domain.plan`, `domain.error`,
+`domain.identity`, `domain.audit` (asserted by `ModularityTest`, drawn in the drift-gated
+diagram). Cross-context references are stored as **id values** (e.g.
+`user_account.beneficiary_id` is a plain `UUID`, with a DB-level FK for referential integrity
+only — no JPA relationship crosses a module), so `verify()` stays green. The identity → notification
+and legal-document seams are deferred to SPEC-0004 / SPEC-0006 respectively (see those specs and
+ADR-0004).
+
 ## Consequences
 
 - Positive: no fake bounded contexts; the Modulith gate is real from day one; each future

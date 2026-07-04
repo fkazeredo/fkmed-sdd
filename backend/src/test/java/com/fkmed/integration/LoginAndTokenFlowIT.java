@@ -15,18 +15,22 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
- * SPEC-0001 BR8 + AC3 (API side), end to end over the real embedded Authorization Server: the
- * dev-seam login (maria/dev12345) goes through the OIDC Authorization Code + PKCE flow, the issued
- * access token carries MARIA's beneficiary card, and {@code /api/plan/my-plan} answers the
- * canonical payload. Also proves the JDBC persistence of the AS state (V2).
+ * SPEC-0002 real login, end to end over the real embedded Authorization Server: MARIA's seeded
+ * database account (maria@fkmed.local / maria12345) goes through the OIDC Authorization Code + PKCE
+ * flow, the issued access token carries her beneficiary card (resolved from {@code user_account} →
+ * beneficiary), and {@code /api/plan/my-plan} answers the canonical payload. Replaces the retired
+ * in-memory dev-login seam (SPEC-0001 BR8). Also proves the JDBC persistence of the AS state (V2).
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("dev")
@@ -35,11 +39,18 @@ class LoginAndTokenFlowIT {
   @ServiceConnection static final PostgreSQLContainer POSTGRES = SharedPostgres.INSTANCE;
 
   private static final Pattern CSRF_INPUT = Pattern.compile("name=\"_csrf\"\\s+value=\"([^\"]+)\"");
+  private static final String MARIA_BENEFICIARY_ID = "3f2a1b4c-6d5e-4f7a-8b9c-0d1e2f3a4b5c";
 
   @LocalServerPort private int port;
+  @Autowired private JdbcTemplate jdbc;
+
+  @BeforeEach
+  void clearLoginAudit() {
+    jdbc.update("delete from audit_event where event_type like 'identity.login%'");
+  }
 
   @Test
-  void devLogin_authorizationCodeWithPkce_yieldsTokenBoundToMaria_andMyPlanAnswers()
+  void realLogin_authorizationCodeWithPkce_yieldsTokenBoundToMaria_andMyPlanAnswers()
       throws Exception {
     String base = "http://localhost:" + port;
     CookieManager cookies = new CookieManager();
@@ -69,18 +80,19 @@ class LoginAndTokenFlowIT {
 
     HttpResponse<String> loginPage = get(client, base + "/login");
     assertThat(loginPage.statusCode()).isEqualTo(200);
-    assertThat(loginPage.body()).contains("Entrar no FKMed").contains("Usuário").contains("Senha");
+    assertThat(loginPage.body()).contains("Entrar no FKMed").contains("E-mail").contains("Senha");
     Matcher csrf = CSRF_INPUT.matcher(loginPage.body());
     assertThat(csrf.find()).as("login page must render the CSRF field").isTrue();
 
-    // 2. Form login with the dev-seam credentials resumes the authorize request.
+    // 2. Form login with MARIA's seeded account credentials resumes the authorize request.
     HttpResponse<String> login =
         client.send(
             HttpRequest.newBuilder(URI.create(base + "/login"))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(
                     HttpRequest.BodyPublishers.ofString(
-                        "username=maria&password=dev12345&_csrf=" + url(csrf.group(1))))
+                        "username=maria%40fkmed.local&password=maria12345&_csrf="
+                            + url(csrf.group(1))))
                 .build(),
             HttpResponse.BodyHandlers.ofString());
     assertThat(login.statusCode()).isEqualTo(302);
@@ -129,6 +141,15 @@ class LoginAndTokenFlowIT {
         .isEqualTo("MARIA CLARA SOUZA LIMA");
     assertThat((String) JsonPath.read(myPlan.body(), "$.members[1].fullName"))
         .isEqualTo("PEDRO SOUZA LIMA");
+
+    // SPEC-0002 BR14 / SPEC-0003 BR6: the successful login is audited with MARIA as author/target.
+    Long loginSuccesses =
+        jdbc.queryForObject(
+            "select count(*) from audit_event where event_type = 'identity.login-success'"
+                + " and target_beneficiary_id = ?::uuid",
+            Long.class,
+            MARIA_BENEFICIARY_ID);
+    assertThat(loginSuccesses).isEqualTo(1L);
   }
 
   private static HttpResponse<String> get(HttpClient client, String url) throws Exception {

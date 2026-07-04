@@ -1,0 +1,64 @@
+<section class="mx-auto max-w-md p-4" aria-labelledby="verify-title">
+  <h1 id="verify-title" class="mb-6 text-2xl font-semibold text-teal-800">
+    {{ 'verificarEmail.title' | translate }}
+  </h1>
+
+  @if (status() === 'loading') {
+    <p class="text-slate-500" role="status" data-testid="verify-loading">
+      {{ 'verificarEmail.loading' | translate }}
+    </p>
+  } @else if (status() === 'confirmed') {
+    <div class="rounded-xl bg-white p-5 shadow" data-testid="verify-confirmed">
+      <h2 class="mb-2 text-lg font-medium text-teal-800">
+        {{ 'verificarEmail.confirmado.title' | translate }}
+      </h2>
+      <p class="mb-4 text-slate-600">{{ 'verificarEmail.confirmado.message' | translate }}</p>
+      <button
+        type="button"
+        class="rounded bg-teal-700 px-4 py-2 text-white"
+        data-testid="verify-login"
+        (click)="goToLogin()"
+      >
+        {{ 'verificarEmail.entrar' | translate }}
+      </button>
+    </div>
+  } @else {
+    <div class="rounded-xl bg-white p-5 shadow" data-testid="verify-resend">
+      @if (status() === 'invalid') {
+        <h2 class="mb-2 text-lg font-medium text-red-700">
+          {{ 'verificarEmail.invalido.title' | translate }}
+        </h2>
+      }
+      <p class="mb-4 text-slate-600">{{ 'verificarEmail.invalido.message' | translate }}</p>
+
+      @if (resendDone()) {
+        <p class="rounded-lg bg-green-50 p-3 text-green-700" role="status" data-testid="resend-done">
+          {{ 'verificarEmail.reenviar.enviado' | translate }}
+        </p>
+      } @else {
+        <form (ngSubmit)="resend()">
+          <label for="resendEmail" class="mb-1 block text-sm text-slate-600">
+            {{ 'verificarEmail.reenviar.email' | translate }}
+          </label>
+          <input
+            id="resendEmail"
+            name="resendEmail"
+            type="email"
+            class="mb-3 w-full rounded border border-slate-300 px-3 py-2"
+            [(ngModel)]="resendEmail"
+          />
+          <button
+            type="submit"
+            class="w-full rounded bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+            data-testid="resend-submit"
+            [disabled]="!emailValid || resending()"
+          >
+            {{
+              (resending() ? 'common.processando' : 'verificarEmail.reenviar.submit') | translate
+            }}
+          </button>
+        </form>
+      }
+    </div>
+  }
+</section>

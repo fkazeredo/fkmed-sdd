@@ -1,7 +1,7 @@
 # Dev profile — enumerated dev defaults only (SECURITY.md); never active in production
-# (ProdReadinessValidator refuses the combination).
+# (ProdReadinessValidator refuses the combination). The retired in-memory login seam is replaced
+# by MARIA's seeded database account (Flyway V3). SMTP is wired only in the docker dev/E2E stacks
+# (Mailpit via SPRING_MAIL_HOST), so plain unit/integration runs use the LoggingMailSender.
 app:
   security:
     allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:4200}
-    # Binds the dev login seam to MARIA's seeded beneficiary record (SPEC-0001 BR8).
-    dev-login-card: "001234567"

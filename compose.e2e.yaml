@@ -19,12 +19,22 @@ services:
       timeout: 3s
       retries: 10
 
+  # Mailpit SMTP catcher for the first-access journey (ADR-0004): the E2E reads the verification
+  # link from its HTTP API on :8025.
+  mailpit-e2e:
+    image: axllent/mailpit:latest
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 'true'
+      MP_SMTP_AUTH_ALLOW_INSECURE: 'true'
+    ports:
+      - '8025:8025'
+
   app-e2e:
     build:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: dev # the dev login seam IS the E2E journey (SPEC-0001 BR8)
+      SPRING_PROFILES_ACTIVE: dev # real seeded MARIA account replaces the retired dev-login seam
       DB_URL: jdbc:postgresql://db-e2e:5432/fkmed
       DB_USERNAME: fkmed
       DB_PASSWORD: fkmed
@@ -32,9 +42,14 @@ services:
       APP_OIDC_REDIRECT_URIS: http://localhost:4201/
       APP_OIDC_POST_LOGOUT_REDIRECT_URIS: http://localhost:4201/
       APP_ALLOWED_ORIGINS: '' # same origin behind the proxy
+      SPRING_MAIL_HOST: mailpit-e2e
+      SPRING_MAIL_PORT: 1025
+      APP_WEB_BASE_URL: http://localhost:4201 # verification links resolve to the E2E SPA origin
     depends_on:
       db-e2e:
         condition: service_healthy
+      mailpit-e2e:
+        condition: service_started
     healthcheck:
       test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/actuator/health']
       interval: 10s

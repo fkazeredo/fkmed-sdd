@@ -1,0 +1,165 @@
+<section class="mx-auto max-w-md p-4" aria-labelledby="first-access-title">
+  <h1 id="first-access-title" class="mb-6 text-2xl font-semibold text-teal-800">
+    {{ 'primeiroAcesso.title' | translate }}
+  </h1>
+
+  @if (errorKey(); as key) {
+    <div class="mb-4 rounded-lg bg-red-50 p-4 text-red-700" role="alert" data-testid="error">
+      <p>{{ key | translate }}</p>
+      @if (accountExists()) {
+        <button
+          type="button"
+          class="mt-2 rounded bg-teal-700 px-3 py-1 text-white"
+          data-testid="go-login"
+          (click)="goToLogin()"
+        >
+          {{ 'primeiroAcesso.voltarLogin' | translate }}
+        </button>
+      }
+    </div>
+  }
+
+  @if (step() === 1) {
+    <form class="rounded-xl bg-white p-5 shadow" (ngSubmit)="submitStep1()" data-testid="step1">
+      <h2 class="mb-4 text-lg font-medium">{{ 'primeiroAcesso.step1.title' | translate }}</h2>
+
+      <label for="cpf" class="mb-1 block text-sm text-slate-600">
+        {{ 'primeiroAcesso.cpf' | translate }}
+      </label>
+      <input
+        id="cpf"
+        name="cpf"
+        class="mb-1 w-full rounded border border-slate-300 px-3 py-2"
+        inputmode="numeric"
+        maxlength="11"
+        [(ngModel)]="cpf"
+      />
+      @if (cpf.length > 0 && !cpfValid) {
+        <p class="mb-2 text-sm text-red-600">{{ 'primeiroAcesso.validation.cpf' | translate }}</p>
+      }
+
+      <label for="cardNumber" class="mb-1 mt-3 block text-sm text-slate-600">
+        {{ 'primeiroAcesso.cardNumber' | translate }}
+      </label>
+      <input
+        id="cardNumber"
+        name="cardNumber"
+        class="mb-1 w-full rounded border border-slate-300 px-3 py-2"
+        inputmode="numeric"
+        maxlength="9"
+        [(ngModel)]="cardNumber"
+      />
+      @if (cardNumber.length > 0 && !cardValid) {
+        <p class="mb-2 text-sm text-red-600">{{ 'primeiroAcesso.validation.card' | translate }}</p>
+      }
+
+      <label for="birthDate" class="mb-1 mt-3 block text-sm text-slate-600">
+        {{ 'primeiroAcesso.birthDate' | translate }}
+      </label>
+      <input
+        id="birthDate"
+        name="birthDate"
+        type="date"
+        class="mb-4 w-full rounded border border-slate-300 px-3 py-2"
+        [(ngModel)]="birthDate"
+      />
+
+      <button
+        type="submit"
+        class="w-full rounded bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+        data-testid="step1-submit"
+        [disabled]="!step1Valid || loading()"
+      >
+        {{ (loading() ? 'common.processando' : 'primeiroAcesso.step1.submit') | translate }}
+      </button>
+    </form>
+  } @else if (step() === 2) {
+    <form class="rounded-xl bg-white p-5 shadow" (ngSubmit)="submitStep2()" data-testid="step2">
+      <h2 class="mb-4 text-lg font-medium">{{ 'primeiroAcesso.step2.title' | translate }}</h2>
+
+      <label for="email" class="mb-1 block text-sm text-slate-600">
+        {{ 'primeiroAcesso.email' | translate }}
+      </label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        autocomplete="username"
+        class="mb-1 w-full rounded border border-slate-300 px-3 py-2"
+        [(ngModel)]="email"
+      />
+      @if (email.length > 0 && !emailValid) {
+        <p class="mb-2 text-sm text-red-600">{{ 'primeiroAcesso.validation.email' | translate }}</p>
+      }
+
+      <label for="password" class="mb-1 mt-3 block text-sm text-slate-600">
+        {{ 'primeiroAcesso.password' | translate }}
+      </label>
+      <div class="mb-1 flex gap-2">
+        <input
+          id="password"
+          name="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          autocomplete="new-password"
+          class="w-full rounded border border-slate-300 px-3 py-2"
+          [(ngModel)]="password"
+        />
+        <button
+          type="button"
+          class="rounded border border-slate-300 px-3 text-sm text-slate-600"
+          data-testid="toggle-password"
+          [attr.aria-pressed]="showPassword()"
+          (click)="togglePassword()"
+        >
+          {{
+            (showPassword() ? 'primeiroAcesso.password.hide' : 'primeiroAcesso.password.show')
+              | translate
+          }}
+        </button>
+      </div>
+      @if (password.length > 0 && !passwordValid) {
+        <p class="mb-2 text-sm text-red-600">
+          {{ 'primeiroAcesso.validation.password' | translate }}
+        </p>
+      }
+
+      <label class="mt-4 flex items-start gap-2 text-sm text-slate-700">
+        <input type="checkbox" name="acceptedTerms" data-testid="accept-terms" [(ngModel)]="acceptedTerms" />
+        <span>{{ 'primeiroAcesso.acceptTerms' | translate }}</span>
+      </label>
+      <label class="mt-2 flex items-start gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          name="acceptedPrivacy"
+          data-testid="accept-privacy"
+          [(ngModel)]="acceptedPrivacy"
+        />
+        <span>{{ 'primeiroAcesso.acceptPrivacy' | translate }}</span>
+      </label>
+
+      <button
+        type="submit"
+        class="mt-5 w-full rounded bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+        data-testid="step2-submit"
+        [disabled]="!step2Valid || loading()"
+      >
+        {{ (loading() ? 'common.processando' : 'primeiroAcesso.step2.submit') | translate }}
+      </button>
+    </form>
+  } @else {
+    <div class="rounded-xl bg-white p-5 shadow" data-testid="step3">
+      <h2 class="mb-3 text-lg font-medium text-teal-800">
+        {{ 'primeiroAcesso.step3.title' | translate }}
+      </h2>
+      <p class="mb-4 text-slate-600">{{ 'primeiroAcesso.step3.message' | translate }}</p>
+      <button
+        type="button"
+        class="rounded bg-teal-700 px-4 py-2 text-white"
+        data-testid="step3-login"
+        (click)="goToLogin()"
+      >
+        {{ 'primeiroAcesso.voltarLogin' | translate }}
+      </button>
+    </div>
+  }
+</section>

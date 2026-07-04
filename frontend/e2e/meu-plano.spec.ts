@@ -1,18 +1,18 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * SPEC-0001 AC3 — the walking-skeleton journey, end to end over the real stack:
- * dev login (SPEC-0002 seam) → OIDC Code+PKCE → Meu Plano shows the plan name, ANS 326305,
- * coverage, additive and both family members served by the API from the seeded database.
+ * SPEC-0002 AC1 (login half) — end to end over the real stack: MARIA's seeded database account
+ * (maria@fkmed.local / maria12345) → OIDC Code+PKCE → Meu Plano shows the plan name, ANS 326305,
+ * coverage, additive and both family members served by the API. Replaces the retired dev-login seam.
  */
-test('dev login → Meu Plano shows the seeded plan and family', async ({ page }) => {
+test('login → Meu Plano shows the seeded plan and family', async ({ page }) => {
   await page.goto('/');
 
   // Unauthenticated: the guard sends the browser to the AS pt-BR login page.
   await expect(page.getByRole('heading', { name: 'Entrar no FKMed' })).toBeVisible();
 
-  await page.getByLabel('Usuário').fill('maria');
-  await page.getByLabel('Senha').fill('dev12345');
+  await page.getByLabel('E-mail').fill('maria@fkmed.local');
+  await page.getByLabel('Senha').fill('maria12345');
   await page.getByRole('button', { name: 'Entrar' }).click();
 
   // Back in the SPA, authenticated: shell + Meu Plano.

@@ -6,24 +6,29 @@ import { MissingTranslationHandler } from '@ngx-translate/core';
 import { AuthService } from '../auth/auth.service';
 import { Shell } from '../layout/shell';
 import { MyPlan } from '../../features/my-plan/my-plan';
+import { FirstAccess } from '../../features/first-access/first-access';
+import { EmailVerification } from '../../features/email-verification/email-verification';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
 
 /**
- * SPEC-0001 AC5 (BR7): every visible UI string of this slice resolves from the pt-BR bundle.
- * Renders every screen of the slice with a recording MissingTranslationHandler — a single
- * missing key fails the build.
+ * SPEC-0001 AC5 / SPEC-0002 BR16: every visible UI string of the slice resolves from the pt-BR
+ * bundle. Renders every screen of the slice — including all branches of the first-access and
+ * verification flows — with a recording MissingTranslationHandler; a single missing key fails.
  */
 describe('i18n completeness (pt-BR)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Shell, MyPlan],
+      imports: [Shell, MyPlan, FirstAccess, EmailVerification],
       providers: [
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideI18n(),
-        { provide: AuthService, useValue: { username: () => 'maria', logout: vi.fn() } },
+        {
+          provide: AuthService,
+          useValue: { username: () => 'maria', logout: vi.fn(), login: vi.fn() },
+        },
       ],
     }).compileComponents();
   });
@@ -62,6 +67,31 @@ describe('i18n completeness (pt-BR)', () => {
     });
     await myPlan.whenStable();
     myPlan.detectChanges();
+
+    // First-access wizard: exercise every step, the field validations and the error block.
+    const firstAccess = TestBed.createComponent(FirstAccess);
+    await firstAccess.whenStable();
+    firstAccess.componentInstance.cpf = '1';
+    firstAccess.componentInstance.cardNumber = '1';
+    firstAccess.detectChanges();
+    firstAccess.componentInstance.step.set(2);
+    firstAccess.componentInstance.email = 'bad';
+    firstAccess.componentInstance.password = 'x';
+    firstAccess.detectChanges();
+    firstAccess.componentInstance.step.set(3);
+    firstAccess.detectChanges();
+    firstAccess.componentInstance.errorKey.set('primeiroAcesso.erro.jaExiste');
+    firstAccess.detectChanges();
+
+    // Verification landing: idle→resend, confirmed and invalid branches.
+    const verification = TestBed.createComponent(EmailVerification);
+    await verification.whenStable();
+    verification.detectChanges();
+    verification.componentInstance.status.set('confirmed');
+    verification.detectChanges();
+    verification.componentInstance.status.set('invalid');
+    verification.componentInstance.resendDone.set(true);
+    verification.detectChanges();
 
     expect(
       Array.from(handler.missing),

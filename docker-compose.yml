@@ -34,17 +34,32 @@ services:
       APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:4200}
       APP_OIDC_REDIRECT_URIS: ${APP_OIDC_REDIRECT_URIS:-http://localhost:4200/}
       APP_OIDC_POST_LOGOUT_REDIRECT_URIS: ${APP_OIDC_POST_LOGOUT_REDIRECT_URIS:-http://localhost:4200/}
+      # E-mail via Mailpit (ADR-0004); verification links point at the ng-serve SPA origin.
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-mailpit}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-1025}
+      APP_WEB_BASE_URL: ${APP_WEB_BASE_URL:-http://localhost:4200}
     ports:
       - '127.0.0.1:${APP_PORT:-8080}:8080' # loopback: dev login page + /actuator must not be LAN-exposed (M2)
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/actuator/health']
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 30s
+
+  # Dev SMTP catcher (ADR-0004): SMTP on 1025 (internal), web UI/API on 8025 (loopback host).
+  mailpit:
+    image: axllent/mailpit:latest
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 'true'
+      MP_SMTP_AUTH_ALLOW_INSECURE: 'true'
+    ports:
+      - '127.0.0.1:${MAILPIT_HTTP_PORT:-8025}:8025'
 
   prometheus:
     image: prom/prometheus:latest
