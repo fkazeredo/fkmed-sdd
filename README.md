@@ -1,48 +1,54 @@
-# Boilerplate — Spec-Driven Development foundation
+# FKMed — Portal do Beneficiário
 
-A portable, **domain-free** foundation distilled from a real project built end-to-end with
-Claude Code under Spec-Driven Development: its constitution, architecture rules, battle-tested
-decisions, workflow, quality gates and agent team — **without any of its business content**.
-Use it to start a new product with the same architecture, code design and quality bar.
+Web portal for health-plan beneficiaries: digital card and attendance token, accredited
+network search, appointments, telemedicine, authorization guides, contract finances
+(invoices, copay, income tax) and the full **reimbursement** journey (request, preview,
+tracking, statement). POC with real-system behavior: registered users, persisted data,
+protocols, notifications and audit trail.
 
-## What's inside
+Built with Spec-Driven Development on the project's own foundation (constitution +
+architecture baseline + agent team). This README is the operational entry point; the
+knowledge lives in `docs/`.
 
-| File / folder | What it is |
+## Stack
+
+Java 21 · Spring Boot 4.1 · Spring Modulith · PostgreSQL 16 · Flyway · embedded Spring
+Authorization Server — Angular 22 (standalone, zoneless, signals) · PrimeNG · Tailwind 4 ·
+ngx-translate (pt-BR product locale) — JUnit 5 · Testcontainers · ArchUnit · jqwik · PIT ·
+Vitest · Playwright — Docker Compose · GitHub Actions. Full manifest:
+[`docs/BOOTSTRAP.md`](docs/BOOTSTRAP.md).
+
+## Repository map
+
+| Path | Content |
 |---|---|
-| `CLAUDE.md` | The constitution — always-loaded operating rules (~150 lines; the only file that costs context on every request) |
-| `.claude/skills/` | 10 ritual commands: `/spec` `/adr` `/dl` `/slice` `/dod` `/release` `/manual` `/dev-env` `/ci-triage` `/new-project` |
-| `.claude/agents/` | The agent team: `architect` (the owner's single interlocutor) + `dev-backend`/`dev-frontend`/`dev-fullstack` + `qa` |
-| `.claude/settings.json` | Git guardrail: agents push feature branches and open PRs; never merge/tag/force-push |
-| `docs/BOOTSTRAP.md` | The build recipe: empty repo → green walking skeleton (stack, gates, CI, sequence) |
-| `docs/DECISIONS-BASELINE.md` | 21 inherited architecture decisions as pre-accepted rules (with provenance) |
-| `docs/architecture/` | The 13 detailed rule documents (backend, frontend, testing, security, persistence…) — loaded on demand via the Routing Map |
-| `docs/TUTORIAL.md` | The 7-step slice loop (RED test first → gates + Definition of Done) |
-| `docs/RUN-PHASE.md` | The decision-log format + authorized-autonomy rules |
-| `docs/specs/0000-specs-template.md` | Spec template, optimized for LLM execution (testable BRs, Given/When/Then acceptance criteria, Open Questions) |
-| `docs/adr/0000-adr-template.md` | ADR template (with revision triggers) |
-| `docs/GUIA-TIME-CLAUDE.md` | Didactic guide to operating the agent team (pt-BR, by owner request) |
+| `CLAUDE.md` | The constitution — operating rules loaded on every request |
+| `docs/specs/` | Product specs (index + template) — source of truth for behavior |
+| `docs/ROADMAP.md` · `docs/ROADMAP-STATUS.md` | Phases (end-to-end deliverables) · execution log |
+| `docs/architecture/` | Architecture rule docs (routing map in `CLAUDE.md`) |
+| `docs/DECISIONS-BASELINE.md` · `docs/adr/` | Inherited decisions · project ADRs |
+| `docs/decision-log/` | Autonomous decisions (DL) under authorized autonomy |
+| `docs/MANUAL.md` | User manual (pt-BR, living artifact) |
+| `docs/release-notes/CHANGELOG.md` | Consolidated release notes |
+| `backend/` · `frontend/` | *(created by roadmap phase 0 — walking skeleton)* |
 
-## How to use (3 steps)
+## How to run
 
-1. **Copy the CONTENTS of this folder to the root of your new repository** (including the
-   hidden `.claude/`).
-2. Open Claude Code in the new repo: `claude` (or `claude --agent architect` to start with
-   the coordinator persona).
-3. Say: **"Read docs/BOOTSTRAP.md and let's start."** The architect will collect your product
-   decisions (domain, package, languages), write SPEC-0001 with you and build the walking
-   skeleton — gates and CI included.
+> Phase 0 (walking skeleton) delivers the runnable stack. Until it lands, this section is
+> a placeholder kept honest on purpose.
 
-From then on, every feature follows the loop: spec (with you) → plan (you approve) → build
-(agent team) → QA → review → PR (**you merge**). The didactic guide is
-`docs/GUIA-TIME-CLAUDE.md`.
+```bash
+docker compose up -d                                      # db + app + observability
+cd backend && ./mvnw verify                               # build + all quality gates
+cd frontend && npm run lint && npm test && npm run build  # frontend gates
+```
 
-## Design notes
+Dev URLs, logins and smoke checks: `/dev-env` skill (after phase 0).
 
-- **Token-conscious:** only `CLAUDE.md` is always loaded. Everything else (architecture docs,
-  baseline, skills' bodies, agents' bodies) loads on demand.
-- **Language policy:** en-US for all artifacts by default; pt-BR only where the owner named
-  it (the guide). Chat with the owner is pt-BR.
-- **No product code inside:** the application is born via walking skeleton (BOOTSTRAP §5),
-  not copied — so nothing from the parent project's business leaks into yours.
-- **Inherited decisions are revisable:** write a new ADR citing the baseline number
-  (see `docs/DECISIONS-BASELINE.md`, header).
+## Contributing / process
+
+Work happens on `feature/*` branches from `develop`; every slice follows `/slice` →
+implementation with tests → `/dod` (gates + manual + changelog) → push + **PR to
+`develop`**. Agents never merge, tag or force-push; the owner merges every PR
+(`docs/DECISIONS-BASELINE.md` §0023). Secrets never enter the repo (gitleaks in CI +
+pre-commit).
