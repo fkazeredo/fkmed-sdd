@@ -1,11 +1,11 @@
 -- SPEC-0001: plan and beneficiary baseline + canonical seed (BR4/BR5).
--- tenant_id: single-tenant with multi-tenant seams (DECISIONS-BASELINE §0003).
+-- Single-tenant per build (one medical provider per deployment) — the multi-tenant seam of
+-- DECISIONS-BASELINE §0003 is intentionally dropped for FKMed (see ADR-0003).
 -- Coverage stays a simple column; the registry table arrives with the spec that manages it
 -- (baseline §0019 — see SPEC-0001 §Persistence Changes).
 
 create table plan (
     id uuid primary key,
-    tenant_id varchar(64) not null default 'fkmed',
     name varchar(200) not null,
     ans_registration varchar(6) not null,
     coverage varchar(40) not null,
@@ -14,11 +14,8 @@ create table plan (
     additives text[] not null default '{}'
 );
 
-create index idx_plan_tenant on plan (tenant_id);
-
 create table beneficiary (
     id uuid primary key,
-    tenant_id varchar(64) not null default 'fkmed',
     plan_id uuid not null references plan (id),
     full_name varchar(200) not null,
     cpf varchar(11) not null,
@@ -37,7 +34,6 @@ create table beneficiary (
     constraint chk_beneficiary_cpf check (cpf ~ '^[0-9]{11}$')
 );
 
-create index idx_beneficiary_tenant on beneficiary (tenant_id);
 create index idx_beneficiary_plan on beneficiary (plan_id);
 create index idx_beneficiary_titular on beneficiary (titular_id);
 

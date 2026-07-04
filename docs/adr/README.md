@@ -8,3 +8,5 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 | ADR | Title | Status |
 |---|---|---|
 | [0001](0001-modulith-module-map.md) | Initial Modulith Module Map — plan module + error kernel | Proposed |
+| [0002](0002-csrf-disabled-on-stateless-api.md) | CSRF disabled on the stateless JWT `/api/**` chain | Proposed |
+| [0003](0003-single-tenant-per-build.md) | Single-tenant per build — drop the multi-tenant seam (revises baseline §0003) | Proposed |
