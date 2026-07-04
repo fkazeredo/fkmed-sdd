@@ -22,7 +22,36 @@ class GlobalExceptionHandlerTest {
     messages.addMessage(
         "plan.not-found", ptBr, "Nenhum plano vinculado ao seu usuário foi encontrado.");
     messages.addMessage("internal.error", ptBr, "Ocorreu um erro inesperado.");
+    messages.addMessage("access.denied", ptBr, "Você não tem permissão para acessar este recurso.");
     handler = new GlobalExceptionHandler(messages);
+  }
+
+  @Test
+  void frameworkErrorResponse_keepsItsOwnStatus_neverBecomes500() {
+    // Regression (review finding I1): unknown route must stay 404, wrong method 405.
+    ResponseEntity<ApiErrorResponse> notFound =
+        handler.handleUnexpected(
+            new org.springframework.web.servlet.resource.NoResourceFoundException(
+                org.springframework.http.HttpMethod.GET, "/api/unknown-route", null));
+    assertThat(notFound.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    assertThat(notFound.getBody().code()).isEqualTo("http.404");
+
+    ResponseEntity<ApiErrorResponse> methodNotAllowed =
+        handler.handleUnexpected(
+            new org.springframework.web.HttpRequestMethodNotSupportedException("POST"));
+    assertThat(methodNotAllowed.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+    assertThat(methodNotAllowed.getBody().code()).isEqualTo("http.405");
+  }
+
+  @Test
+  void accessDenied_becomes403_withLocalizedMessage() {
+    ResponseEntity<ApiErrorResponse> response =
+        handler.handleAccessDenied(
+            new org.springframework.security.access.AccessDeniedException("denied"));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(response.getBody().code()).isEqualTo("access.denied");
+    assertThat(response.getBody().message())
+        .isEqualTo("Você não tem permissão para acessar este recurso.");
   }
 
   @Test
