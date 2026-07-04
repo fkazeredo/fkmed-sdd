@@ -12,7 +12,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-fkmed}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fkmed} # dev default (SECURITY.md)
     ports:
-      - '127.0.0.1:5432:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -35,7 +35,7 @@ services:
       APP_OIDC_REDIRECT_URIS: ${APP_OIDC_REDIRECT_URIS:-http://localhost:4200/}
       APP_OIDC_POST_LOGOUT_REDIRECT_URIS: ${APP_OIDC_POST_LOGOUT_REDIRECT_URIS:-http://localhost:4200/}
     ports:
-      - '8080:8080'
+      - '${APP_PORT:-8080}:8080'
     depends_on:
       db:
         condition: service_healthy

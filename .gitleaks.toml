@@ -19,4 +19,9 @@ regexes = [
 paths = [
   # committed example env with dev defaults only
   '''\.env\.example$''',
+  # build outputs (never committed — .gitignore); keeps filesystem scans equal to CI git scans
+  '''backend/target/''',
+  '''frontend/dist/''',
+  '''frontend/coverage/''',
+  '''node_modules/''',
 ]
