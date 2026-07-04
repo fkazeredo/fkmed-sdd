@@ -184,10 +184,12 @@
         "properties" : {
           "cpf" : {
             "type" : "string",
+            "minLength" : 1,
             "pattern" : "\\d{11}"
           },
           "cardNumber" : {
             "type" : "string",
+            "minLength" : 1,
             "pattern" : "\\d{9}"
           },
           "birthDate" : {
@@ -195,7 +197,7 @@
             "format" : "date"
           }
         },
-        "required" : [ "birthDate" ]
+        "required" : [ "birthDate", "cardNumber", "cpf" ]
       },
       "VerifyFirstAccessResponse" : {
         "type" : "object",

@@ -41,7 +41,7 @@ the `explicitly-annotated` strategy:
   module (SPEC-0004 will centralize that).
 - **`domain.audit`** (SPEC-0003 foundation) — the append-only audit trail: `AuditRecorder`
   application contract, `AuditEventTypes` `*Codes`, and the 12-month retention sweep. Owns
-  `audit_event` (V3). Depends only on `domain.error`; consumed by `domain.identity` and by
+  `audit_event` (V4). Depends only on `domain.error`; consumed by `domain.identity` and by
   infra security listeners (login/logout).
 
 The verified map is therefore **four modules**: `domain.plan`, `domain.error`,

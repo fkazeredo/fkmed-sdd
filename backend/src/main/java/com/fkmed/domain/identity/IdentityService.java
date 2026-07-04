@@ -56,6 +56,14 @@ public class IdentityService {
    */
   @Transactional(readOnly = true)
   public String verifyFirstAccess(String cpf, String cardNumber, LocalDate birthDate) {
+    // SPEC-0002 §Validation Rules ("CPF: 11 digits, valid check digits") + BR1 neutrality: an
+    // invalid checksum is refused with the SAME generic error as a real triple mismatch — it must
+    // never surface as a distinct "invalid CPF" failure, or it becomes an oracle for the format
+    // check alone. No beneficiary in the seed base can have an invalid-checksum CPF, so this
+    // short-circuit changes no legitimate outcome.
+    if (!CpfCheckDigits.isValid(cpf)) {
+      throw new RegistrationNotFoundException();
+    }
     BeneficiaryMatch match =
         beneficiaries
             .matchForFirstAccess(cpf, cardNumber, birthDate)
@@ -167,6 +175,11 @@ public class IdentityService {
             SecureTokens.sha256Hex(rawToken),
             now,
             settings.verificationTokenTtl()));
+    // Republishing AccountCreated is intentional reuse of the one existing consumer (the
+    // verification-e-mail listener, ADR-0004) — correct today since it is the only subscriber.
+    // TRIPWIRE: if a second AccountCreated consumer ever appears (e.g. an analytics/welcome-flow
+    // listener in SPEC-0004), it would misfire on every resend too. Revisit with a dedicated
+    // event (e.g. VerificationLinkReissued) when that happens — not needed yet (Rule Zero).
     events.publishEvent(
         new AccountCreated(
             account.getId(), account.getEmail(), account.getBeneficiaryId(), rawToken));

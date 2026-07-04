@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
+import { isValidCpf } from './cpf';
 import {
   CompleteFirstAccessRequest,
   FirstAccessApi,
@@ -41,7 +42,7 @@ export class FirstAccess {
   private registrationToken = '';
 
   get cpfValid(): boolean {
-    return /^\d{11}$/.test(this.cpf);
+    return isValidCpf(this.cpf);
   }
 
   get cardValid(): boolean {

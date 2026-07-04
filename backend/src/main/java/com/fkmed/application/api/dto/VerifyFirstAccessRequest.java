@@ -1,5 +1,6 @@
 package com.fkmed.application.api.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
  * @param birthDate a past calendar date (ISO-8601).
  */
 public record VerifyFirstAccessRequest(
-    @Pattern(regexp = "\\d{11}", message = "cpf must have 11 digits") String cpf,
-    @Pattern(regexp = "\\d{9}", message = "cardNumber must have 9 digits") String cardNumber,
+    @NotBlank @Pattern(regexp = "\\d{11}", message = "cpf must have 11 digits") String cpf,
+    @NotBlank @Pattern(regexp = "\\d{9}", message = "cardNumber must have 9 digits")
+        String cardNumber,
     @NotNull @Past LocalDate birthDate) {}

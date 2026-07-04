@@ -19,7 +19,7 @@ communication is in **pt-BR**. **Announce the expected duration before slow bloc
 
 ```bash
 cd backend && ./mvnw verify              # full gates
-cd backend && ./mvnw verify -Pmutation   # PIT — run when the slice touched money/critical domain
+cd backend && ./mvnw -Pmutation test-compile org.pitest:pitest-maven:mutationCoverage   # PIT — run when the slice touched money/critical domain
 cd frontend && npm run lint && npm test && npm run build
 cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down   # isolated stack
 ```

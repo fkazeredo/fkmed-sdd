@@ -6,7 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,6 +106,16 @@ class IdentityServiceTest {
   }
 
   @Test
+  void verify_refusesAnInvalidChecksumCpf_withTheSameGenericError_beforeQueryingBeneficiaries() {
+    // SPEC-0002 §Validation Rules + BR1 neutrality: a checksum-invalid CPF never reaches the
+    // beneficiary lookup — it fails exactly like a real mismatch, with no distinguishable trace.
+    String tamperedChecksum = "52998224724"; // same fixture as BeneficiaryTest: wrong 2nd digit
+    assertThatExceptionOfType(RegistrationNotFoundException.class)
+        .isThrownBy(() -> service.verifyFirstAccess(tamperedChecksum, CARD, ADULT_BIRTH));
+    verify(beneficiaries, never()).matchForFirstAccess(anyString(), anyString(), any());
+  }
+
+  @Test
   void verify_refusesAnUnderageDependent() {
     matchReturns(BeneficiaryRole.DEPENDENT, MINOR_BIRTH);
     assertThatExceptionOfType(DependentUnderageException.class)
@@ -115,6 +128,27 @@ class IdentityServiceTest {
     when(accounts.existsByBeneficiaryId(BENEFICIARY)).thenReturn(false);
     assertThatCode(() -> service.verifyFirstAccess(CPF, CARD, ADULT_BIRTH))
         .doesNotThrowAnyException();
+  }
+
+  @Test
+  void verify_allowsADependentWhoTurnsEighteenExactlyToday() {
+    // CLOCK is fixed at 2026-07-04; born exactly 18 years earlier.
+    LocalDate eighteenthBirthdayToday = LocalDate.parse("2008-07-04");
+    matchReturns(BeneficiaryRole.DEPENDENT, eighteenthBirthdayToday);
+    when(accounts.existsByBeneficiaryId(BENEFICIARY)).thenReturn(false);
+
+    assertThatCode(() -> service.verifyFirstAccess(CPF, CARD, eighteenthBirthdayToday))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  void verify_refusesADependentOneDayShortOfEighteen() {
+    // CLOCK is fixed at 2026-07-04; their 18th birthday is tomorrow (17 years, 364 days today).
+    LocalDate oneDayShortOfEighteen = LocalDate.parse("2008-07-05");
+    matchReturns(BeneficiaryRole.DEPENDENT, oneDayShortOfEighteen);
+
+    assertThatExceptionOfType(DependentUnderageException.class)
+        .isThrownBy(() -> service.verifyFirstAccess(CPF, CARD, oneDayShortOfEighteen));
   }
 
   @Test
@@ -135,8 +169,27 @@ class IdentityServiceTest {
 
     service.completeFirstAccess(token, "User@Fkmed.local", "Abcd1234", CONTEXT);
 
-    verify(accounts).save(any(UserAccount.class));
-    verify(termAcceptances, org.mockito.Mockito.times(2)).save(any());
+    ArgumentCaptor<UserAccount> savedAccount = ArgumentCaptor.forClass(UserAccount.class);
+    verify(accounts).save(savedAccount.capture());
+    UUID accountId = savedAccount.getValue().getId();
+
+    // Regression (QA finding): `save(any())` also matches null — capture and assert the real
+    // fields (BR15: account, both current document types, current version, timestamp).
+    ArgumentCaptor<TermAcceptance> acceptances = ArgumentCaptor.forClass(TermAcceptance.class);
+    verify(termAcceptances, times(2)).save(acceptances.capture());
+    List<TermAcceptance> recorded = acceptances.getAllValues();
+    assertThat(recorded)
+        .extracting(TermAcceptance::getDocumentType)
+        .containsExactlyInAnyOrder(
+            LegalDocumentTypes.TERMS_OF_USE, LegalDocumentTypes.PRIVACY_POLICY);
+    assertThat(recorded)
+        .allSatisfy(
+            acceptance -> {
+              assertThat(acceptance.getAccountId()).isEqualTo(accountId);
+              assertThat(acceptance.getVersion()).isEqualTo("1.0");
+              assertThat(acceptance.getAcceptedAt()).isEqualTo(CLOCK.instant());
+            });
+
     verify(verificationTokens).save(any(EmailVerificationToken.class));
 
     ArgumentCaptor<AuditEntry> audit = ArgumentCaptor.forClass(AuditEntry.class);
@@ -208,15 +261,25 @@ class IdentityServiceTest {
 
   @Test
   void confirm_rejectsAnAlreadyUsedToken() {
+    // Regression (QA/PIT finding): accounts.findById was left unstubbed, so an unrelated
+    // Optional.empty() default was the ACTUAL reason the test passed — isUsable(now) being
+    // mutated to always-true went undetected. Stubbing it here (lenient: the correct code path
+    // never reaches it) forces the test to fail unless the "already used" check itself
+    // short-circuits before ever reaching findById.
+    UserAccount account =
+        UserAccount.register(BENEFICIARY, "user@fkmed.local", "{bcrypt}hash", CLOCK.instant());
     String hash = SecureTokens.sha256Hex("raw-token");
     EmailVerificationToken token =
-        EmailVerificationToken.issue(
-            UUID.randomUUID(), hash, CLOCK.instant(), Duration.ofHours(24));
+        EmailVerificationToken.issue(account.getId(), hash, CLOCK.instant(), Duration.ofHours(24));
     token.markUsed(CLOCK.instant());
     when(verificationTokens.findByTokenHash(hash)).thenReturn(Optional.of(token));
+    lenient().when(accounts.findById(account.getId())).thenReturn(Optional.of(account));
 
     assertThatExceptionOfType(VerificationLinkInvalidException.class)
         .isThrownBy(() -> service.confirmVerification("raw-token", CONTEXT));
+
+    assertThat(account.isActive()).isFalse();
+    verify(accounts, never()).findById(any());
   }
 
   @Test

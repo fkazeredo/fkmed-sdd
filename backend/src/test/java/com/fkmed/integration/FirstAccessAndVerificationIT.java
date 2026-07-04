@@ -101,6 +101,17 @@ class FirstAccessAndVerificationIT extends AbstractIntegrationTest {
   }
 
   @Test
+  void invalidChecksumCpf_yieldsTheSameGenericNotFound_notADistinctValidationError()
+      throws Exception {
+    // SPEC-0002 §Validation Rules ("valid check digits") + BR1 neutrality: PEDRO's real CPF with
+    // only the check digit tampered must fail exactly like any other mismatch — same HTTP status,
+    // same code — never a distinct "invalid CPF format" error that would leak which check failed.
+    verify("15350946099", "001234575", "2007-05-20")
+        .andExpect(status().isUnprocessableEntity())
+        .andExpect(jsonPath("$.code").value("auth.registration-not-found"));
+  }
+
+  @Test
   void ac3_beneficiaryWithAnAccount_isDirectedToLogin_andNoAccountIsCreated() throws Exception {
     long before = accountCount();
     verify("52998224725", "001234567", "1988-03-12")
@@ -164,6 +175,92 @@ class FirstAccessAndVerificationIT extends AbstractIntegrationTest {
                 .content("{\"token\":\"an-unknown-token\"}"))
         .andExpect(status().isGone())
         .andExpect(jsonPath("$.code").value("auth.verification-link-invalid"));
+  }
+
+  @Test
+  void confirmingTheSameVerificationTokenTwice_secondAttemptIsGone() throws Exception {
+    // SPEC-0002 BR5 (single-use link), against the real Testcontainers Postgres — a committed
+    // regression for the coincidental-pass gap found by QA/PIT in IdentityServiceTest.
+    String registrationToken =
+        JsonPath.read(
+            verify("15350946056", "001234575", "2007-05-20")
+                .andReturn()
+                .getResponse()
+                .getContentAsString(),
+            "$.registrationToken");
+    mockMvc
+        .perform(
+            post("/api/auth/first-access/complete")
+                .contentType("application/json")
+                .content(completeBody(registrationToken, "pedro@fkmed.local", "Pedro1234")))
+        .andExpect(status().isCreated());
+    String verificationToken = extractToken(mail.messages.getLast().body());
+    String confirmBody = "{\"token\":\"" + verificationToken + "\"}";
+
+    mockMvc
+        .perform(
+            post("/api/auth/verification/confirm")
+                .contentType("application/json")
+                .content(confirmBody))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            post("/api/auth/verification/confirm")
+                .contentType("application/json")
+                .content(confirmBody))
+        .andExpect(status().isGone())
+        .andExpect(jsonPath("$.code").value("auth.verification-link-invalid"));
+  }
+
+  @Test
+  void resend_invalidatesThePreviousLink_onlyTheNewOneConfirms() throws Exception {
+    // SPEC-0002 §Tests Required ("resend invalidates previous link"), against the real Postgres
+    // bulk-update (EmailVerificationTokenRepository.invalidateOpenTokens) — not just a mock
+    // verifying the call happened, but the actual reuse rejection and the actual new-token success.
+    String registrationToken =
+        JsonPath.read(
+            verify("15350946056", "001234575", "2007-05-20")
+                .andReturn()
+                .getResponse()
+                .getContentAsString(),
+            "$.registrationToken");
+    mockMvc
+        .perform(
+            post("/api/auth/first-access/complete")
+                .contentType("application/json")
+                .content(completeBody(registrationToken, "pedro@fkmed.local", "Pedro1234")))
+        .andExpect(status().isCreated());
+    String oldToken = extractToken(mail.messages.getLast().body());
+
+    mockMvc
+        .perform(
+            post("/api/auth/verification/resend")
+                .contentType("application/json")
+                .content("{\"email\":\"pedro@fkmed.local\"}"))
+        .andExpect(status().isAccepted());
+
+    assertThat(mail.messages).hasSize(2);
+    String newToken = extractToken(mail.messages.getLast().body());
+    assertThat(newToken).isNotEqualTo(oldToken);
+
+    // The OLD link no longer works...
+    mockMvc
+        .perform(
+            post("/api/auth/verification/confirm")
+                .contentType("application/json")
+                .content("{\"token\":\"" + oldToken + "\"}"))
+        .andExpect(status().isGone())
+        .andExpect(jsonPath("$.code").value("auth.verification-link-invalid"));
+
+    // ...but the NEW one does.
+    mockMvc
+        .perform(
+            post("/api/auth/verification/confirm")
+                .contentType("application/json")
+                .content("{\"token\":\"" + newToken + "\"}"))
+        .andExpect(status().isOk());
+    assertThat(accountStatus("pedro@fkmed.local")).isEqualTo("ACTIVE");
   }
 
   private org.springframework.test.web.servlet.ResultActions verify(

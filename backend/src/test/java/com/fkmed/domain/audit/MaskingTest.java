@@ -24,6 +24,12 @@ class MaskingTest {
   }
 
   @Test
+  void email_withAtAtPositionZero_isFullyMasked() {
+    // Boundary: `at <= 0` must catch position 0 too, not just "no @ at all" (indexOf == -1).
+    assertThat(Masking.email("@fkmed.local")).isEqualTo("***");
+  }
+
+  @Test
   void cpf_revealsOnlyTheLastTwoDigits() {
     assertThat(Masking.cpf("52998224725")).isEqualTo("*********25");
   }
@@ -32,5 +38,16 @@ class MaskingTest {
   void cpf_blankOrNull_isEmpty() {
     assertThat(Masking.cpf(" ")).isEmpty();
     assertThat(Masking.cpf(null)).isEmpty();
+  }
+
+  @Test
+  void cpf_ofExactlyTwoCharacters_isFullyMasked() {
+    // Boundary: length() <= 2 — a non-blank 2-char value must not fall through to substring().
+    assertThat(Masking.cpf("12")).isEqualTo("**");
+  }
+
+  @Test
+  void cpf_ofThreeCharacters_revealsTheLastTwo() {
+    assertThat(Masking.cpf("123")).isEqualTo("*23");
   }
 }
