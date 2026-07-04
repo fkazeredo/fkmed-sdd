@@ -1,0 +1,31 @@
+# --- Secrets (DECISIONS-BASELINE §0023) — never committed ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+*.pfx
+*.crt
+!frontend/nginx/**/*.conf
+infra/nginx/certs/
+
+# --- Build outputs ---
+backend/target/
+frontend/dist/
+frontend/coverage/
+frontend/.angular/
+frontend/test-results/
+frontend/playwright-report/
+node_modules/
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# --- Claude Code worktrees (agent sandboxes) ---
+.claude/worktrees/

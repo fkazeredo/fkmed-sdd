@@ -1,0 +1,99 @@
+# FKMed development stack (BOOTSTRAP §3): database + app + observability.
+# The frontend runs on `ng serve` (proxy.conf.json) — see docs and the /dev-env skill.
+# Config via .env (committed .env.example holds the enumerated dev-only defaults).
+
+name: fkmed
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fkmed}
+      POSTGRES_USER: ${POSTGRES_USER:-fkmed}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fkmed} # dev default (SECURITY.md)
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-fkmed} -d ${POSTGRES_DB:-fkmed}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-fkmed}
+      DB_USERNAME: ${POSTGRES_USER:-fkmed}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-fkmed}
+      APP_ISSUER: ${APP_ISSUER:-http://localhost:8080}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:4200}
+      APP_OIDC_REDIRECT_URIS: ${APP_OIDC_REDIRECT_URIS:-http://localhost:4200/}
+      APP_OIDC_POST_LOGOUT_REDIRECT_URIS: ${APP_OIDC_POST_LOGOUT_REDIRECT_URIS:-http://localhost:4200/}
+    ports:
+      - '127.0.0.1:${APP_PORT:-8080}:8080' # loopback: dev login page + /actuator must not be LAN-exposed (M2)
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/actuator/health']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+    volumes:
+      - ./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - '127.0.0.1:9090:9090'
+    depends_on:
+      - app
+
+  loki:
+    image: grafana/loki:latest
+    command: ['-config.file=/etc/loki/loki-config.yml']
+    volumes:
+      - ./infra/observability/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    ports:
+      - '127.0.0.1:3100:3100'
+
+  alloy:
+    image: grafana/alloy:latest
+    command: ['run', '/etc/alloy/config.alloy']
+    volumes:
+      - ./infra/observability/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin} # dev default (SECURITY.md)
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      - prometheus
+      - loki
+
+volumes:
+  db-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:

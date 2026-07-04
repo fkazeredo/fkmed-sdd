@@ -1,0 +1,8 @@
+# Backend image build context (repo root): keep it lean and reproducible.
+# .git stays IN the context — git-commit-id feeds /api/system/version (real clones/CI).
+backend/target/
+frontend/
+docs/
+infra/
+.claude/
+*.md

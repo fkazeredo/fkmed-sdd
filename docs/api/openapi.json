@@ -1,0 +1,149 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "FKMed",
+    "description" : "FKMed — health plan beneficiary portal API",
+    "version" : "0.1.0"
+  },
+  "servers" : [ {
+    "url" : "http://localhost",
+    "description" : "Generated server url"
+  } ],
+  "paths" : {
+    "/api/system/version" : {
+      "get" : {
+        "tags" : [ "system-controller" ],
+        "operationId" : "version",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SystemVersionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/health" : {
+      "get" : {
+        "tags" : [ "system-controller" ],
+        "operationId" : "health",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SystemHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plan/my-plan" : {
+      "get" : {
+        "tags" : [ "plan-controller" ],
+        "operationId" : "myPlan",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MyPlanResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "SystemVersionResponse" : {
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "type" : "string"
+          },
+          "commit" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SystemHealthResponse" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "database" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MemberSummary" : {
+        "type" : "object",
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "TITULAR", "DEPENDENT" ]
+          },
+          "cardNumber" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MyPlanResponse" : {
+        "type" : "object",
+        "properties" : {
+          "plan" : {
+            "$ref" : "#/components/schemas/PlanSummary"
+          },
+          "members" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MemberSummary"
+            }
+          }
+        }
+      },
+      "PlanSummary" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "ansRegistration" : {
+            "type" : "string"
+          },
+          "coverage" : {
+            "type" : "string"
+          },
+          "copay" : {
+            "type" : "boolean"
+          },
+          "reimbursement" : {
+            "type" : "boolean"
+          },
+          "additives" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

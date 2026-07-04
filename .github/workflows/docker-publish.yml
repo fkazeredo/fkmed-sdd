@@ -1,0 +1,43 @@
+# Publishes backend and frontend images to GHCR on a SemVer tag (no `v` prefix —
+# DECISIONS-BASELINE §0015). Tags are cut by a human from main via the release PR.
+name: Docker publish
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  publish:
+    name: Build & push images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git metadata into the backend image (/api/system/version)
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/fkazeredo/fkmed-backend:${{ github.ref_name }}
+            ghcr.io/fkazeredo/fkmed-backend:latest
+      - name: Push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          tags: |
+            ghcr.io/fkazeredo/fkmed-frontend:${{ github.ref_name }}
+            ghcr.io/fkazeredo/fkmed-frontend:latest

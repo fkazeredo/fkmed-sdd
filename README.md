@@ -34,16 +34,22 @@ Vitest · Playwright — Docker Compose · GitHub Actions. Full manifest:
 
 ## How to run
 
-> Phase 0 (walking skeleton) delivers the runnable stack. Until it lands, this section is
-> a placeholder kept honest on purpose.
-
 ```bash
 docker compose up -d                                      # db + app + observability
-cd backend && ./mvnw verify                               # build + all quality gates
-cd frontend && npm run lint && npm test && npm run build  # frontend gates
+cd frontend && npm ci && npm start                        # SPA on :4200 (proxy to :8080)
 ```
 
-Dev URLs, logins and smoke checks: `/dev-env` skill (after phase 0).
+Dev login (walking skeleton, SPEC-0002 seam): `maria` / `dev12345`. URLs: app
+http://localhost:4200 · API/AS http://localhost:8080 · Grafana http://localhost:3000.
+
+```bash
+cd backend && ./mvnw verify                               # build + all quality gates
+cd backend && ./mvnw -Pmutation org.pitest:pitest-maven:mutationCoverage  # PIT
+cd frontend && npm run lint && npm test && npm run build  # frontend gates
+docker compose -f compose.e2e.yaml up -d --build --wait && cd frontend && npm run e2e  # E2E
+```
+
+Dev URLs, logins and smoke checks are automated by the `/dev-env` skill.
 
 ## Contributing / process
 

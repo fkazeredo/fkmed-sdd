@@ -1,0 +1,54 @@
+# FKMed ISOLATED E2E stack (BOOTSTRAP §3): throwaway tmpfs Postgres, own ports, own project
+# name. Playwright targets http://localhost:4201 — the E2E suite NEVER touches the dev
+# database (docs/architecture/testing.md).
+
+name: fkmed-e2e
+
+services:
+  db-e2e:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fkmed
+      POSTGRES_USER: fkmed
+      POSTGRES_PASSWORD: fkmed # throwaway tmpfs database
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U fkmed -d fkmed']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app-e2e:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: dev # the dev login seam IS the E2E journey (SPEC-0001 BR8)
+      DB_URL: jdbc:postgresql://db-e2e:5432/fkmed
+      DB_USERNAME: fkmed
+      DB_PASSWORD: fkmed
+      APP_ISSUER: http://localhost:4201
+      APP_OIDC_REDIRECT_URIS: http://localhost:4201/
+      APP_OIDC_POST_LOGOUT_REDIRECT_URIS: http://localhost:4201/
+      APP_ALLOWED_ORIGINS: '' # same origin behind the proxy
+    depends_on:
+      db-e2e:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/actuator/health']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  frontend-e2e:
+    build:
+      context: frontend
+    environment:
+      BACKEND_HOST: app-e2e:8080
+    ports:
+      - '4201:80'
+    depends_on:
+      app-e2e:
+        condition: service_healthy

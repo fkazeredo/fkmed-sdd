@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+@import 'primeicons/primeicons.css';
+
+body {
+  margin: 0;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}

@@ -1,0 +1,112 @@
+# FKMed production stack (BOOTSTRAP §3, DECISIONS-BASELINE §0021): nginx TLS proxy in front,
+# Postgres with NO public port, app on the `prod` profile (ProdReadinessValidator fail-fasts
+# on every dev default), Grafana on loopback. Secrets come from .env.prod (NEVER committed).
+#
+#   docker compose -f compose.prod.yaml --env-file .env.prod up -d
+#
+# TLS material is mounted from ./infra/nginx/certs (not committed; see SECURITY.md).
+
+name: fkmed-prod
+
+services:
+  proxy:
+    image: nginx:1.27-alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./infra/nginx/tls-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - frontend
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/fkazeredo/fkmed-frontend:latest}
+    environment:
+      BACKEND_HOST: app:8080
+
+  app:
+    image: ${BACKEND_IMAGE:-ghcr.io/fkazeredo/fkmed-backend:latest}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-fkmed}
+      DB_USERNAME: ${POSTGRES_USER:-fkmed}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.prod}
+      APP_ISSUER: ${APP_ISSUER:?https issuer required}
+      APP_OIDC_REDIRECT_URIS: ${APP_OIDC_REDIRECT_URIS:?}
+      APP_OIDC_POST_LOGOUT_REDIRECT_URIS: ${APP_OIDC_POST_LOGOUT_REDIRECT_URIS:?}
+      APP_ALLOWED_ORIGINS: '' # same origin behind the TLS proxy
+      OIDC_JWK_PRIVATE_KEY: ${OIDC_JWK_PRIVATE_KEY:?persisted signing key required}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/actuator/health']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fkmed}
+      POSTGRES_USER: ${POSTGRES_USER:-fkmed}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.prod}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-fkmed} -d ${POSTGRES_DB:-fkmed}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=60d'
+      - '--storage.tsdb.retention.size=4GB'
+    volumes:
+      - ./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - app
+
+  loki:
+    image: grafana/loki:latest
+    command: ['-config.file=/etc/loki/loki-config.yml']
+    volumes:
+      - ./infra/observability/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+
+  alloy:
+    image: grafana/alloy:latest
+    command: ['run', '/etc/alloy/config.alloy']
+    volumes:
+      - ./infra/observability/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?}
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      - prometheus
+      - loki
+
+volumes:
+  db-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:
