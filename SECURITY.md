@@ -24,6 +24,7 @@ allowlisted in `.gitleaks.toml`. Each row lists what blocks it in production:
 | Credential | Value | Where | Blocked in prod by |
 |---|---|---|---|
 | MARIA dev account (SPEC-0002, replaces the retired in-memory seam) | `maria@fkmed.local` / `maria12345` | Flyway `V3` seed (all envs) | `ProdReadinessValidator` (refuses to boot when the seeded account + dev password are present) |
+| Disposable account-security E2E account (SPEC-0003 débito B; keeps the E2E off MARIA) | `seguranca-e2e@fkmed.local` / `seguranca12345` | Flyway `V7` seed (all envs) | `ProdReadinessValidator` (refuses to boot when the seeded account + dev password are present) |
 | Postgres dev password | `fkmed` | `.env.example`, compose dev/E2E | `ProdReadinessValidator` (refuses the dev DB password) |
 | Grafana dev admin | `admin` / `admin` | `.env.example`, compose dev | `compose.prod.yaml`: `GRAFANA_ADMIN_*` are mandatory `:?` variables (the app validator never sees Grafana) |
 

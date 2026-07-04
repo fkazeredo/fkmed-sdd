@@ -6,6 +6,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -53,6 +54,13 @@ public class UserAccount {
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
+
+  /**
+   * Optimistic-lock version (débito técnico A, DL-0005): concurrent lockout increments were
+   * lost-updating each other; JPA now guards every mutation so a stale write fails and is retried
+   * on a fresh read (Flyway V6, {@code default 0}). Read-only — no setter, bumped by the provider.
+   */
+  @Version private long version;
 
   /** JPA only. */
   protected UserAccount() {}

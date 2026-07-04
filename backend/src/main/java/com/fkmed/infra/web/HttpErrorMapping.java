@@ -2,6 +2,7 @@ package com.fkmed.infra.web;
 
 import com.fkmed.domain.error.DomainException;
 import com.fkmed.domain.identity.AccountAlreadyExistsException;
+import com.fkmed.domain.identity.ConcurrentAccountUpdateException;
 import com.fkmed.domain.identity.CurrentPasswordIncorrectException;
 import com.fkmed.domain.identity.DependentUnderageException;
 import com.fkmed.domain.identity.EmailAlreadyUsedException;
@@ -35,7 +36,9 @@ public final class HttpErrorMapping {
           Map.entry(PasswordPolicyViolationException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(VerificationLinkInvalidException.class, HttpStatus.GONE),
           Map.entry(ResetLinkInvalidException.class, HttpStatus.GONE),
-          Map.entry(CurrentPasswordIncorrectException.class, HttpStatus.UNPROCESSABLE_CONTENT));
+          Map.entry(CurrentPasswordIncorrectException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          // Débito técnico A (DL-0005): a concurrent-update conflict is retryable by the client.
+          Map.entry(ConcurrentAccountUpdateException.class, HttpStatus.CONFLICT));
 
   private HttpErrorMapping() {}
 

@@ -35,7 +35,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 /** SPEC-0002 first-access + verification orchestration (branch coverage for the mutation gate). */
 @ExtendWith(MockitoExtension.class)
@@ -49,6 +54,21 @@ class IdentityServiceTest {
   private static final LocalDate ADULT_BIRTH = LocalDate.parse("1988-03-12");
   private static final LocalDate MINOR_BIRTH = LocalDate.parse("2012-01-01");
   private static final AuditContext CONTEXT = new AuditContext("203.0.113.7", "JUnit");
+
+  /** Runs each {@code recordFailedLogin} attempt inline (no real DB) — never signals a conflict. */
+  private static final PlatformTransactionManager NO_OP_TX =
+      new PlatformTransactionManager() {
+        @Override
+        public TransactionStatus getTransaction(TransactionDefinition definition) {
+          return new SimpleTransactionStatus();
+        }
+
+        @Override
+        public void commit(TransactionStatus status) {}
+
+        @Override
+        public void rollback(TransactionStatus status) {}
+      };
 
   @Mock private UserAccountRepository accounts;
   @Mock private EmailVerificationTokenRepository verificationTokens;
@@ -85,6 +105,7 @@ class IdentityServiceTest {
             auditRecorder,
             events,
             settings,
+            NO_OP_TX,
             CLOCK);
   }
 
@@ -381,6 +402,46 @@ class IdentityServiceTest {
     service.recordFailedLogin("ghost@fkmed.local", CONTEXT);
 
     verify(auditRecorder, never()).record(any());
+  }
+
+  @Test
+  void recordFailedLogin_whenTheConflictNeverReconciles_translatesToTheDomainError() {
+    // Débito técnico A (DL-0005): an unrelenting optimistic-lock conflict must surface as the
+    // domain ConcurrentAccountUpdateException (→ 409), NEVER the raw framework exception.
+    PlatformTransactionManager alwaysConflicts =
+        new PlatformTransactionManager() {
+          @Override
+          public TransactionStatus getTransaction(TransactionDefinition definition) {
+            return new SimpleTransactionStatus();
+          }
+
+          @Override
+          public void commit(TransactionStatus status) {
+            throw new ObjectOptimisticLockingFailureException(UserAccount.class, UUID.randomUUID());
+          }
+
+          @Override
+          public void rollback(TransactionStatus status) {}
+        };
+    IdentityService conflicting =
+        new IdentityService(
+            accounts,
+            verificationTokens,
+            resetTokens,
+            termAcceptances,
+            beneficiaries,
+            new PasswordPolicy(password -> false),
+            passwordEncoder,
+            registrationTokens,
+            activeSessions,
+            auditRecorder,
+            events,
+            new IdentitySettings(Duration.ofHours(24), Duration.ofMinutes(30), "1.0", "1.0"),
+            alwaysConflicts,
+            CLOCK);
+
+    assertThatExceptionOfType(ConcurrentAccountUpdateException.class)
+        .isThrownBy(() -> conflicting.recordFailedLogin("user@fkmed.local", CONTEXT));
   }
 
   @Test
