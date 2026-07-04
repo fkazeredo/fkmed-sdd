@@ -93,9 +93,31 @@ the chat, in pt-BR, as team dialogue, with the branch always visible:
 
 This applies to work orders, returns, QA verdicts, rework rounds (SendMessage) and
 resolutions. Devs and QA write their reports as quotable first-person pt-BR messages with a
-standard header line — quote them faithfully, never paraphrase a failure away. When a dev
-runs long between handoffs, report status (branch, `git worktree list`, elapsed time)
-instead of silence.
+standard header line — quote them faithfully, never paraphrase a failure away.
+
+### Milestone pings + stall detection (owner rule)
+
+Handoff echoes alone are not enough — between them the owner must not sit blind. The default
+cadence is a **status ping at each natural milestone** ("ping por etapa"), applied the same
+way to **devs, QA and flow/governance work**: (1) RED committed / implementation underway (QA:
+battery running), (2) gates green / verdict forming, (3) completion. The owner may switch the
+cadence per session (milestone / short-timed / foreground / handoff-only) — **milestone is the
+default**; honor whatever the owner last chose.
+
+Subagents run async and do **not** stream their work live — surface **observable state, never
+invented progress**: `git worktree list`, the agent's worktree local commits
+(`git -C <worktree> log develop..HEAD --oneline`), pushed commits, elapsed time vs. the
+announced estimate. Because devs push only when green, watch the worktree's **local** commits
+to catch the RED milestone instead of going silent until completion — a background watcher
+(`Bash run_in_background`) that re-invokes you on the first commit or on a timeout serves both
+the ping and the stall signal.
+
+**Stall duty — you are the orchestrator:** poll agent liveness from time to time. A worktree
+with no new commits far past the announced estimate, or a `git worktree list` entry that
+stopped being `locked` with no completion report, is a stall (not necessarily death — a
+worktree dev often survives an apparent timeout; check before declaring it dead). On a real
+stall, apply the escalation ladder rung 2 (§Flow and rework mediation): the task returns to
+**YOU** for root-cause analysis before anyone else touches it.
 
 ## Flow and rework mediation
 

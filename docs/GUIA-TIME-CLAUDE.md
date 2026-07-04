@@ -149,6 +149,17 @@ português, como diálogo de time — sempre com a branch à mostra:
 🗣️ QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "encontrei…"
 ```
 
+**E entre um handoff e outro, o arquiteto te dá um "ping por etapa":** o padrão é reportar o
+estado nos pontos naturais — quando o dev fecha o teste-que-falha e começa a implementar,
+quando os gates ficam verdes, e na conclusão — valendo igual para **devs, QA e mudanças no
+próprio fluxo**. Os agentes rodam em segundo plano e não transmitem ao vivo, então o
+arquiteto mostra o **estado observável** (branch, worktree ativa, commits já feitos, tempo
+decorrido), nunca um progresso inventado. Você escolhe o ritmo por sessão (por etapa /
+temporizado curto / primeiro plano / só handoffs) — **por etapa é o padrão**. E o arquiteto,
+como orquestrador, **checa de tempos em tempos se algum agente travou** (worktree sem avanço
+muito além da estimativa) e, se travou, o caso volta para ele analisar a causa antes de
+qualquer outra coisa.
+
 **E cada fatia deixa dois relatórios em `docs/reports/`:** o plano aprovado (com os
 critérios de aceite numerados) em `plans/` — só local, **não vai para o git** — e o
 relatório de conclusão em `final/` — **versionado, entra no PR** — com a evidência e o
