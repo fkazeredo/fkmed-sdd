@@ -46,6 +46,7 @@ describe('Shell', () => {
     expect(el.querySelector('[data-testid="username"]')?.textContent).toContain('maria');
     expect(el.querySelector('[data-testid="nav-home"]')?.textContent).toContain('Início');
     expect(el.querySelector('[data-testid="nav-meu-plano"]')?.textContent).toContain('Meu Plano');
+    expect(el.querySelector('[data-testid="nav-carteirinha"]')?.textContent).toContain('Carteirinha');
     expect(el.querySelector('[data-testid="nav-seguranca"]')?.textContent).toContain('Segurança');
     expect(el.textContent).toContain('Mais funcionalidades em breve');
     expect(el.textContent).toContain('Sair');
