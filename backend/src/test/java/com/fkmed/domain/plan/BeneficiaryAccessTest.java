@@ -25,6 +25,7 @@ class BeneficiaryAccessTest {
   private static final String MARIA_CARD = "001234567";
 
   @Mock private BeneficiaryRepository beneficiaries;
+  @Mock private BeneficiaryPhotoRepository photos;
 
   private BeneficiaryAccess access;
   private Plan plan;
@@ -33,7 +34,7 @@ class BeneficiaryAccessTest {
 
   @BeforeEach
   void setUp() {
-    access = new BeneficiaryAccess(beneficiaries);
+    access = new BeneficiaryAccess(beneficiaries, photos);
     plan =
         Plan.create(
             "PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP",

@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BeneficiaryAccess {
 
   private final BeneficiaryRepository beneficiaries;
+  private final BeneficiaryPhotoRepository photos;
 
   /**
    * The beneficiaries the caller (identified by their beneficiary card claim) may act for — titular
@@ -41,13 +42,35 @@ public class BeneficiaryAccess {
    * the beneficiary exists.
    */
   public BeneficiarySummary summaryFor(String beneficiaryCard, UUID targetBeneficiaryId) {
+    Beneficiary target = requireInScope(beneficiaryCard, targetBeneficiaryId);
+    return toSummary(target, avatarUrlFor(target.getId()));
+  }
+
+  /**
+   * Resolves {@code targetBeneficiaryId} to its entity when it falls within the caller's active
+   * family scope (SPEC-0003 BR2/BR3), for the profile/contacts/photo flows (SPEC-0006). Anything
+   * outside the scope — absent card, unknown id, or a beneficiary the caller may not act for (a
+   * dependent editing the titular, PEDRO→MARIA) — throws {@link BeneficiaryNotAccessibleException}
+   * (404) without revealing whether the beneficiary exists. Package-private: the entity never
+   * leaves the module.
+   */
+  Beneficiary requireInScope(String beneficiaryCard, UUID targetBeneficiaryId) {
     Beneficiary callerBeneficiary =
         caller(beneficiaryCard).orElseThrow(BeneficiaryNotAccessibleException::new);
     return accessibleEntities(callerBeneficiary).stream()
         .filter(beneficiary -> beneficiary.getId().equals(targetBeneficiaryId))
         .findFirst()
-        .map(BeneficiaryAccess::toSummary)
         .orElseThrow(BeneficiaryNotAccessibleException::new);
+  }
+
+  /**
+   * The avatar URL for a beneficiary (SPEC-0006 BR3): the photo endpoint when a photo exists, else
+   * {@code null} so the client shows the placeholder.
+   */
+  String avatarUrlFor(UUID beneficiaryId) {
+    return photos.existsByBeneficiaryId(beneficiaryId)
+        ? "/api/beneficiaries/" + beneficiaryId + "/photo"
+        : null;
   }
 
   /**
@@ -103,7 +126,7 @@ public class BeneficiaryAccess {
         beneficiary.getId(), firstName(beneficiary.getFullName()), beneficiary.getRole());
   }
 
-  private static BeneficiarySummary toSummary(Beneficiary beneficiary) {
+  private static BeneficiarySummary toSummary(Beneficiary beneficiary, String avatarUrl) {
     return new BeneficiarySummary(
         beneficiary.getId(),
         firstName(beneficiary.getFullName()),
@@ -111,7 +134,7 @@ public class BeneficiaryAccess {
         beneficiary.getRole(),
         beneficiary.getPlan().getName(),
         beneficiary.getCardNumber(),
-        null);
+        avatarUrl);
   }
 
   private static CardDetails toCardDetails(Beneficiary beneficiary, boolean viewedAsDependent) {
