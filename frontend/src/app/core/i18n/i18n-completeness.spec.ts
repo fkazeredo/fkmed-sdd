@@ -4,7 +4,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { MissingTranslationHandler } from '@ngx-translate/core';
 import { AuthService } from '../auth/auth.service';
+import { BeneficiaryContextService } from '../context/beneficiary-context.service';
 import { Shell } from '../layout/shell';
+import { Home } from '../../features/home/home';
 import { MyPlan } from '../../features/my-plan/my-plan';
 import { FirstAccess } from '../../features/first-access/first-access';
 import { EmailVerification } from '../../features/email-verification/email-verification';
@@ -18,14 +20,16 @@ import { TRANSLATIONS } from './translations';
 /**
  * SPEC-0001 AC5 / SPEC-0002 BR16: every visible UI string of the slice resolves from the pt-BR
  * bundle. Renders every screen of the slice — including all branches of the first-access,
- * verification, password-recovery, Segurança and session-expiry flows — with a recording
- * MissingTranslationHandler; a single missing key fails.
+ * verification, password-recovery, Segurança and session-expiry flows, and the SPEC-0003
+ * active-beneficiary selector (both TITULAR and DEPENDENT role labels) embedded in the shell —
+ * with a recording MissingTranslationHandler; a single missing key fails.
  */
 describe('i18n completeness (pt-BR)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
         Shell,
+        Home,
         MyPlan,
         FirstAccess,
         EmailVerification,
@@ -61,6 +65,17 @@ describe('i18n completeness (pt-BR)', () => {
 
     const shell = TestBed.createComponent(Shell);
     await shell.whenStable();
+    // SPEC-0003 BR5: the shell loads the active-beneficiary context on init — flush both a
+    // TITULAR and a DEPENDENT beneficiary, then switch the active one, to exercise both role
+    // labels (contexto.papel.TITULAR / contexto.papel.DEPENDENT) through the selector.
+    http.expectOne('/api/context/accessible-beneficiaries').flush([
+      { beneficiaryId: 'maria-id', firstName: 'MARIA', role: 'TITULAR' },
+      { beneficiaryId: 'pedro-id', firstName: 'PEDRO', role: 'DEPENDENT' },
+    ]);
+    await shell.whenStable();
+    shell.detectChanges();
+    TestBed.inject(BeneficiaryContextService).setActive('pedro-id');
+    await shell.whenStable();
     shell.detectChanges();
 
     const myPlan = TestBed.createComponent(MyPlan);
@@ -81,6 +96,61 @@ describe('i18n completeness (pt-BR)', () => {
     });
     await myPlan.whenStable();
     myPlan.detectChanges();
+
+    // Home (SPEC-0005): the shell section above already switched the active beneficiary to
+    // PEDRO, so the card's effect fires against his id straight away. Exercises the card, both
+    // "em breve" dialog triggers (avatar / Reconhecimento Facial), the disabled quick-access
+    // hints, the banners (rendered + disabled CTA) and the notices accordion (default-open +
+    // ALERT tag + switching to the other panel).
+    const home = TestBed.createComponent(Home);
+    await home.whenStable();
+    http.expectOne('/api/context/beneficiaries/pedro-id').flush({
+      firstName: 'PEDRO',
+      fullName: 'PEDRO SOUZA LIMA',
+      role: 'DEPENDENT',
+      planName: 'ADESÃO PRATA RJ QP COPART TP',
+      cardNumber: '001234575',
+      avatarUrl: null,
+    });
+    http.expectOne('/api/content/home').flush({
+      banners: [
+        {
+          title: 'Alerta de golpe!',
+          text: 'A operadora não solicita dados ou pagamentos por WhatsApp.',
+          buttonLabel: 'Saiba mais',
+          destination: '/atendimento#antifraude',
+          imageUrl: null,
+          order: 1,
+        },
+      ],
+      notices: [
+        {
+          title: 'Instabilidade momentânea da Telemedicina',
+          severity: 'ALERT',
+          body: 'Estamos normalizando o serviço de Telemedicina.',
+          order: 1,
+        },
+        {
+          title: 'Lei Geral de Proteção de Dados Pessoais',
+          severity: 'INFORMATIVE',
+          body: 'Saiba como tratamos seus dados pessoais.',
+          order: 2,
+        },
+      ],
+    });
+    await home.whenStable();
+    home.detectChanges();
+
+    (home.nativeElement.querySelector('[data-testid="card-avatar"]') as HTMLElement).click();
+    home.detectChanges();
+    home.componentInstance.closeDialog();
+    home.detectChanges();
+    (home.nativeElement.querySelector('[data-testid="shortcut-reconhecimentoFacial"]') as HTMLElement).click();
+    home.detectChanges();
+    home.componentInstance.closeDialog();
+    home.detectChanges();
+    (home.nativeElement.querySelector('[data-testid="notice-2"] p-accordion-header') as HTMLElement).click();
+    home.detectChanges();
 
     // First-access wizard: exercise every step, the field validations and the error block.
     const firstAccess = TestBed.createComponent(FirstAccess);

@@ -4,9 +4,16 @@ import { APIRequestContext, expect, test } from '@playwright/test';
  * SPEC-0002 AC1 end to end over the isolated stack: PEDRO's first access (identity triple → account
  * creation) → the verification link is caught by Mailpit → confirming it activates the account →
  * PEDRO logs in and reaches an authenticated screen. Nothing is stubbed: real backend, real e-mail.
+ *
+ * Also covers SPEC-0003 AC2 (BR2/BR3) at the end of the same authenticated session: PEDRO, a
+ * dependent, has no scope over MARIA's beneficiary id — the server must deny it as a plain
+ * not-found, never revealing that the resource exists.
  */
 
 const MAILPIT = 'http://localhost:8025';
+
+// MARIA's seeded beneficiary id (SPEC-0003 work order — frozen for this slice's E2E).
+const MARIA_BENEFICIARY_ID = '3f2a1b4c-6d5e-4f7a-8b9c-0d1e2f3a4b5c';
 
 /** Polls Mailpit for the newest message to {@code recipient} and returns its verification link. */
 async function verificationLink(request: APIRequestContext, recipient: string): Promise<string> {
@@ -38,7 +45,7 @@ async function verificationLink(request: APIRequestContext, recipient: string): 
   return link;
 }
 
-test('PEDRO first access → e-mail link → confirm → login reaches Meu Plano', async ({
+test('PEDRO first access → e-mail link → confirm → login reaches Home, then Meu Plano', async ({
   page,
   request,
 }) => {
@@ -74,8 +81,24 @@ test('PEDRO first access → e-mail link → confirm → login reaches Meu Plano
   await page.getByLabel('Senha').fill('Pedro1234');
   await page.getByRole('button', { name: 'Entrar' }).click();
 
+  // SPEC-0005: login now lands on Home first; navigate to Meu Plano for the family assertions.
+  await expect(page.getByTestId('home-page')).toBeVisible();
+  await page.getByTestId('nav-meu-plano').click();
   await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
   const rows = page.getByTestId('member-row');
   await expect(rows).toHaveCount(2);
   await expect(rows.nth(1)).toContainText('PEDRO SOUZA LIMA');
+
+  // SPEC-0003 AC2: PEDRO is authenticated as a dependent — he has no scope over MARIA's
+  // beneficiary. angular-oauth2-oidc keeps the access token in sessionStorage under 'access_token'
+  // (default OAuthStorage); read it straight from the SPA to call the API as PEDRO.
+  const accessToken = await page.evaluate(() => sessionStorage.getItem('access_token'));
+  expect(accessToken, 'PEDRO must hold an access token after login').toBeTruthy();
+
+  const response = await request.get(`/api/context/beneficiaries/${MARIA_BENEFICIARY_ID}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  expect(response.status()).toBe(404);
+  const body = (await response.json()) as { code: string };
+  expect(body.code).toBe('context.beneficiary-not-accessible');
 });

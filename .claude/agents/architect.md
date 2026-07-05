@@ -112,6 +112,16 @@ Each agent works in **its own worktree** — never the main repo, never another 
 the architect, **own the worktree lifecycle** and are accountable for keeping that invariant
 true; an agent that ends up working in the wrong directory is first your orchestration miss.
 
+- **Pin every agent to its worktree, then verify it landed (owner rule — the slice-1.3 lesson).**
+  File tools use ABSOLUTE paths, and an agent will otherwise build them from the main-repo path it
+  sees in context — silently writing its work into the MAIN worktree (it happened once, caught only
+  by a manual status check ~20 min in). So: **(a)** every work order carries the mandatory first
+  step — `ROOT="$(git rev-parse --show-toplevel)"`, assert it matches `.claude/worktrees/agent-*`,
+  use only `$ROOT`-prefixed paths, never the main repo; and **(b)** within ~1–2 min of spawning,
+  run a **landing check** — `git -C <main-worktree> status` must stay clean and each agent's
+  worktree must show its first local changes. **Any change appearing in the main worktree ⇒ stop
+  that agent immediately and rescue** (see "If work lands in the wrong worktree" below), never wait
+  for its report.
 - **Before you spawn an agent, free its target branch.** Git allows a branch in only one
   worktree at a time: if the main worktree (yours) is sitting on the agent's branch, the
   agent's `checkout` fails (`already used by worktree`) and it may fall back to the wrong

@@ -10,6 +10,8 @@ description = "Enumerated dev-only defaults (SECURITY.md); blocked in prod by Pr
 regexes = [
   # MARIA seeded dev account password (SPEC-0002; refused in prod by ProdReadinessValidator)
   '''maria12345''',
+  # disposable account-security E2E password (SPEC-0003 débito B; refused in prod by ProdReadinessValidator)
+  '''seguranca12345''',
   # retired in-memory dev-login seam (SPEC-0001 BR8 — replaced by SPEC-0002); still referenced
   # in historical docs (README, architecture, skills)
   '''dev12345''',

@@ -32,9 +32,21 @@ created from the default branch — before anything else, check out the declared
 branch is a sub-branch `feature/<slice>--<scope>`; the architect integrates it — never merge
 other branches yourself.
 
-**Stay in your own worktree — this is absolute.** You work ONLY inside the worktree the
-harness created for you (your shell's starting directory); never the main repository, never
-another agent's worktree. If checking out your declared branch fails — e.g.
+**Pin your worktree FIRST — mechanical, non-negotiable (owner rule).** Your file tools
+(Read/Write/Edit) take ABSOLUTE paths, and the canonical project path you see in context points
+at the MAIN repo, not your worktree — addressing it silently writes your work into the wrong tree
+(a real slice-1.3 incident). So, before ANY file operation:
+
+1. Run `ROOT="$(git rev-parse --show-toplevel)"` and print it.
+2. Assert `$ROOT` contains `.claude/worktrees/agent-` — if it does NOT (you are in the main repo
+   or a sibling worktree), **STOP and report to the architect**; edit nothing.
+3. Use `$ROOT` as the prefix for EVERY Read/Write/Edit path; NEVER address a path under the main
+   repo or another agent's worktree.
+4. After your first edit and before every commit, run `git -C "$ROOT" status` and confirm your
+   changes appear THERE.
+
+**Stay in your own worktree — this is absolute.** You work ONLY inside `$ROOT` (the worktree the
+harness created for you); never the main repository, never another agent's worktree. If checking out your declared branch fails — e.g.
 `fatal: '<branch>' is already used by worktree` because it is held elsewhere — that is NOT
 yours to work around: **STOP and report it to the architect** with the exact error. Do **not**
 `cd` into another directory, and do **not** write files anywhere but your worktree, to keep

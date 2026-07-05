@@ -16,9 +16,12 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Application service of the identity module (SPEC-0002 first access + e-mail verification). Each
@@ -33,6 +36,14 @@ public class IdentityService {
 
   private static final int ADULT_AGE = 18;
 
+  /**
+   * Bounded retries for a failed-login increment under contention (débito técnico A, DL-0005).
+   * Generous margin: only the first {@link UserAccount#MAX_FAILED_ATTEMPTS} increments can collide
+   * (once locked, further attempts are conflict-free no-ops), so a burst never exhausts this before
+   * the account locks.
+   */
+  private static final int MAX_LOCK_RETRIES = 10;
+
   private final UserAccountRepository accounts;
   private final EmailVerificationTokenRepository verificationTokens;
   private final PasswordResetTokenRepository resetTokens;
@@ -45,6 +56,7 @@ public class IdentityService {
   private final AuditRecorder auditRecorder;
   private final ApplicationEventPublisher events;
   private final IdentitySettings settings;
+  private final PlatformTransactionManager transactionManager;
   private final Clock clock;
 
   /**
@@ -172,9 +184,34 @@ public class IdentityService {
    * — no row is created or touched, keeping the failure indistinguishable from a wrong password on
    * a real account (BR7). The 5th consecutive failure locks the account for 15 minutes and audits
    * it once; attempts made while already locked are ignored (DL-0002).
+   *
+   * <p>Concurrency (débito técnico A, DL-0005): each attempt runs in its OWN transaction so a
+   * {@code @Version} collision between simultaneous attempts on the same account fails only that
+   * attempt, which is re-applied on a fresh read instead of silently lost. NOT
+   * {@code @Transactional} itself — the per-attempt transaction is opened by {@link
+   * #transactionManager}; a residual conflict after {@link #MAX_LOCK_RETRIES} becomes a {@link
+   * ConcurrentAccountUpdateException} (409).
+   *
+   * @throws ConcurrentAccountUpdateException when the increment could not be reconciled within the
+   *     retry budget.
    */
-  @Transactional
   public void recordFailedLogin(String email, AuditContext auditContext) {
+    TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+    for (int attempt = 1; attempt <= MAX_LOCK_RETRIES; attempt++) {
+      try {
+        transaction.executeWithoutResult(status -> applyFailedLogin(email, auditContext));
+        return;
+      } catch (ObjectOptimisticLockingFailureException conflict) {
+        if (attempt == MAX_LOCK_RETRIES) {
+          throw new ConcurrentAccountUpdateException();
+        }
+        // Retry: the next iteration re-reads the account in a fresh transaction and re-applies the
+        // increment against the current version.
+      }
+    }
+  }
+
+  private void applyFailedLogin(String email, AuditContext auditContext) {
     accounts
         .findByEmail(Emails.normalize(email))
         .ifPresent(account -> lockIfThresholdReached(account, auditContext));

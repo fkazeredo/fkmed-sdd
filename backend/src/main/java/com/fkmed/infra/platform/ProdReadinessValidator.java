@@ -29,6 +29,10 @@ public class ProdReadinessValidator implements ApplicationRunner {
   static final String DEV_DB_PASSWORD = "fkmed";
   static final String DEV_ACCOUNT_EMAIL = "maria@fkmed.local";
   static final String DEV_ACCOUNT_PASSWORD = "maria12345";
+  // Débito técnico B (SPEC-0003 slice 1.3): the disposable account-security E2E identity (Flyway
+  // V7).
+  static final String DEV_E2E_ACCOUNT_EMAIL = "seguranca-e2e@fkmed.local";
+  static final String DEV_E2E_ACCOUNT_PASSWORD = "seguranca12345";
 
   private final AppSecurityProperties securityProperties;
   private final AppIdentityProperties identityProperties;
@@ -59,9 +63,15 @@ public class ProdReadinessValidator implements ApplicationRunner {
     if (identityProperties.registrationTokenSecret().isBlank()) {
       violations.add("app.identity.registration-token-secret must be persisted in prod");
     }
-    if (devSeedAccountPresent()) {
+    if (seedAccountPresent(DEV_ACCOUNT_EMAIL, DEV_ACCOUNT_PASSWORD)) {
       violations.add(
           "the dev seed account (" + DEV_ACCOUNT_EMAIL + ") must not exist in prod (SPEC-0002)");
+    }
+    if (seedAccountPresent(DEV_E2E_ACCOUNT_EMAIL, DEV_E2E_ACCOUNT_PASSWORD)) {
+      violations.add(
+          "the dev seed account ("
+              + DEV_E2E_ACCOUNT_EMAIL
+              + ") must not exist in prod (SPEC-0003 débito B)");
     }
     if (!violations.isEmpty()) {
       throw new IllegalStateException(
@@ -69,13 +79,11 @@ public class ProdReadinessValidator implements ApplicationRunner {
     }
   }
 
-  /** True when the seeded MARIA dev account with its dev password is present in the database. */
-  private boolean devSeedAccountPresent() {
+  /** True when the given seeded dev account with its dev password is present in the database. */
+  private boolean seedAccountPresent(String email, String devPassword) {
     List<String> hashes =
         jdbcTemplate.queryForList(
-            "select password_hash from user_account where email = ?",
-            String.class,
-            DEV_ACCOUNT_EMAIL);
-    return !hashes.isEmpty() && passwordEncoder.matches(DEV_ACCOUNT_PASSWORD, hashes.get(0));
+            "select password_hash from user_account where email = ?", String.class, email);
+    return !hashes.isEmpty() && passwordEncoder.matches(devPassword, hashes.get(0));
   }
 }
