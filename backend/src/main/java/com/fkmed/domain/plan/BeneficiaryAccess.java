@@ -13,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
  * authorization (SPEC-0003 BR1-BR5). The plan module already owns the beneficiary/titular family
  * model, so the scope check lives here rather than in a new module (Rule Zero — DL-0004): a titular
  * may act for themselves and their dependents, a dependent only for themselves. Exposes only DTO
- * views, never the {@link Beneficiary} entity or CPF/CNS (BR8).
+ * views, never the {@link Beneficiary} entity or CPF/CNS (BR8) — except {@link #cardDetailsFor},
+ * the deliberate SPEC-0007 BR8 exception for the digital-card feature.
  */
 @Service
 @RequiredArgsConstructor
@@ -49,6 +50,29 @@ public class BeneficiaryAccess {
         .orElseThrow(BeneficiaryNotAccessibleException::new);
   }
 
+  /**
+   * The digital card + data sheet of {@code targetBeneficiaryId} within the caller's family scope
+   * (SPEC-0007). Unlike {@link #summaryFor}, this variant does NOT exclude an inactive dependent
+   * from the caller's scope: the card feature must tell "out of scope" ({@link
+   * BeneficiaryNotAccessibleException}, 404) apart from "in scope but inactive" ({@code active =
+   * false}, mapped to 409 {@code card.unavailable} by the card module — BR10) — excluding inactive
+   * beneficiaries here the way {@link #accessibleEntities} does would collapse both into the same
+   * 404, losing that distinction.
+   *
+   * @throws BeneficiaryNotAccessibleException when the caller card is absent/unknown or the target
+   *     falls outside the caller's family scope (existence never revealed, BR2).
+   */
+  public CardDetails cardDetailsFor(String beneficiaryCard, UUID targetBeneficiaryId) {
+    Beneficiary callerBeneficiary =
+        caller(beneficiaryCard).orElseThrow(BeneficiaryNotAccessibleException::new);
+    Beneficiary target =
+        familyRegardlessOfActive(callerBeneficiary).stream()
+            .filter(beneficiary -> beneficiary.getId().equals(targetBeneficiaryId))
+            .findFirst()
+            .orElseThrow(BeneficiaryNotAccessibleException::new);
+    return toCardDetails(target, !target.getId().equals(callerBeneficiary.getId()));
+  }
+
   private Optional<Beneficiary> caller(String beneficiaryCard) {
     if (beneficiaryCard == null || beneficiaryCard.isBlank()) {
       return Optional.empty();
@@ -65,6 +89,15 @@ public class BeneficiaryAccess {
     return accessible;
   }
 
+  private List<Beneficiary> familyRegardlessOfActive(Beneficiary caller) {
+    List<Beneficiary> family = new ArrayList<>();
+    family.add(caller);
+    if (caller.getRole() == BeneficiaryRole.TITULAR) {
+      family.addAll(beneficiaries.findByTitularIdOrderByBirthDate(caller.getId()));
+    }
+    return family;
+  }
+
   private static AccessibleBeneficiary toAccessible(Beneficiary beneficiary) {
     return new AccessibleBeneficiary(
         beneficiary.getId(), firstName(beneficiary.getFullName()), beneficiary.getRole());
@@ -79,6 +112,21 @@ public class BeneficiaryAccess {
         beneficiary.getPlan().getName(),
         beneficiary.getCardNumber(),
         null);
+  }
+
+  private static CardDetails toCardDetails(Beneficiary beneficiary, boolean viewedAsDependent) {
+    Plan plan = beneficiary.getPlan();
+    return new CardDetails(
+        beneficiary.getFullName(),
+        beneficiary.getCardNumber(),
+        beneficiary.getCns(),
+        beneficiary.isActive(),
+        viewedAsDependent,
+        plan.getName(),
+        plan.getAnsRegistration(),
+        plan.getCoverage(),
+        plan.getCategory(),
+        plan.getAdditives());
   }
 
   private static String firstName(String fullName) {

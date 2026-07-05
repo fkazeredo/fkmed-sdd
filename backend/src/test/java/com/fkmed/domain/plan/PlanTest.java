@@ -18,6 +18,7 @@ class PlanTest {
             "PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP",
             "326305",
             "ESTADUAL",
+            "Coletivo por Adesão",
             true,
             true,
             List.of("Urg/emerg Nacional Hr — Assistência"));
@@ -25,6 +26,7 @@ class PlanTest {
     assertThat(plan.getName()).isEqualTo("PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP");
     assertThat(plan.getAnsRegistration()).isEqualTo("326305");
     assertThat(plan.getCoverage()).isEqualTo("ESTADUAL");
+    assertThat(plan.getCategory()).isEqualTo("Coletivo por Adesão");
     assertThat(plan.isCopay()).isTrue();
     assertThat(plan.isReimbursement()).isTrue();
     assertThat(plan.getAdditives()).containsExactly("Urg/emerg Nacional Hr — Assistência");
@@ -33,19 +35,26 @@ class PlanTest {
   @Test
   void name_isRequired() {
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> Plan.create(" ", "326305", "ESTADUAL", true, true, List.of()));
+        .isThrownBy(() -> Plan.create(" ", "326305", "ESTADUAL", "Adesão", true, true, List.of()));
   }
 
   @Test
   void coverage_isRequired() {
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> Plan.create("PLANO", "326305", " ", true, true, List.of()));
+        .isThrownBy(() -> Plan.create("PLANO", "326305", " ", "Adesão", true, true, List.of()));
+  }
+
+  @Test
+  void category_isRequired() {
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> Plan.create("PLANO", "326305", "ESTADUAL", " ", true, true, List.of()));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"32630", "3263050", "32630X", ""})
   void ansRegistration_mustHave6NumericDigits(String invalidAns) {
     assertThatIllegalArgumentException()
-        .isThrownBy(() -> Plan.create("PLANO", invalidAns, "ESTADUAL", true, true, List.of()));
+        .isThrownBy(
+            () -> Plan.create("PLANO", invalidAns, "ESTADUAL", "Adesão", true, true, List.of()));
   }
 }

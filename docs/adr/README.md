@@ -16,3 +16,4 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 | [0007](0007-pdf-generation-openpdf.md) | Server-side PDF generation library — OpenPDF (SPEC-0007) | Proposed |
 | [0008](0008-notification-module.md) | Module map revision — `domain.notification` (shared in-app + async e-mail, SPEC-0004) | Proposed |
 | [0009](0009-jwt-desensitize-remove-card-claim.md) | De-sensitize the JWT — remove the beneficiary card number from token claims (CodeQL) | Proposed |
+| [0010](0010-card-module-digital-card.md) | Module map revision — `domain.card` (Digital Card, SPEC-0007) | Proposed |

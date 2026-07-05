@@ -24,3 +24,4 @@ old one.
 | [0007](DL-0007-in-app-notification-retention.md) | 2026-07-05 | 2 / notifications | 0004 | Medium | Cheap | In-app notification retention window (OQ2) |
 | [0008](DL-0008-phase2-notification-centralization-scope.md) | 2026-07-05 | 2 / notifications | 0004, 0006 | Medium | Cheap | Phase-2 notification centralization scope |
 | [0009](DL-0009-digital-card-pdf-layout.md) | 2026-07-05 | 2 / digital-card | 0007 | High | Cheap | Digital-card PDF layout (OQ1) |
+| [0010](DL-0010-digital-card-plan-category-value.md) | 2026-07-05 | 2 / digital-card | 0007 | Medium | Cheap | Digital-card `planCategory` column and seeded value |
