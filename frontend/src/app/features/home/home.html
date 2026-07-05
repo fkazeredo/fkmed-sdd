@@ -21,8 +21,8 @@
           [attr.aria-label]="'home.cartao.avatarLabel' | translate"
           (click)="onAvatarClick()"
         >
-          @if (avatarUrl() && !avatarBroken(); as url) {
-            <img [src]="url" [alt]="beneficiary.fullName" class="h-full w-full rounded-full object-cover" (error)="onAvatarImageError()" />
+          @if (avatarUrl(); as url) {
+            <img [src]="url" [alt]="beneficiary.fullName" class="h-full w-full rounded-full object-cover" />
           } @else {
             {{ initialOf(beneficiary.firstName) }}
           }

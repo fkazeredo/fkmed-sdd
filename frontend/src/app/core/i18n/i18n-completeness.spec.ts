@@ -378,8 +378,12 @@ describe('i18n completeness (pt-BR)', () => {
     perfil.componentInstance.askLogout();
     perfil.detectChanges();
 
-    // Alterar Foto: both success variants and an error key.
+    // Alterar Foto: the current-photo blob-fetch (404 = no photo) + both success variants + error.
     const foto = TestBed.createComponent(AlterarFoto);
+    await foto.whenStable();
+    http
+      .expectOne('/api/beneficiaries/maria-id/photo')
+      .flush(null, { status: 404, statusText: 'Not Found' });
     await foto.whenStable();
     foto.componentInstance.errorKey.set('profile.photo-too-large');
     foto.componentInstance.success.set('saved');
@@ -420,19 +424,33 @@ describe('i18n completeness (pt-BR)', () => {
     cadastro.componentInstance.success.set(true);
     cadastro.detectChanges();
 
-    // Legal document page (TERMS by default) — triggers the single legal snapshot load.
+    // Legal document page (TERMS by default) — fetches the text from GET /api/legal-documents/TERMS.
     const legalDoc = TestBed.createComponent(LegalDocumentPage);
     await legalDoc.whenStable();
-    http.expectOne('/api/legal-documents/current').flush({
-      terms: { version: '2.0', publishedAt: '2026-06-01', acceptedByMe: false, body: 'Texto dos termos.' },
-      privacy: { version: '1.0', publishedAt: '2026-01-01', acceptedByMe: true, body: 'Texto de privacidade.' },
+    http.expectOne('/api/legal-documents/TERMS').flush({
+      type: 'TERMS',
+      version: '2.0',
+      publishedAt: '2026-06-01',
+      body: 'Texto dos termos.',
     });
     await legalDoc.whenStable();
     legalDoc.detectChanges();
 
-    // Legal acceptance (interception screen): reuses the cached snapshot (TERMS pending, so it
-    // shows the document instead of redirecting); force the outdated-version message too.
+    // Legal acceptance (interception screen): loads current (TERMS pending), then the pending
+    // text; force the outdated-version message too.
     const aceite = TestBed.createComponent(LegalAcceptance);
+    await aceite.whenStable();
+    http.expectOne('/api/legal-documents/current').flush({
+      terms: { version: '3.0', publishedAt: '2026-07-01', acceptedByMe: false },
+      privacy: { version: '1.0', publishedAt: '2026-01-01', acceptedByMe: true },
+    });
+    await aceite.whenStable();
+    http.expectOne('/api/legal-documents/TERMS').flush({
+      type: 'TERMS',
+      version: '3.0',
+      publishedAt: '2026-07-01',
+      body: 'Novos termos.',
+    });
     await aceite.whenStable();
     aceite.componentInstance.errorKey.set('legal.version-outdated');
     aceite.detectChanges();

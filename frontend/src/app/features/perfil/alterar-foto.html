@@ -30,13 +30,8 @@
       >
         @if (previewUrl(); as preview) {
           <img [src]="preview" [alt]="'perfil.foto.previewLabel' | translate" class="h-full w-full object-cover" />
-        } @else if (currentAvatarUrl() && !avatarBroken(); as avatar) {
-          <img
-            [src]="avatar"
-            [alt]="'perfil.foto.atualLabel' | translate"
-            class="h-full w-full object-cover"
-            (error)="onAvatarError()"
-          />
+        } @else if (currentAvatarUrl(); as avatar) {
+          <img [src]="avatar" [alt]="'perfil.foto.atualLabel' | translate" class="h-full w-full object-cover" />
         } @else {
           <span data-testid="foto-placeholder">{{ initialOf(activeName()) }}</span>
         }

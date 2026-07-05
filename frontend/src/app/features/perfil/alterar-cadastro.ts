@@ -41,7 +41,7 @@ const EDITABLE_KEYS: readonly (keyof ContactFields)[] = [
   'uf',
 ];
 
-type ErrorField = 'contactEmail' | 'mobile' | 'cep' | 'uf' | null;
+type ErrorField = 'contactEmail' | 'mobile' | 'landline' | 'cep' | 'uf' | null;
 
 function emptyFields(): ContactFields {
   return {
@@ -206,6 +206,7 @@ export class AlterarCadastro {
       'profile.mobile-invalid': 'mobile',
       'profile.contact-email-required': 'contactEmail',
       'profile.contact-email-invalid': 'contactEmail',
+      'profile.landline-invalid': 'landline',
       'profile.cep-invalid': 'cep',
       'profile.uf-invalid': 'uf',
     };

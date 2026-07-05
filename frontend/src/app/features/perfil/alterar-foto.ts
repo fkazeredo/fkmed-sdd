@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AvatarStateService } from '../../core/context/avatar-state.service';
 import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
@@ -15,7 +15,9 @@ import { ProfileApi } from './profile.api';
  * "Alterar Foto" (SPEC-0006 BR2/BR3): upload a JPG/PNG (client pre-check ≤ 5 MB + magic-byte
  * content sniffing) with a square-crop preview, replace or remove — for the **active** beneficiary
  * (a titular may change a dependent's via the header selector, SPEC-0003). On success the shared
- * AvatarStateService is updated so the avatar changes everywhere without a new login (BR3).
+ * AvatarStateService is updated so the avatar changes everywhere without a new login (BR3). The
+ * current photo is blob-fetched through AvatarStateService (the photo endpoint needs a Bearer
+ * token, so `<img src>` cannot load it directly).
  */
 @Component({
   selector: 'app-alterar-foto',
@@ -33,16 +35,22 @@ export class AlterarFoto {
   readonly errorKey = signal<string | null>(null);
   readonly previewUrl = signal<string | null>(null);
   readonly pendingBlob = signal<Blob | null>(null);
-  readonly avatarBroken = signal(false);
 
   readonly activeId = computed(() => this.context.active()?.beneficiaryId);
   readonly activeName = computed(() => this.context.active()?.firstName ?? '');
 
-  /** Current avatar for the active beneficiary (shared state wins over the backend endpoint). */
-  readonly currentAvatarUrl = computed(() => {
-    const id = this.activeId();
-    return id ? this.avatar.resolve(id, `/api/beneficiaries/${id}/photo`) : null;
-  });
+  /** Current avatar for the active beneficiary (shared blob state); null → placeholder. */
+  readonly currentAvatarUrl = computed(() => this.avatar.avatarUrl(this.activeId()));
+
+  constructor() {
+    // Load the active beneficiary's current photo (and reload on switch) so it can be shown.
+    effect(() => {
+      const id = this.activeId();
+      if (id) {
+        this.avatar.load(id);
+      }
+    });
+  }
 
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
@@ -74,7 +82,6 @@ export class AlterarFoto {
     this.clearPreview();
     this.pendingBlob.set(blob);
     this.previewUrl.set(this.toObjectUrl(blob));
-    this.avatarBroken.set(false);
   }
 
   save(): void {
@@ -87,11 +94,11 @@ export class AlterarFoto {
     this.errorKey.set(null);
     this.api.uploadPhoto(id, blob).subscribe({
       next: () => {
-        this.avatar.onPhotoChanged(id);
+        // Publish the exact bytes we just uploaded (no extra fetch) — propagates everywhere (BR3).
+        this.avatar.setFromBlob(id, blob);
         this.loading.set(false);
         this.success.set('saved');
         this.clearPreview();
-        this.avatarBroken.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.loading.set(false);
@@ -110,7 +117,7 @@ export class AlterarFoto {
     this.success.set(null);
     this.api.removePhoto(id).subscribe({
       next: () => {
-        this.avatar.onPhotoRemoved(id);
+        this.avatar.remove(id);
         this.loading.set(false);
         this.success.set('removed');
         this.clearPreview();
@@ -120,11 +127,6 @@ export class AlterarFoto {
         this.applyError(error);
       },
     });
-  }
-
-  /** The photo endpoint returns 404 when the beneficiary has none — show the placeholder. */
-  onAvatarError(): void {
-    this.avatarBroken.set(true);
   }
 
   initialOf(name: string): string {

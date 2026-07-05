@@ -13,16 +13,16 @@
       </p>
     }
 
-    @for (item of pending(); track item.type) {
+    @for (item of pendingDocs(); track item.type) {
       <div class="mb-6 rounded-xl bg-white p-5 shadow" [attr.data-testid]="'aceite-' + item.type">
         <h2 class="mb-1 text-lg font-medium text-teal-800">{{ titleKey(item.type) | translate }}</h2>
         <p class="mb-3 text-sm text-slate-500">
-          {{ 'perfil.legal.versao' | translate }} {{ item.doc.version }} ·
-          {{ 'perfil.legal.publicadoEm' | translate }} {{ item.doc.publishedAt | date: 'dd/MM/yyyy' }}
+          {{ 'perfil.legal.versao' | translate }} {{ item.version }} ·
+          {{ 'perfil.legal.publicadoEm' | translate }} {{ item.publishedAt | date: 'dd/MM/yyyy' }}
         </p>
         <article class="mb-4 max-h-64 overflow-y-auto whitespace-pre-line text-sm text-slate-700">
-          @if (item.doc.body) {
-            {{ item.doc.body }}
+          @if (item.body) {
+            {{ item.body }}
           } @else {
             <span class="text-slate-500">{{ 'perfil.legal.semTexto' | translate }}</span>
           }
@@ -32,7 +32,7 @@
           class="w-full rounded bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
           [attr.data-testid]="'aceite-botao-' + item.type"
           [disabled]="accepting() !== null"
-          (click)="accept(item.type)"
+          (click)="accept(item.type, item.version)"
         >
           {{ (accepting() === item.type ? 'common.processando' : 'perfil.aceite.aceitar') | translate }}
         </button>

@@ -245,6 +245,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     // Error codes surfaced inline (mirror the backend 422/409 codes)
     'profile.mobile-required': 'O celular é obrigatório.',
     'profile.mobile-invalid': 'Celular inválido. Use o formato (99) 99999-9999.',
+    'profile.landline-invalid': 'Telefone fixo inválido. Use o formato (99) 9999-9999.',
     'profile.contact-email-required': 'O e-mail de contato é obrigatório.',
     'profile.contact-email-invalid': 'E-mail de contato inválido.',
     'profile.cep-invalid': 'CEP inválido.',

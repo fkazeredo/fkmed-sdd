@@ -35,14 +35,10 @@ export class PerfilMenu {
   protected readonly version = inject(APP_VERSION);
 
   readonly summary = signal<BeneficiarySummary | null>(null);
-  readonly avatarBroken = signal(false);
   readonly confirmingLogout = signal(false);
 
-  readonly avatarUrl = computed(() => {
-    const id = this.context.active()?.beneficiaryId;
-    const fallback = this.summary()?.avatarUrl ?? null;
-    return id ? this.avatar.resolve(id, fallback) : fallback;
-  });
+  /** The avatar (blob object URL) for the active beneficiary; null → placeholder (BR3). */
+  readonly avatarUrl = computed(() => this.avatar.avatarUrl(this.context.active()?.beneficiaryId));
 
   constructor() {
     effect(() => {
@@ -54,15 +50,17 @@ export class PerfilMenu {
   }
 
   loadSummary(beneficiaryId: string): void {
-    this.avatarBroken.set(false);
     this.summaryApi.getBeneficiary(beneficiaryId).subscribe({
-      next: (summary) => this.summary.set(summary),
+      next: (summary) => {
+        this.summary.set(summary);
+        // Blob-fetch the photo only when the backend reports one exists (avatarUrl set) — avoids a
+        // needless 404 round-trip when there is no photo.
+        if (summary.avatarUrl) {
+          this.avatar.load(beneficiaryId);
+        }
+      },
       error: () => this.summary.set(null),
     });
-  }
-
-  onAvatarError(): void {
-    this.avatarBroken.set(true);
   }
 
   initialOf(name: string | undefined): string {

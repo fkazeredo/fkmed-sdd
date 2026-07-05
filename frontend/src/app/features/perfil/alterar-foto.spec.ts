@@ -17,6 +17,8 @@ describe('AlterarFoto (SPEC-0006 BR2/BR3)', () => {
   let avatar: AvatarStateService;
 
   beforeEach(async () => {
+    URL.createObjectURL = vi.fn(() => 'blob:mock');
+    URL.revokeObjectURL = vi.fn();
     await TestBed.configureTestingModule({
       imports: [AlterarFoto],
       providers: [
@@ -32,19 +34,25 @@ describe('AlterarFoto (SPEC-0006 BR2/BR3)', () => {
 
   afterEach(() => http.verify());
 
-  function create(): AlterarFoto {
-    return TestBed.createComponent(AlterarFoto).componentInstance;
+  // Creating the component blob-fetches the current photo (effect); flush it as "no photo" (404).
+  async function create(): Promise<AlterarFoto> {
+    const fixture = TestBed.createComponent(AlterarFoto);
+    await fixture.whenStable();
+    http
+      .expectOne('/api/beneficiaries/pedro-id/photo')
+      .flush(null, { status: 404, statusText: 'Not Found' });
+    return fixture.componentInstance;
   }
 
   it('refuses an executable renamed to an image (AC3) — nothing is staged', async () => {
-    const component = create();
+    const component = await create();
     await component.acceptFile(new Blob([EXE]));
     expect(component.errorKey()).toBe('profile.photo-invalid-content');
     expect(component.pendingBlob()).toBeNull();
   });
 
   it('refuses a file over 5 MB with the too-large key (BR2)', async () => {
-    const component = create();
+    const component = await create();
     const blob = new Blob([JPEG]);
     Object.defineProperty(blob, 'size', { value: MAX_PHOTO_BYTES + 1 });
     await component.acceptFile(blob);
@@ -52,8 +60,8 @@ describe('AlterarFoto (SPEC-0006 BR2/BR3)', () => {
     expect(component.pendingBlob()).toBeNull();
   });
 
-  it('uploads a staged photo and propagates the new avatar everywhere (BR3, AC4)', () => {
-    const component = create();
+  it('uploads a staged photo and propagates the new avatar everywhere (BR3, AC4)', async () => {
+    const component = await create();
     component.stagePhoto(new Blob([JPEG]));
 
     component.save();
@@ -64,23 +72,25 @@ describe('AlterarFoto (SPEC-0006 BR2/BR3)', () => {
 
     expect(component.success()).toBe('saved');
     expect(component.pendingBlob()).toBeNull();
-    // The shared avatar state now points at the (cache-busted) photo endpoint for this beneficiary.
-    expect(avatar.resolve('pedro-id', null)).toMatch(/^\/api\/beneficiaries\/pedro-id\/photo\?v=\d+$/);
+    // The shared avatar state now serves the just-uploaded bytes (object URL) for this beneficiary.
+    expect(avatar.avatarUrl('pedro-id')).toBe('blob:mock');
   });
 
-  it('removes the photo and returns to the placeholder (BR3)', () => {
-    const component = create();
+  it('removes the photo and returns to the placeholder (BR3)', async () => {
+    const component = await create();
+    avatar.setFromBlob('pedro-id', new Blob([JPEG])); // pretend a photo is currently shown
+
     component.remove();
     const request = http.expectOne('/api/beneficiaries/pedro-id/photo');
     expect(request.request.method).toBe('DELETE');
     request.flush(null);
 
     expect(component.success()).toBe('removed');
-    expect(avatar.resolve('pedro-id', '/api/beneficiaries/pedro-id/photo')).toBeNull();
+    expect(avatar.avatarUrl('pedro-id')).toBeNull();
   });
 
-  it('maps a backend 422 invalid-content on upload to the inline error', () => {
-    const component = create();
+  it('maps a backend 422 invalid-content on upload to the inline error', async () => {
+    const component = await create();
     component.stagePhoto(new Blob([JPEG]));
     component.save();
     http
