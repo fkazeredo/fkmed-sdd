@@ -19,7 +19,14 @@ import lombok.Getter;
 @Getter
 public class ContactInfo {
 
-  private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+  // Linear e-mail pattern (no ambiguous backtracking): each domain label forbids dots (`[^@\s.]+`),
+  // so the `.` separators are unambiguous and the engine cannot backtrack polynomially over how to
+  // split the domain. The previous `[^@\s]+\.[^@\s]+` was ReDoS-vulnerable on inputs like
+  // `a@` + `.`×n (CodeQL: polynomial regex on uncontrolled data). Semantics preserved: accepts
+  // `a@b.c` and `a@b.c.d`; rejects no-@ and no-dot.
+  private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s.]+(\\.[^@\\s.]+)+$");
+  // Defense-in-depth length bound (RFC 5321 max e-mail length) checked before the regex runs.
+  private static final int EMAIL_MAX_LENGTH = 254;
   private static final Pattern MOBILE = Pattern.compile("^\\(\\d{2}\\) \\d{5}-\\d{4}$");
   private static final Pattern LANDLINE = Pattern.compile("^\\(\\d{2}\\) \\d{4}-\\d{4}$");
   private static final Pattern CEP = Pattern.compile("^\\d{8}$");
@@ -112,7 +119,7 @@ public class ContactInfo {
     if (normalized == null) {
       throw new ContactEmailRequiredException();
     }
-    if (!EMAIL.matcher(normalized).matches()) {
+    if (normalized.length() > EMAIL_MAX_LENGTH || !EMAIL.matcher(normalized).matches()) {
       throw new ContactEmailInvalidException();
     }
     return normalized;

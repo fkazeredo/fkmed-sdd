@@ -108,7 +108,13 @@ export class AlterarCadastro {
       next: (profile) => {
         this.profile.set(profile);
         for (const key of EDITABLE_KEYS) {
-          this.form[key] = profile[key];
+          // Optional contact/address fields arrive as `null` when unset (ProfileView returns null
+          // per field). The form and its validators operate on strings, so coerce null → '' at the
+          // boundary — otherwise `form.landline.trim()` (and siblings) throw and break the form.
+          // Optional contact/address fields arrive as `null` when unset (ProfileView returns null
+          // per field). The form and its validators operate on strings, so coerce null → '' at the
+          // boundary — otherwise `form.landline.trim()` (and siblings) throw and break the form.
+          this.form[key] = profile[key] ?? '';
         }
         this.snapshot = { ...this.form };
         this.loading.set(false);

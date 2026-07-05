@@ -35,7 +35,11 @@ test('bell shows unread notifications, opening the center lists them newest-firs
   await bell.click();
   await expect(page.getByTestId('notification-center-page')).toBeVisible();
 
+  // The list loads asynchronously — wait until it has settled (either the first item or the empty
+  // state is attached) before counting, so the count reflects the loaded state and not the
+  // still-empty initial render. MARIA has >= 1 seeded unread (V13), so the item path is exercised.
   const items = page.getByTestId('notification-item');
+  await expect(items.first().or(page.getByTestId('notifications-empty'))).toBeVisible();
   const initialCount = await items.count();
 
   if (initialCount === 0) {
