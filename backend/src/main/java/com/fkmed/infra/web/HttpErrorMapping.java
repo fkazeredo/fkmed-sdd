@@ -12,6 +12,9 @@ import com.fkmed.domain.identity.PasswordPolicyViolationException;
 import com.fkmed.domain.identity.RegistrationNotFoundException;
 import com.fkmed.domain.identity.ResetLinkInvalidException;
 import com.fkmed.domain.identity.VerificationLinkInvalidException;
+import com.fkmed.domain.network.NetworkQueryTooShortException;
+import com.fkmed.domain.network.OutsideCoverageException;
+import com.fkmed.domain.network.ProviderUnavailableException;
 import com.fkmed.domain.notification.MandatoryPreferenceOptOutException;
 import com.fkmed.domain.notification.NotificationNotFoundException;
 import com.fkmed.domain.plan.BeneficiaryNotAccessibleException;
@@ -74,7 +77,11 @@ public final class HttpErrorMapping {
           Map.entry(UfInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(PhotoInvalidContentException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(PhotoTooLargeException.class, HttpStatus.UNPROCESSABLE_CONTENT),
-          Map.entry(LegalVersionOutdatedException.class, HttpStatus.CONFLICT));
+          Map.entry(LegalVersionOutdatedException.class, HttpStatus.CONFLICT),
+          // SPEC-0008 §Error Behavior.
+          Map.entry(NetworkQueryTooShortException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(ProviderUnavailableException.class, HttpStatus.GONE),
+          Map.entry(OutsideCoverageException.class, HttpStatus.UNPROCESSABLE_CONTENT));
 
   private HttpErrorMapping() {}
 
