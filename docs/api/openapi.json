@@ -10,6 +10,50 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/notifications/preferences" : {
+      "get" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "preferences",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NotificationPreferencesView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "updatePreferences",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NotificationPreferencesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NotificationPreferencesView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/password" : {
       "put" : {
         "tags" : [ "password-controller" ],
@@ -27,6 +71,37 @@
         "responses" : {
           "200" : {
             "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}/read" : {
+      "post" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "markRead",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all" : {
+      "post" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "markAllRead",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
           }
         }
       }
@@ -218,6 +293,43 @@
         }
       }
     },
+    "/api/notifications" : {
+      "get" : {
+        "tags" : [ "notification-controller" ],
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "page",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NotificationListView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/context/beneficiaries/{beneficiaryId}" : {
       "get" : {
         "tags" : [ "context-controller" ],
@@ -342,6 +454,59 @@
   },
   "components" : {
     "schemas" : {
+      "NotificationPreferenceItem" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "emailOptOut" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "NotificationPreferencesRequest" : {
+        "type" : "object",
+        "properties" : {
+          "preferences" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationPreferenceItem"
+            }
+          }
+        },
+        "required" : [ "preferences" ]
+      },
+      "NotificationPreferenceView" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "emailOptOut" : {
+            "type" : "boolean"
+          },
+          "mandatory" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "NotificationPreferencesView" : {
+        "type" : "object",
+        "properties" : {
+          "preferences" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationPreferenceView"
+            }
+          }
+        }
+      },
       "ChangePasswordRequest" : {
         "type" : "object",
         "properties" : {
@@ -530,6 +695,49 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "NotificationListView" : {
+        "type" : "object",
+        "properties" : {
+          "unread" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationView"
+            }
+          }
+        }
+      },
+      "NotificationView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "read" : {
+            "type" : "boolean"
           }
         }
       },

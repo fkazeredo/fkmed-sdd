@@ -11,6 +11,8 @@ import com.fkmed.domain.identity.PasswordPolicyViolationException;
 import com.fkmed.domain.identity.RegistrationNotFoundException;
 import com.fkmed.domain.identity.ResetLinkInvalidException;
 import com.fkmed.domain.identity.VerificationLinkInvalidException;
+import com.fkmed.domain.notification.MandatoryPreferenceOptOutException;
+import com.fkmed.domain.notification.NotificationNotFoundException;
 import com.fkmed.domain.plan.BeneficiaryNotAccessibleException;
 import com.fkmed.domain.plan.PlanNotFoundException;
 import java.util.Map;
@@ -46,7 +48,10 @@ public final class HttpErrorMapping {
           Map.entry(ConcurrentAccountUpdateException.class, HttpStatus.CONFLICT),
           // SPEC-0007 BR10: an inactive beneficiary's card is unavailable, distinct from the 404
           // out-of-scope case above.
-          Map.entry(CardUnavailableException.class, HttpStatus.CONFLICT));
+          Map.entry(CardUnavailableException.class, HttpStatus.CONFLICT),
+          // SPEC-0004 §Error Behavior.
+          Map.entry(NotificationNotFoundException.class, HttpStatus.NOT_FOUND),
+          Map.entry(MandatoryPreferenceOptOutException.class, HttpStatus.UNPROCESSABLE_CONTENT));
 
   private HttpErrorMapping() {}
 
