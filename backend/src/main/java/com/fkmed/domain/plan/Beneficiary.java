@@ -1,6 +1,7 @@
 package com.fkmed.domain.plan;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -60,6 +61,12 @@ public class Beneficiary {
 
   @Column(nullable = false)
   private boolean active;
+
+  /**
+   * Beneficiary-owned contact/address data (SPEC-0006 BR5). Absent (all columns {@code null}) until
+   * the beneficiary saves it; contract data above stays operator-owned and read-only (BR4).
+   */
+  @Embedded private ContactInfo contact;
 
   private Beneficiary(
       Plan plan,
@@ -144,6 +151,22 @@ public class Beneficiary {
    */
   public void deactivate() {
     this.active = false;
+  }
+
+  /**
+   * Applies a partial contact update (SPEC-0006 BR6/BR7): only the sent fields change, the contact
+   * e-mail and mobile can never be emptied, and every value is validated before it is stored.
+   *
+   * @return the e-mail before/after the change, so the caller can publish {@link
+   *     ContactDataChanged} only when the contact e-mail actually changed.
+   * @throws ContactEmailRequiredException / {@link MobileRequiredException} when a mandatory field
+   *     would be emptied; the various {@code *InvalidException} on a malformed value.
+   */
+  public ContactChange updateContacts(ContactUpdate update, UfValidator ufValidator) {
+    ContactInfo current = contact == null ? ContactInfo.empty() : contact;
+    String oldEmail = current.getContactEmail();
+    this.contact = current.apply(update, ufValidator);
+    return new ContactChange(oldEmail, contact.getContactEmail());
   }
 
   /**

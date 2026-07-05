@@ -54,6 +54,86 @@
         }
       }
     },
+    "/api/beneficiaries/{beneficiaryId}/photo" : {
+      "get" : {
+        "tags" : [ "profile-controller" ],
+        "operationId" : "photo",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "profile-controller" ],
+        "operationId" : "setPhoto",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "profile-controller" ],
+        "operationId" : "removePhoto",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/auth/password" : {
       "put" : {
         "tags" : [ "password-controller" ],
@@ -99,6 +179,35 @@
       "post" : {
         "tags" : [ "notification-controller" ],
         "operationId" : "markAllRead",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/legal-documents/{type}/accept" : {
+      "post" : {
+        "tags" : [ "legal-document-controller" ],
+        "operationId" : "accept",
+        "parameters" : [ {
+          "name" : "type",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AcceptLegalDocumentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -239,6 +348,43 @@
         }
       }
     },
+    "/api/beneficiaries/{beneficiaryId}/contacts" : {
+      "patch" : {
+        "tags" : [ "profile-controller" ],
+        "operationId" : "updateContacts",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateContactsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/version" : {
       "get" : {
         "tags" : [ "system-controller" ],
@@ -323,6 +469,50 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/NotificationListView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/legal-documents/{type}" : {
+      "get" : {
+        "tags" : [ "legal-document-controller" ],
+        "operationId" : "document",
+        "parameters" : [ {
+          "name" : "type",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LegalDocumentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/legal-documents/current" : {
+      "get" : {
+        "tags" : [ "legal-document-controller" ],
+        "operationId" : "current",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LegalDocumentsView"
                 }
               }
             }
@@ -450,6 +640,33 @@
           }
         }
       }
+    },
+    "/api/beneficiaries/{beneficiaryId}/profile" : {
+      "get" : {
+        "tags" : [ "profile-controller" ],
+        "operationId" : "profile",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileView"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -520,6 +737,16 @@
           }
         },
         "required" : [ "currentPassword", "newPassword" ]
+      },
+      "AcceptLegalDocumentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "version" ]
       },
       "ResendVerificationRequest" : {
         "type" : "object",
@@ -620,6 +847,105 @@
           }
         },
         "required" : [ "email", "password", "registrationToken" ]
+      },
+      "UpdateContactsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "contactEmail" : {
+            "type" : "string"
+          },
+          "mobile" : {
+            "type" : "string"
+          },
+          "landline" : {
+            "type" : "string"
+          },
+          "cep" : {
+            "type" : "string"
+          },
+          "street" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "number" : {
+            "type" : "string",
+            "maxLength" : 10,
+            "minLength" : 0
+          },
+          "complement" : {
+            "type" : "string",
+            "maxLength" : 60,
+            "minLength" : 0
+          },
+          "neighborhood" : {
+            "type" : "string",
+            "maxLength" : 80,
+            "minLength" : 0
+          },
+          "city" : {
+            "type" : "string",
+            "maxLength" : 80,
+            "minLength" : 0
+          },
+          "uf" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ProfileView" : {
+        "type" : "object",
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "cpf" : {
+            "type" : "string"
+          },
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "cardNumber" : {
+            "type" : "string"
+          },
+          "planName" : {
+            "type" : "string"
+          },
+          "contactEmail" : {
+            "type" : "string"
+          },
+          "mobile" : {
+            "type" : "string"
+          },
+          "landline" : {
+            "type" : "string"
+          },
+          "cep" : {
+            "type" : "string"
+          },
+          "street" : {
+            "type" : "string"
+          },
+          "number" : {
+            "type" : "string"
+          },
+          "complement" : {
+            "type" : "string"
+          },
+          "neighborhood" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "uf" : {
+            "type" : "string"
+          },
+          "avatarUrl" : {
+            "type" : "string"
+          }
+        }
       },
       "SystemVersionResponse" : {
         "type" : "object",
@@ -738,6 +1064,53 @@
           },
           "read" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "LegalDocumentView" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "acceptedByMe" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "LegalDocumentStatus" : {
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "acceptedByMe" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "LegalDocumentsView" : {
+        "type" : "object",
+        "properties" : {
+          "terms" : {
+            "$ref" : "#/components/schemas/LegalDocumentStatus"
+          },
+          "privacy" : {
+            "$ref" : "#/components/schemas/LegalDocumentStatus"
           }
         }
       },

@@ -36,6 +36,7 @@ Rel(FkmedApplication.FkmedApplication.identity, FkmedApplication.FkmedApplicatio
 Rel(FkmedApplication.FkmedApplication.identity, FkmedApplication.FkmedApplication.plan, "uses", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.identity, "listens to", $techn="", $tags="", $link="")
+Rel(FkmedApplication.FkmedApplication.plan, FkmedApplication.FkmedApplication.audit, "uses", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.plan, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
 
 SHOW_LEGEND(true)
