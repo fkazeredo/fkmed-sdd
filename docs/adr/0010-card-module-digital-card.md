@@ -18,7 +18,7 @@ introducing a business capability... enters this map only through their owning s
 
 ## Decision
 
-We will add **`domain.card`** as a sixth verified Modulith module (`explicitly-annotated` strategy,
+We will add **`domain.card`** as a new verified Modulith module (`explicitly-annotated` strategy,
 consistent with the rest of the map). It owns no new tables (SPEC-0007 §Persistence Changes: reads
 the existing `plan`/`beneficiary` registry, extended in place by `V9__card_registry.sql` with the
 `plan.category` column — DL-0010). Its public facade is `CardService` (`@Service`), consumed only by
@@ -34,9 +34,10 @@ the existing `plan`/`beneficiary` registry, extended in place by `V9__card_regis
 - `domain.audit`'s `AuditRecorder`/`AuditEventTypes` — records the dependent-card-view entry
   (`card.dependent-viewed`) in the same transaction as the read (BR4/BR7).
 
-The verified map is now **six modules**: `domain.plan`, `domain.error`, `domain.identity`,
-`domain.audit`, `domain.content`, `domain.card` (asserted by `ModularityTest`, drawn in the
-drift-gated diagram `docs/architecture-diagrams/modules.puml`).
+The verified map is now **seven modules**: `domain.plan`, `domain.error`, `domain.identity`,
+`domain.audit`, `domain.content`, `domain.card`, `domain.notification` (the last added the same phase
+by ADR-0008; asserted by `ModularityTest`, drawn in the drift-gated diagram
+`docs/architecture-diagrams/modules.puml`).
 
 ## Consequences
 

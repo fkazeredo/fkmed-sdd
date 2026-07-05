@@ -21,13 +21,17 @@ map one spec at a time" policy is triggered.
 We will add **`domain.notification`** as a verified Modulith module (`explicitly-annotated`,
 consistent with the map) owning its three tables and the seeded event-type catalog — **registry
 data** (code, description, `email_default`, `mandatory`) per DECISIONS-BASELINE §0019, never an
-enum. It consumes other modules' domain events via `@ApplicationModuleListener` (AFTER_COMMIT,
-in-process): each consumed event creates an in-app notification and — when the type's
+enum. It consumes other modules' domain events via Spring's `@TransactionalEventListener(AFTER_COMMIT)`
+with `@Transactional(REQUIRES_NEW)` — the Modulith `@ApplicationModuleListener` is avoided because its
+`spring-modulith-events` starter is not on the classpath and pulling it in for the same after-commit +
+own-transaction semantics would be over-engineering (Rule Zero); delivery is in-process. Each consumed
+event creates an in-app notification and — when the type's
 `email_default` is set and the user has not opted out — dispatches an e-mail through the existing
 `infra.email.MailSender` seam (ADR-0004). E-mail dispatch failures are caught and logged, never
 propagated, so they cannot roll back the publishing transaction (BR6). Its public API is
 `NotificationController` (`/api/notifications`, `/read`, `/read-all`, `/preferences`). The verified
-map becomes **six modules**: plan, error, identity, audit, content, notification.
+map becomes **seven modules**: plan, error, identity, audit, content, card, notification
+(`domain.card` is added the same phase by ADR-0010).
 
 ## Consequences
 
