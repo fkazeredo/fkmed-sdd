@@ -1,6 +1,6 @@
 # 0004 - Notifications
 
-**Status:** Approved
+**Status:** Draft
 
 ## Goal
 
@@ -115,14 +115,11 @@ masked in logs. Failed deliveries logged with correlation id for retry diagnosis
 
 ## Open Questions
 
-*(all resolved by the owner on 2026-07-05 — Phase 2 planning)*
-
-- **OQ1** — RESOLVED — Recipient when the target beneficiary has no account (minors):
-  deliver to the **titular's account** (the accepted proposed default). The listener routes
-  a beneficiary-targeted event without an own account to the titular's account (BR8).
-- **OQ2** — RESOLVED — In-app retention window: keep **12 months visible, no hard delete**
-  in the POC (the accepted proposed default). Listing filters to the last 12 months by
-  `created_at`; nothing is physically deleted.
+- **OQ1** — Recipient when the target beneficiary has no account (minors) · wrong guess
+  either spams the titular or silently drops events · proposed default: deliver to the
+  **titular's account**.
+- **OQ2** — In-app retention window · storage vs history value · proposed default: keep
+  12 months visible, no hard delete in POC.
 
 ## Out of Scope
 

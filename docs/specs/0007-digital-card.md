@@ -1,6 +1,6 @@
 # 0007 - Digital Card
 
-**Status:** Approved
+**Status:** Draft
 
 ## Goal
 
@@ -116,11 +116,8 @@ Audit entry on dependent-card view (BR7); counter of PDF downloads. CNS never lo
 
 ## Open Questions
 
-*(resolved by the owner on 2026-07-05 — Phase 2 planning)*
-
-- **OQ1** — RESOLVED — PDF layout: **card format laid on A4 (portrait)** with the front
-  visual on top + a complementary data block below (the accepted proposed default). The PDF
-  is generated server-side (`GET /api/cards/{beneficiaryId}/pdf`).
+- **OQ1** — PDF layout (portrait page vs card-sized) · pure presentation, cheap to change ·
+  proposed default: card format laid on A4 with front visual + data block.
 
 ## Out of Scope
 

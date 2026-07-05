@@ -1,6 +1,6 @@
 # 0006 - Profile and Account
 
-**Status:** Approved
+**Status:** Draft
 
 ## Goal
 
@@ -141,10 +141,7 @@ photo bytes in logs. Counter of interception screens shown (adoption of new term
 
 ## Open Questions
 
-*(none — photo moderation was explicitly deferred; approved by the owner on 2026-07-05 for
-Phase 2. Note: photo avatar is served by this spec's photo endpoint; the Phase-1 context
-summary endpoint `/api/context/beneficiaries/{id}` is not modified here to avoid clashing
-with the parallel Home slice.)*
+*(none — photo moderation was explicitly deferred)*
 
 ## Out of Scope
 
