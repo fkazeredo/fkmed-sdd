@@ -120,6 +120,50 @@ class ProdReadinessValidatorTest {
   }
 
   @Test
+  void refusesToBoot_whenTheDisposableProfileE2eAccountIsPresent() {
+    // SPEC-0006 Phase 2: the disposable profile E2E identity (V13) is just as dev-only as MARIA and
+    // must equally block a prod boot, reusing the same seedAccountPresent(...) path.
+    MockEnvironment environment = new MockEnvironment();
+    environment.setActiveProfiles("prod");
+    environment.setProperty("spring.datasource.password", "a-real-secret-from-env");
+
+    JdbcTemplate jdbc = mock(JdbcTemplate.class);
+    when(jdbc.queryForList(anyString(), eq(String.class), any())).thenReturn(List.of());
+    when(jdbc.queryForList(anyString(), eq(String.class), eq("perfil-e2e@fkmed.local")))
+        .thenReturn(List.of(ENCODER.encode("perfilE2e12345")));
+
+    ProdReadinessValidator validator =
+        new ProdReadinessValidator(
+            productionSecurity(), productionIdentity(), environment, jdbc, ENCODER);
+
+    assertThatIllegalStateException()
+        .isThrownBy(() -> validator.run(null))
+        .withMessageContaining("perfil-e2e@fkmed.local");
+  }
+
+  @Test
+  void refusesToBoot_whenTheDisposableTermsE2eAccountIsPresent() {
+    // SPEC-0006 Phase 2: the disposable terms-interception E2E identity (V13) must equally block a
+    // prod boot, reusing the same seedAccountPresent(...) path.
+    MockEnvironment environment = new MockEnvironment();
+    environment.setActiveProfiles("prod");
+    environment.setProperty("spring.datasource.password", "a-real-secret-from-env");
+
+    JdbcTemplate jdbc = mock(JdbcTemplate.class);
+    when(jdbc.queryForList(anyString(), eq(String.class), any())).thenReturn(List.of());
+    when(jdbc.queryForList(anyString(), eq(String.class), eq("termos-e2e@fkmed.local")))
+        .thenReturn(List.of(ENCODER.encode("termosE2e12345")));
+
+    ProdReadinessValidator validator =
+        new ProdReadinessValidator(
+            productionSecurity(), productionIdentity(), environment, jdbc, ENCODER);
+
+    assertThatIllegalStateException()
+        .isThrownBy(() -> validator.run(null))
+        .withMessageContaining("termos-e2e@fkmed.local");
+  }
+
+  @Test
   void boots_withProductionValues() {
     MockEnvironment environment = new MockEnvironment();
     environment.setActiveProfiles("prod");

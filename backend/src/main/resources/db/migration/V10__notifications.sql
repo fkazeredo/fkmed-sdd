@@ -42,9 +42,11 @@ create table notification_preference (
 -- labels). Mandatory security/account types (BR7) cannot be e-mail-disabled. DL-0008: the two
 -- account types whose e-mail the existing identity listeners already send keep email_default=false
 -- so this module never double-sends; account.contact-changed and the business types e-mail by
--- default. Producers for account.locked, account.contact-changed and the business types are wired
--- by their own specs/integration — this phase only wires account.password-changed and seeds the
--- full catalog + the generic mechanism.
+-- default. This phase wires two producers end-to-end: account.password-changed, and
+-- account.contact-changed via ContactDataChangedNotificationListener (SPEC-0006 — an in-app item
+-- plus a security-notice e-mail to the old and the new address). Producers for account.locked and
+-- the business types are wired by their own specs/integration; the full catalog + the generic
+-- mechanism are seeded now.
 insert into notification_event_type (code, description, email_default, mandatory) values
     ('account.password-changed', 'Senha alterada', false, true),
     ('account.locked', 'Conta bloqueada', false, true),
