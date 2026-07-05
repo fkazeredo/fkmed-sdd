@@ -72,6 +72,31 @@ public class Notifications {
     return notification.getId();
   }
 
+  /**
+   * Raises the mandatory {@code account.contact-changed} notification (SPEC-0006 §Events): one
+   * in-app item for the account plus a security-notice e-mail to BOTH the new and the previous
+   * address, so a hijacked change is visible on the old inbox too. The type is mandatory, so the
+   * e-mail is sent regardless of opt-out; e-mail delivery is AFTER_COMMIT (BR6). {@code oldEmail}
+   * may be null/blank (first time a contact e-mail is set) — then only the new address is notified.
+   */
+  @Transactional
+  public void notifyContactChange(
+      UUID accountId, String title, String body, String oldEmail, String newEmail) {
+    notify(
+        new NotificationRequest(
+            accountId,
+            NotificationEventTypes.ACCOUNT_CONTACT_CHANGED,
+            title,
+            body,
+            null,
+            newEmail));
+    if (hasEmail(oldEmail) && !oldEmail.equalsIgnoreCase(newEmail)) {
+      events.publishEvent(
+          new NotificationEmailRequested(
+              oldEmail, title, body, NotificationEventTypes.ACCOUNT_CONTACT_CHANGED));
+    }
+  }
+
   /** One page of the account's notifications, newest first, plus the unread count (BR2/BR3). */
   @Transactional(readOnly = true)
   public NotificationListView list(UUID accountId, int page, int size) {
