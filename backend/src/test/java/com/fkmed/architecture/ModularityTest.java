@@ -33,7 +33,12 @@ class ModularityTest {
   void moduleMap_containsExactlyTheModulesOfAdr0001() {
     assertThat(MODULES.stream().map(m -> m.getIdentifier().toString()))
         .containsExactlyInAnyOrder(
-            "domain.plan", "domain.error", "domain.identity", "domain.audit", "domain.content");
+            "domain.plan",
+            "domain.error",
+            "domain.identity",
+            "domain.audit",
+            "domain.content",
+            "domain.card");
   }
 
   @Test

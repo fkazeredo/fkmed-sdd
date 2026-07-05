@@ -283,6 +283,61 @@
           }
         }
       }
+    },
+    "/api/cards/{beneficiaryId}" : {
+      "get" : {
+        "tags" : [ "card-controller" ],
+        "operationId" : "card",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cards/{beneficiaryId}/pdf" : {
+      "get" : {
+        "tags" : [ "card-controller" ],
+        "operationId" : "cardPdf",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/pdf" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -579,6 +634,38 @@
           "order" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "CardResponse" : {
+        "type" : "object",
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "cardNumber" : {
+            "type" : "string"
+          },
+          "cns" : {
+            "type" : "string"
+          },
+          "ansRegistration" : {
+            "type" : "string"
+          },
+          "coverage" : {
+            "type" : "string"
+          },
+          "planName" : {
+            "type" : "string"
+          },
+          "planCategory" : {
+            "type" : "string"
+          },
+          "additives" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       }
