@@ -5,17 +5,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fkmed.infra.security.TokenClaims;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 /**
  * SPEC-0003 context & family-scope authorization (BR1-BR5, BR2/BR3; AC1/AC2). MARIA (titular) may
  * act for herself and PEDRO; PEDRO (dependent) only for himself and is denied MARIA's data with a
- * not-found that never reveals her existence. Read-only against the canonical seed — no rows are
- * mutated, so no absolute-count isolation is needed.
+ * not-found that never reveals her existence. The caller's card is resolved server-side from the
+ * authenticated account (ADR-0009): MARIA is seeded by Flyway V3, PEDRO's account is a disposable
+ * fixture created here (cleaned in @BeforeEach/@AfterEach for isolation).
  */
 class ContextApiIT extends AbstractIntegrationTest {
 
@@ -23,9 +26,22 @@ class ContextApiIT extends AbstractIntegrationTest {
   private static final String PEDRO_CARD = "001234575";
   private static final String MARIA_ID = "3f2a1b4c-6d5e-4f7a-8b9c-0d1e2f3a4b5c";
   private static final String PEDRO_ID = "9c8b7a6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
+  private static final String MARIA_EMAIL = "maria@fkmed.local";
+  private static final String PEDRO_EMAIL = PedroAccountFixture.PEDRO_EMAIL;
   private static final String PLAN_NAME = "PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP";
 
   @Autowired private MockMvc mockMvc;
+  @Autowired private JdbcTemplate jdbc;
+
+  @BeforeEach
+  void seedPedroAccount() {
+    PedroAccountFixture.seed(jdbc);
+  }
+
+  @AfterEach
+  void removePedroAccount() {
+    PedroAccountFixture.remove(jdbc);
+  }
 
   @Test
   void accessibleBeneficiaries_withoutAuthentication_returns401() throws Exception {
@@ -37,7 +53,7 @@ class ContextApiIT extends AbstractIntegrationTest {
   @Test
   void accessibleBeneficiaries_asMaria_returnsHerselfThenPedro() throws Exception {
     mockMvc
-        .perform(get("/api/context/accessible-beneficiaries").with(cardOf(MARIA_CARD)))
+        .perform(get("/api/context/accessible-beneficiaries").with(authAs(MARIA_EMAIL)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(2))
         .andExpect(jsonPath("$[0].beneficiaryId").value(MARIA_ID))
@@ -51,7 +67,7 @@ class ContextApiIT extends AbstractIntegrationTest {
   @Test
   void accessibleBeneficiaries_asPedro_returnsOnlyHimself() throws Exception {
     mockMvc
-        .perform(get("/api/context/accessible-beneficiaries").with(cardOf(PEDRO_CARD)))
+        .perform(get("/api/context/accessible-beneficiaries").with(authAs(PEDRO_EMAIL)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(1))
         .andExpect(jsonPath("$[0].beneficiaryId").value(PEDRO_ID))
@@ -62,7 +78,7 @@ class ContextApiIT extends AbstractIntegrationTest {
   @Test
   void beneficiary_asMaria_ofPedro_returnsScopedSummary() throws Exception {
     mockMvc
-        .perform(get("/api/context/beneficiaries/{id}", PEDRO_ID).with(cardOf(MARIA_CARD)))
+        .perform(get("/api/context/beneficiaries/{id}", PEDRO_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.beneficiaryId").value(PEDRO_ID))
         .andExpect(jsonPath("$.firstName").value("PEDRO"))
@@ -75,7 +91,7 @@ class ContextApiIT extends AbstractIntegrationTest {
   @Test
   void beneficiary_asMaria_ofHerself_returnsSummary() throws Exception {
     mockMvc
-        .perform(get("/api/context/beneficiaries/{id}", MARIA_ID).with(cardOf(MARIA_CARD)))
+        .perform(get("/api/context/beneficiaries/{id}", MARIA_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.beneficiaryId").value(MARIA_ID))
         .andExpect(jsonPath("$.firstName").value("MARIA"))
@@ -86,7 +102,7 @@ class ContextApiIT extends AbstractIntegrationTest {
   @Test
   void beneficiary_asPedro_ofMaria_returns404WithoutRevealingExistence() throws Exception {
     mockMvc
-        .perform(get("/api/context/beneficiaries/{id}", MARIA_ID).with(cardOf(PEDRO_CARD)))
+        .perform(get("/api/context/beneficiaries/{id}", MARIA_ID).with(authAs(PEDRO_EMAIL)))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("context.beneficiary-not-accessible"))
         .andExpect(jsonPath("$.message").value("Beneficiário não encontrado."));
@@ -97,12 +113,12 @@ class ContextApiIT extends AbstractIntegrationTest {
     mockMvc
         .perform(
             get("/api/context/beneficiaries/{id}", "00000000-0000-0000-0000-000000000000")
-                .with(cardOf(MARIA_CARD)))
+                .with(authAs(MARIA_EMAIL)))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("context.beneficiary-not-accessible"));
   }
 
-  private static RequestPostProcessor cardOf(String cardNumber) {
-    return jwt().jwt(jwt -> jwt.claim(TokenClaims.BENEFICIARY_CARD, cardNumber));
+  private static RequestPostProcessor authAs(String email) {
+    return jwt().jwt(jwt -> jwt.subject(email));
   }
 }

@@ -1,0 +1,74 @@
+<section
+  class="mx-auto max-w-2xl p-4"
+  aria-labelledby="notification-preferences-title"
+  data-testid="notification-preferences-page"
+>
+  <h1 id="notification-preferences-title" class="mb-1 text-2xl font-semibold text-teal-800">
+    {{ 'notificacoes.preferencias.title' | translate }}
+  </h1>
+  <p class="mb-4 text-sm text-slate-500">{{ 'notificacoes.preferencias.subtitulo' | translate }}</p>
+
+  @if (loading()) {
+    <p class="text-slate-500" role="status">{{ 'common.loading' | translate }}</p>
+  } @else if (error()) {
+    <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">
+      <p class="mb-2">{{ 'common.error' | translate }}</p>
+      <button type="button" class="rounded bg-red-700 px-3 py-1 text-white" (click)="load()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (preferences().length === 0) {
+    <p class="text-slate-500" data-testid="notification-preferences-empty">
+      {{ 'notificacoes.preferencias.vazio' | translate }}
+    </p>
+  } @else {
+    @if (errorKey()) {
+      <div
+        class="mb-4 rounded-lg bg-red-50 p-4 text-red-700"
+        role="alert"
+        data-testid="notification-preferences-error"
+      >
+        {{ errorKey() | translate }}
+      </div>
+    }
+    <ul class="divide-y divide-slate-200 rounded-xl bg-white shadow">
+      @for (preference of preferences(); track preference.type) {
+        <li
+          class="flex items-center justify-between gap-4 p-4"
+          [attr.data-testid]="'preference-' + preference.type"
+        >
+          <div>
+            <p class="font-medium text-slate-800">{{ preference.description }}</p>
+            @if (preference.mandatory) {
+              <p
+                class="text-xs text-slate-400"
+                [attr.data-testid]="'preference-' + preference.type + '-mandatory-hint'"
+              >
+                {{ 'notificacoes.preferencias.obrigatorio' | translate }}
+              </p>
+            }
+          </div>
+          <button
+            type="button"
+            class="rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            [class.border-teal-700]="!preference.emailOptOut"
+            [class.text-teal-700]="!preference.emailOptOut"
+            [class.border-slate-300]="preference.emailOptOut"
+            [class.text-slate-500]="preference.emailOptOut"
+            [disabled]="preference.mandatory || savingType() === preference.type"
+            [attr.aria-pressed]="!preference.emailOptOut"
+            [attr.data-testid]="'preference-' + preference.type + '-toggle'"
+            (click)="toggle(preference)"
+          >
+            {{
+              (preference.emailOptOut
+                ? 'notificacoes.preferencias.emailDesativado'
+                : 'notificacoes.preferencias.emailAtivado'
+              ) | translate
+            }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>

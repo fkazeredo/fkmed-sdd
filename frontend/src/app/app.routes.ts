@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { legalAcceptanceGuard } from './core/legal/legal-acceptance.guard';
 import { Shell } from './core/layout/shell';
 
 export const routes: Routes = [
@@ -35,6 +36,10 @@ export const routes: Routes = [
     path: '',
     component: Shell,
     canActivate: [authGuard],
+    // SPEC-0006 BR8: terms interception. While a new mandatory legal version is unaccepted, this
+    // guard blocks every internal route and funnels the user to /aceite-legal (only Sair, the
+    // header logout, stays reachable) until "Li e aceito".
+    canActivateChild: [legalAcceptanceGuard],
     children: [
       // SPEC-0005: Home is the new default child — the daily entry point after login. Meu Plano
       // remains reachable through the shell nav (nav-meu-plano).
@@ -47,11 +52,63 @@ export const routes: Routes = [
         path: 'meu-plano',
         loadComponent: () => import('./features/my-plan/my-plan').then((m) => m.MyPlan),
       },
+      // SPEC-0007 (Phase 2): the Digital Card screen — reachable via the shell nav
+      // (nav-carteirinha); the Home "Acesso Rápido" shortcut for it stays disabled/"em breve"
+      // for now (SPEC-0005 phased-delivery note is Home's own scope, not touched here).
+      {
+        path: 'carteirinha',
+        loadComponent: () => import('./features/card/digital-card').then((m) => m.DigitalCard),
+      },
       // Segurança (SPEC-0002 AC-8): reachable via a direct route for now — the full Perfil menu
       // is SPEC-0006.
       {
         path: 'seguranca',
         loadComponent: () => import('./features/security/security').then((m) => m.Security),
+      },
+      // SPEC-0004: notification center (reached via the shell bell, not the main nav) and its
+      // preferences screen (reached from a link inside the center).
+      {
+        path: 'notificacoes',
+        loadComponent: () =>
+          import('./features/notifications/notification-center').then((m) => m.NotificationCenter),
+      },
+      {
+        path: 'notificacoes/preferencias',
+        loadComponent: () =>
+          import('./features/notifications/notification-preferences').then(
+            (m) => m.NotificationPreferences,
+          ),
+      },
+      // SPEC-0006 (Phase 2): Perfil menu (BR1) and its sub-screens.
+      {
+        path: 'perfil',
+        loadComponent: () => import('./features/perfil/perfil-menu').then((m) => m.PerfilMenu),
+      },
+      {
+        path: 'perfil/foto',
+        loadComponent: () => import('./features/perfil/alterar-foto').then((m) => m.AlterarFoto),
+      },
+      {
+        path: 'perfil/cadastro',
+        loadComponent: () =>
+          import('./features/perfil/alterar-cadastro').then((m) => m.AlterarCadastro),
+      },
+      // Legal pages (BR8): reached from the Perfil menu, shown with version + publication date.
+      {
+        path: 'termos-de-uso',
+        data: { type: 'TERMS' },
+        loadComponent: () => import('./features/perfil/legal-document').then((m) => m.LegalDocumentPage),
+      },
+      {
+        path: 'comunicado-privacidade',
+        data: { type: 'PRIVACY' },
+        loadComponent: () => import('./features/perfil/legal-document').then((m) => m.LegalDocumentPage),
+      },
+      // Legal acceptance interception target (BR8): the guard redirects here while a version is
+      // pending; it self-redirects to /home once nothing is pending.
+      {
+        path: 'aceite-legal',
+        loadComponent: () => import('./features/perfil/legal-acceptance').then((m) => m.LegalAcceptance),
       },
     ],
   },

@@ -28,9 +28,10 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 /**
  * SPEC-0002 real login, end to end over the real embedded Authorization Server: MARIA's seeded
  * database account (maria@fkmed.local / maria12345) goes through the OIDC Authorization Code + PKCE
- * flow, the issued access token carries her beneficiary card (resolved from {@code user_account} →
- * beneficiary), and {@code /api/plan/my-plan} answers the canonical payload. Replaces the retired
- * in-memory dev-login seam (SPEC-0001 BR8). Also proves the JDBC persistence of the AS state (V2).
+ * flow and {@code /api/plan/my-plan} answers the canonical payload — her beneficiary card is
+ * resolved server-side from {@code user_account} → beneficiary (ADR-0009) and is NOT carried in the
+ * token. Replaces the retired in-memory dev-login seam (SPEC-0001 BR8). Also proves the JDBC
+ * persistence of the AS state (V2).
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("dev")
@@ -40,6 +41,7 @@ class LoginAndTokenFlowIT {
 
   private static final Pattern CSRF_INPUT = Pattern.compile("name=\"_csrf\"\\s+value=\"([^\"]+)\"");
   private static final String MARIA_BENEFICIARY_ID = "3f2a1b4c-6d5e-4f7a-8b9c-0d1e2f3a4b5c";
+  private static final String MARIA_CARD = "001234567";
 
   @LocalServerPort private int port;
   @Autowired private JdbcTemplate jdbc;
@@ -60,6 +62,70 @@ class LoginAndTokenFlowIT {
             .followRedirects(HttpClient.Redirect.NEVER)
             .build();
 
+    String tokenBody = loginAndExchangeTokenForMaria(client, base);
+    String accessToken = JsonPath.read(tokenBody, "$.access_token");
+
+    // 4. The token authorizes the Meu Plano API and resolves MARIA's family (SPEC I/O example).
+    HttpResponse<String> myPlan =
+        client.send(
+            HttpRequest.newBuilder(URI.create(base + "/api/plan/my-plan"))
+                .header("Authorization", "Bearer " + accessToken)
+                .GET()
+                .build(),
+            HttpResponse.BodyHandlers.ofString());
+    assertThat(myPlan.statusCode()).isEqualTo(200);
+    assertThat((String) JsonPath.read(myPlan.body(), "$.plan.name"))
+        .isEqualTo("PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP");
+    assertThat((String) JsonPath.read(myPlan.body(), "$.plan.ansRegistration")).isEqualTo("326305");
+    assertThat((String) JsonPath.read(myPlan.body(), "$.members[0].fullName"))
+        .isEqualTo("MARIA CLARA SOUZA LIMA");
+    assertThat((String) JsonPath.read(myPlan.body(), "$.members[1].fullName"))
+        .isEqualTo("PEDRO SOUZA LIMA");
+
+    // SPEC-0002 BR14 / SPEC-0003 BR6: the successful login is audited with MARIA as author/target.
+    Long loginSuccesses =
+        jdbc.queryForObject(
+            "select count(*) from audit_event where event_type = 'identity.login-success'"
+                + " and target_beneficiary_id = ?::uuid",
+            Long.class,
+            MARIA_BENEFICIARY_ID);
+    assertThat(loginSuccesses).isEqualTo(1L);
+  }
+
+  /**
+   * ADR-0009 regression: the card number is product-sensitive (masked everywhere but the digital
+   * card) and a JWT claim is base64, not encrypted — so it MUST NOT travel in the token. Drives the
+   * real embedded Authorization Server and decodes the issued access and id tokens, asserting no
+   * {@code beneficiary_card} claim and no raw 9-digit card value in either. Fails before the fix
+   * (the removed {@code BeneficiaryCardTokenCustomizer} stamped the claim), passes after.
+   */
+  @Test
+  void issuedTokens_carryNoBeneficiaryCardClaim_norRawCardNumber() throws Exception {
+    String base = "http://localhost:" + port;
+    HttpClient client =
+        HttpClient.newBuilder()
+            .cookieHandler(new CookieManager())
+            .followRedirects(HttpClient.Redirect.NEVER)
+            .build();
+
+    String tokenBody = loginAndExchangeTokenForMaria(client, base);
+    String accessTokenClaims = decodeJwtClaims(JsonPath.read(tokenBody, "$.access_token"));
+    String idTokenClaims = decodeJwtClaims(JsonPath.read(tokenBody, "$.id_token"));
+
+    assertThat(accessTokenClaims)
+        .as("access token must not carry the sensitive card (claim name or raw value)")
+        .doesNotContain("beneficiary_card")
+        .doesNotContain(MARIA_CARD);
+    assertThat(idTokenClaims)
+        .as("id token must not carry the sensitive card (claim name or raw value)")
+        .doesNotContain("beneficiary_card")
+        .doesNotContain(MARIA_CARD);
+  }
+
+  /**
+   * Steps 1-3 of the OIDC Authorization Code + PKCE flow for MARIA; returns the token JSON body.
+   */
+  private String loginAndExchangeTokenForMaria(HttpClient client, String base) throws Exception {
     String verifier = randomVerifier();
     String challenge = s256(verifier);
     String authorizeUrl =
@@ -120,36 +186,16 @@ class LoginAndTokenFlowIT {
                 .build(),
             HttpResponse.BodyHandlers.ofString());
     assertThat(token.statusCode()).isEqualTo(200);
-    String accessToken = JsonPath.read(token.body(), "$.access_token");
-    assertThat(accessToken).isNotBlank();
+    assertThat((String) JsonPath.read(token.body(), "$.access_token")).isNotBlank();
     assertThat((String) JsonPath.read(token.body(), "$.id_token")).isNotBlank();
     assertThat(token.body()).doesNotContain("refresh_token");
+    return token.body();
+  }
 
-    // 4. The token authorizes the Meu Plano API and resolves MARIA's family (SPEC I/O example).
-    HttpResponse<String> myPlan =
-        client.send(
-            HttpRequest.newBuilder(URI.create(base + "/api/plan/my-plan"))
-                .header("Authorization", "Bearer " + accessToken)
-                .GET()
-                .build(),
-            HttpResponse.BodyHandlers.ofString());
-    assertThat(myPlan.statusCode()).isEqualTo(200);
-    assertThat((String) JsonPath.read(myPlan.body(), "$.plan.name"))
-        .isEqualTo("PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP");
-    assertThat((String) JsonPath.read(myPlan.body(), "$.plan.ansRegistration")).isEqualTo("326305");
-    assertThat((String) JsonPath.read(myPlan.body(), "$.members[0].fullName"))
-        .isEqualTo("MARIA CLARA SOUZA LIMA");
-    assertThat((String) JsonPath.read(myPlan.body(), "$.members[1].fullName"))
-        .isEqualTo("PEDRO SOUZA LIMA");
-
-    // SPEC-0002 BR14 / SPEC-0003 BR6: the successful login is audited with MARIA as author/target.
-    Long loginSuccesses =
-        jdbc.queryForObject(
-            "select count(*) from audit_event where event_type = 'identity.login-success'"
-                + " and target_beneficiary_id = ?::uuid",
-            Long.class,
-            MARIA_BENEFICIARY_ID);
-    assertThat(loginSuccesses).isEqualTo(1L);
+  /** Base64url-decodes the claims (payload) segment of a compact JWS for content assertions. */
+  private static String decodeJwtClaims(String jwt) {
+    String[] segments = jwt.split("\\.");
+    return new String(Base64.getUrlDecoder().decode(segments[1]), StandardCharsets.UTF_8);
   }
 
   private static HttpResponse<String> get(HttpClient client, String url) throws Exception {

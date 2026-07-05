@@ -1,6 +1,6 @@
 # 0004 - Notifications
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -115,11 +115,11 @@ masked in logs. Failed deliveries logged with correlation id for retry diagnosis
 
 ## Open Questions
 
-- **OQ1** — Recipient when the target beneficiary has no account (minors) · wrong guess
-  either spams the titular or silently drops events · proposed default: deliver to the
-  **titular's account**.
-- **OQ2** — In-app retention window · storage vs history value · proposed default: keep
-  12 months visible, no hard delete in POC.
+- **OQ1** *(resolved — DL-0006)* — Recipient when the target beneficiary has no account
+  (minors): deliver to the **titular's account**. Seeded for the future; no Phase-2 event
+  exercises this path.
+- **OQ2** *(resolved — DL-0007)* — In-app retention window: keep **12 months visible, no hard
+  delete** in the POC (no retention job built this phase).
 
 ## Out of Scope
 

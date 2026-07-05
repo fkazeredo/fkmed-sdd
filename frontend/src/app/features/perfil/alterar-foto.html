@@ -1,0 +1,75 @@
+<section class="mx-auto max-w-md p-4" aria-labelledby="foto-title" data-testid="alterar-foto-page">
+  <h1 id="foto-title" class="mb-1 text-2xl font-semibold text-teal-800">
+    {{ 'perfil.foto.title' | translate }}
+  </h1>
+  <p class="mb-6 text-sm text-slate-600" data-testid="foto-beneficiario">
+    {{ 'perfil.foto.beneficiario' | translate }} {{ activeName() }}
+  </p>
+
+  <div class="rounded-xl bg-white p-5 shadow">
+    @if (success() === 'saved') {
+      <p class="mb-4 rounded-lg bg-green-50 p-3 text-green-700" role="status" data-testid="foto-sucesso-salva">
+        {{ 'perfil.foto.sucessoSalva' | translate }}
+      </p>
+    }
+    @if (success() === 'removed') {
+      <p class="mb-4 rounded-lg bg-green-50 p-3 text-green-700" role="status" data-testid="foto-sucesso-removida">
+        {{ 'perfil.foto.sucessoRemovida' | translate }}
+      </p>
+    }
+    @if (errorKey()) {
+      <p class="mb-4 rounded-lg bg-red-50 p-3 text-red-700" role="alert" data-testid="foto-erro">
+        {{ errorKey() | translate }}
+      </p>
+    }
+
+    <div class="mb-4 flex flex-col items-center gap-3">
+      <div
+        class="flex h-40 w-40 items-center justify-center overflow-hidden rounded-lg bg-teal-600 text-5xl font-semibold text-white"
+        data-testid="foto-preview"
+      >
+        @if (previewUrl(); as preview) {
+          <img [src]="preview" [alt]="'perfil.foto.previewLabel' | translate" class="h-full w-full object-cover" />
+        } @else if (currentAvatarUrl(); as avatar) {
+          <img [src]="avatar" [alt]="'perfil.foto.atualLabel' | translate" class="h-full w-full object-cover" />
+        } @else {
+          <span data-testid="foto-placeholder">{{ initialOf(activeName()) }}</span>
+        }
+      </div>
+      <p class="text-center text-xs text-slate-500">{{ 'perfil.foto.ajuda' | translate }}</p>
+    </div>
+
+    <label
+      class="mb-3 block cursor-pointer rounded bg-teal-700 px-4 py-2 text-center text-white"
+      data-testid="foto-selecionar"
+    >
+      {{ 'perfil.foto.selecionar' | translate }}
+      <input
+        type="file"
+        class="hidden"
+        accept="image/jpeg,image/png"
+        (change)="onFileSelected($event)"
+      />
+    </label>
+
+    <button
+      type="button"
+      class="mb-2 w-full rounded bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+      data-testid="foto-salvar"
+      [disabled]="!pendingBlob() || loading()"
+      (click)="save()"
+    >
+      {{ (loading() ? 'common.processando' : 'perfil.foto.salvar') | translate }}
+    </button>
+
+    <button
+      type="button"
+      class="w-full rounded border border-red-300 px-4 py-2 text-red-700 disabled:opacity-50"
+      data-testid="foto-remover"
+      [disabled]="loading()"
+      (click)="remove()"
+    >
+      {{ 'perfil.foto.remover' | translate }}
+    </button>
+  </div>
+</section>

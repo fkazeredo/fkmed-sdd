@@ -10,4 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TermAcceptanceRepository extends JpaRepository<TermAcceptance, UUID> {
 
   List<TermAcceptance> findByAccountId(UUID accountId);
+
+  /** Whether the account already accepted this version of a document type (SPEC-0006 BR8). */
+  boolean existsByAccountIdAndDocumentTypeAndVersion(
+      UUID accountId, String documentType, String version);
 }

@@ -4,6 +4,7 @@ import com.fkmed.domain.plan.Beneficiaries;
 import com.fkmed.domain.plan.BeneficiaryMatch;
 import java.time.Clock;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,5 +43,14 @@ public class IdentityAccounts {
     return findByEmail(email)
         .flatMap(credentials -> beneficiaries.findById(credentials.beneficiaryId()))
         .map(BeneficiaryMatch::cardNumber);
+  }
+
+  /**
+   * The account id linked to the given beneficiary, if one exists. Lets the notification module
+   * route a beneficiary-scoped event ({@code ContactDataChanged}, SPEC-0006) to the owning account
+   * without leaking the {@code UserAccount} entity or its repository.
+   */
+  public Optional<UUID> accountIdForBeneficiary(UUID beneficiaryId) {
+    return accounts.findByBeneficiaryId(beneficiaryId).map(UserAccount::getId);
   }
 }

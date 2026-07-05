@@ -31,5 +31,20 @@ public final class AuditEventTypes {
   /** An account's password changed via recovery reset or authenticated change (BR10/BR11). */
   public static final String PASSWORD_CHANGED = "identity.password-changed";
 
+  /**
+   * A titular viewed a dependent's digital card (SPEC-0003 BR6, SPEC-0007 BR7) — sensitive-data
+   * access (CNS in full, BR8) that must be auditable. Never recorded for a self-view.
+   */
+  public static final String DEPENDENT_CARD_VIEWED = "card.dependent-viewed";
+
+  /** A beneficiary's contact/address data was changed (SPEC-0006 BR7). */
+  public static final String CONTACT_DATA_CHANGED = "profile.contact-data-changed";
+
+  /** A beneficiary's profile photo was uploaded, replaced or removed (SPEC-0006 BR2/BR3). */
+  public static final String PROFILE_PHOTO_CHANGED = "profile.photo-changed";
+
+  /** A user accepted a legal-document version (SPEC-0006 BR8). */
+  public static final String TERM_ACCEPTED = "legal.term-accepted";
+
   private AuditEventTypes() {}
 }
