@@ -8,6 +8,43 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.6.0] — 2026-07-05
+
+Phase 2 — "Minha conta e identificação" (SPEC-0004 Notifications, SPEC-0006 Profile & Account,
+SPEC-0007 Digital Card). **Closes Phase 2.**
+
+### Added
+
+- **Notification center** (SPEC-0004): a header **bell** with a live unread counter, a paginated
+  notification center (read/unread, deep links, mark-one/mark-all-read) and per-event-type **e-mail
+  preferences** (mandatory security types locked). Domain events become in-app notifications and,
+  per type, e-mails delivered **AFTER_COMMIT** so a mail outage never rolls back business work. New
+  `domain.notification` module + `/api/notifications*` (V10; ADR-0008; DL-0006/0007/0008).
+- **Profile & Account** (SPEC-0006): the profile menu (photo, contacts, security shortcuts, legal
+  documents, sign out) with the build **product version**; **avatar photo** upload (JPG/PNG ≤ 5 MB,
+  content-validated by magic bytes) per beneficiary, propagated app-wide without re-login; **partial
+  contact/address editing** (audited); **versioned** Terms of Use / Privacy Notice with a mandatory
+  re-acceptance **interception**; sign out. `/api/beneficiaries/{id}/{profile,contacts,photo}` and
+  `/api/legal-documents/*` (V11/V12; DL-0011).
+- **Digital Card** (SPEC-0007): the visual card + data sheet for the active beneficiary, "Minhas
+  Carteirinhas", copy card number, and a **PDF** download (OpenPDF, card-on-A4). CNS shown in full
+  only here; viewing a dependent's card is audited. New `domain.card` module + `/api/cards/{id}` and
+  `/pdf` (V9; ADR-0007/0010; DL-0009/0010).
+- **Cross-spec wiring**: a contact-e-mail change raises the mandatory `account.contact-changed`
+  notification — in-app plus a security-notice e-mail to **both the old and the new** address.
+
+### Changed
+
+- **`AuditRetentionJob` moved from `infra` to the `application` layer** — a scheduled job is a
+  delivery mechanism (like a REST endpoint or a queue consumer), so it belongs with the delivery
+  adapters and calls the `domain.audit` facade (owner decision).
+
+### Security
+
+- **De-sensitized the JWT** (ADR-0009): the beneficiary card number is no longer stored in the
+  issued token — it is resolved server-side — resolving a CodeQL "clear-text storage of sensitive
+  information" alert. A regression test asserts issued tokens carry no card number.
+
 ## [0.5.0] — 2026-07-05
 
 Home (SPEC-0005) — Phase 1, slice 1.4. **Closes Phase 1.**

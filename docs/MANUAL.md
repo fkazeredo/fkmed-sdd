@@ -2,7 +2,7 @@
 
 > Artefato vivo em **pt-BR** (idioma do produto). Atualizado via `/manual` ao fechar toda
 > fatia com mudança visível ao usuário — a fatia só está "pronta" quando este manual
-> reflete a mudança. Versão do produto: **0.5.0** (pré-release; tag pendente do owner).
+> reflete a mudança. Versão do produto: **0.6.0** (pré-release; tag pendente do owner).
 
 ## Sobre o portal
 
@@ -92,10 +92,51 @@ operar no contexto do beneficiário escolhido (por exemplo, o cartão do benefic
 acesso é sempre validado pelo servidor: dados de alguém fora do seu núcleo familiar não são
 acessíveis.
 
+### 7. Notificações
+
+No topo do portal, o **sino** mostra quantas notificações você tem **não lidas**. Clique nele para
+abrir a **Central de Notificações**: as mais recentes primeiro, com estado lido/não lido e um link
+direto para o assunto de cada uma. Você pode **marcar como lida** uma a uma ou **marcar todas como
+lidas** — o contador do sino atualiza na hora. Em **Preferências de notificação** você escolhe, por
+tipo de evento, se também quer receber um **e-mail**; a notificação no aplicativo é sempre enviada.
+Tipos de segurança/conta (por exemplo, troca de senha ou alteração dos dados de contato) são
+**obrigatórios** e não podem ter o e-mail desativado. Nenhuma notificação traz dados sensíveis
+completos (CPF, CNS ou dados bancários).
+
+### 8. Perfil e conta
+
+No menu de **Perfil** você cuida da sua conta:
+
+- **Alterar Foto** — envie uma foto (JPG ou PNG, até **5 MB**) com **recorte quadrado**; ela vale
+  para o beneficiário e passa a aparecer em todo o portal (Home, perfil) **sem novo login**.
+  **Remover foto** volta ao avatar padrão. O titular pode alterar a foto de um dependente pelo
+  seletor de beneficiário ativo.
+- **Alterar Cadastro** — seus **dados de contrato** (nome, CPF, data de nascimento, número da
+  carteirinha) são somente leitura ("Para alterar, procure os canais de atendimento"). Você edita
+  seus **dados de contato e endereço** — **e-mail de contato** e **celular** são obrigatórios. O
+  salvamento é **parcial** (só o que mudou) e confirmado. Ao trocar o e-mail de contato, um **aviso
+  de segurança** é enviado ao endereço **antigo e ao novo**.
+- **Comunicado de privacidade** e **Termos de uso** — leia os documentos com **versão e data**.
+  Quando uma nova versão é publicada, o portal **intercepta a navegação** e pede o **"Li e aceito"**
+  antes de continuar (apenas **Sair** fica disponível).
+- **Segurança**, **Central de Libras** e **Perguntas Frequentes** — atalhos (alguns "em breve").
+- **Sair** — encerra a sessão (com confirmação). A **versão do produto** aparece ao lado do Sair.
+
+### 9. Carteirinha digital
+
+A **Carteirinha** mostra o cartão do beneficiário ativo — identidade visual, nome, plano, número e
+selo de abrangência — e a **ficha de dados** (CNS, Registro ANS, abrangência e adicionais). Use
+**Copiar número** para copiar os 9 dígitos e **Salvar Carteirinha** para baixar um **PDF** (formato
+cartão em folha A4) e levar à recepção. **Minhas Carteirinhas** lista a carteirinha de cada
+beneficiário a que você tem acesso; selecionar uma abre o cartão desse beneficiário. O **CNS**
+aparece por extenso **apenas** nesta tela e no PDF; em qualquer outro lugar do portal ele é
+mascarado. Um beneficiário **inativo** mostra o aviso "carteirinha indisponível".
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-05 | 0.6.0 | Minha conta e identificação: central de notificações (sino), perfil (foto, cadastro, termos versionados, sair) e carteirinha digital com PDF — fecha a Fase 2 |
 | 2026-07-05 | 0.5.0 | Home (Início): cartão do beneficiário ativo, Acesso Rápido, banners e avisos — fecha a Fase 1 |
 | 2026-07-04 | 0.4.0 | Beneficiário ativo: seletor no topo do portal com escopo familiar (titular vê dependentes) |
 | 2026-07-04 | 0.3.0 | Segurança da conta: bloqueio, recuperação e troca de senha, sessão e tela Segurança |
