@@ -10,6 +10,8 @@ import com.fkmed.domain.identity.PasswordPolicyViolationException;
 import com.fkmed.domain.identity.RegistrationNotFoundException;
 import com.fkmed.domain.identity.ResetLinkInvalidException;
 import com.fkmed.domain.identity.VerificationLinkInvalidException;
+import com.fkmed.domain.notification.MandatoryPreferenceOptOutException;
+import com.fkmed.domain.notification.NotificationNotFoundException;
 import com.fkmed.domain.plan.BeneficiaryNotAccessibleException;
 import com.fkmed.domain.plan.PlanNotFoundException;
 import java.util.Map;
@@ -42,7 +44,10 @@ public final class HttpErrorMapping {
           Map.entry(ResetLinkInvalidException.class, HttpStatus.GONE),
           Map.entry(CurrentPasswordIncorrectException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           // Débito técnico A (DL-0005): a concurrent-update conflict is retryable by the client.
-          Map.entry(ConcurrentAccountUpdateException.class, HttpStatus.CONFLICT));
+          Map.entry(ConcurrentAccountUpdateException.class, HttpStatus.CONFLICT),
+          // SPEC-0004 §Error Behavior.
+          Map.entry(NotificationNotFoundException.class, HttpStatus.NOT_FOUND),
+          Map.entry(MandatoryPreferenceOptOutException.class, HttpStatus.UNPROCESSABLE_CONTENT));
 
   private HttpErrorMapping() {}
 

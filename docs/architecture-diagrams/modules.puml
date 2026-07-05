@@ -21,14 +21,17 @@ System_Boundary("FkmedApplication_boundary", "FkmedApplication", $tags="") {
     Component(FkmedApplication.FkmedApplication.errorkernel, "error kernel", $techn="Module", $descr="", $tags="", $link="")
     Component(FkmedApplication.FkmedApplication.plan, "plan", $techn="Module", $descr="", $tags="", $link="")
     Component(FkmedApplication.FkmedApplication.identity, "identity", $techn="Module", $descr="", $tags="", $link="")
+    Component(FkmedApplication.FkmedApplication.notification, "notification", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
 
-Rel(FkmedApplication.FkmedApplication.identity, FkmedApplication.FkmedApplication.plan, "uses", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.identity, FkmedApplication.FkmedApplication.audit, "uses", $techn="", $tags="", $link="")
-Rel(FkmedApplication.FkmedApplication.plan, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.identity, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
+Rel(FkmedApplication.FkmedApplication.identity, FkmedApplication.FkmedApplication.plan, "uses", $techn="", $tags="", $link="")
+Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
+Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.identity, "listens to", $techn="", $tags="", $link="")
+Rel(FkmedApplication.FkmedApplication.plan, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
 
 SHOW_LEGEND(true)
 hide stereotypes
