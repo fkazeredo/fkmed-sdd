@@ -12,7 +12,7 @@ slice (`/slice` gate).
 | [0002](0002-identity-and-access.md) | Identity and Access | identity | Approved |
 | [0003](0003-beneficiary-context-and-authorization.md) | Beneficiary Context and Authorization | cross-cutting | Approved |
 | [0004](0004-notifications.md) | Notifications | notifications | Draft |
-| [0005](0005-home.md) | Home | home / content | Draft |
+| [0005](0005-home.md) | Home | home / content | Approved |
 | [0006](0006-profile-and-account.md) | Profile and Account | profile | Draft |
 | [0007](0007-digital-card.md) | Digital Card | card | Draft |
 | [0008](0008-provider-network-search.md) | Provider Network Search | network | Draft |

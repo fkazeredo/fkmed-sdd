@@ -3,7 +3,7 @@
   "info" : {
     "title" : "FKMed",
     "description" : "FKMed — health plan beneficiary portal API",
-    "version" : "0.4.0"
+    "version" : "0.5.0"
   },
   "servers" : [ {
     "url" : "http://localhost",
@@ -265,6 +265,24 @@
           }
         }
       }
+    },
+    "/api/content/home" : {
+      "get" : {
+        "tags" : [ "content-controller" ],
+        "operationId" : "home",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HomeContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -501,6 +519,66 @@
           "role" : {
             "type" : "string",
             "enum" : [ "TITULAR", "DEPENDENT" ]
+          }
+        }
+      },
+      "BannerView" : {
+        "type" : "object",
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "buttonLabel" : {
+            "type" : "string"
+          },
+          "destination" : {
+            "type" : "string"
+          },
+          "imageUrl" : {
+            "type" : "string"
+          },
+          "order" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "HomeContentResponse" : {
+        "type" : "object",
+        "properties" : {
+          "banners" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BannerView"
+            }
+          },
+          "notices" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NoticeView"
+            }
+          }
+        }
+      },
+      "NoticeView" : {
+        "type" : "object",
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "severity" : {
+            "type" : "string",
+            "enum" : [ "INFORMATIVE", "ALERT" ]
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "order" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       }

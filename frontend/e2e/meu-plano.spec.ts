@@ -2,10 +2,11 @@ import { expect, test } from '@playwright/test';
 
 /**
  * SPEC-0002 AC1 (login half) — end to end over the real stack: MARIA's seeded database account
- * (maria@fkmed.local / maria12345) → OIDC Code+PKCE → Meu Plano shows the plan name, ANS 326305,
- * coverage, additive and both family members served by the API. Replaces the retired dev-login seam.
+ * (maria@fkmed.local / maria12345) → OIDC Code+PKCE → Home (SPEC-0005, the new post-login
+ * default) → Meu Plano shows the plan name, ANS 326305, coverage, additive and both family
+ * members served by the API. Replaces the retired dev-login seam.
  */
-test('login → Meu Plano shows the seeded plan and family', async ({ page }) => {
+test('login → Home, then Meu Plano shows the seeded plan and family', async ({ page }) => {
   await page.goto('/');
 
   // Unauthenticated: the guard sends the browser to the AS pt-BR login page.
@@ -15,14 +16,19 @@ test('login → Meu Plano shows the seeded plan and family', async ({ page }) =>
   await page.getByLabel('Senha').fill('maria12345');
   await page.getByRole('button', { name: 'Entrar' }).click();
 
-  // Back in the SPA, authenticated: shell + Meu Plano.
+  // Back in the SPA, authenticated: shell + Home (SPEC-0005 is the new default child).
   await expect(page.getByTestId('brand')).toHaveText('FKMed');
-  await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
+  await expect(page.getByTestId('home-page')).toBeVisible();
+  await expect(page.getByTestId('card-greeting')).toContainText('Olá, MARIA');
 
   // Regression (review finding I2, BR7/AC5): the SPA document is pt-BR branded —
   // fails with the scaffold's lang="en" / <title>Frontend</title>.
   await expect(page).toHaveTitle('FKMed');
   expect(await page.locator('html').getAttribute('lang')).toBe('pt-BR');
+
+  // Navigate to Meu Plano (still reachable via the shell nav) for the plan/family assertions.
+  await page.getByTestId('nav-meu-plano').click();
+  await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
 
   // Plan data (BR4) — served by the API from the V1 seed, nothing hardcoded (BR6).
   await expect(page.getByTestId('plan-name')).toHaveText(

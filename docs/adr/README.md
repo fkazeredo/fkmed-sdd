@@ -12,3 +12,4 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 | [0003](0003-single-tenant-per-build.md) | Single-tenant per build — drop the multi-tenant seam (revises baseline §0003) | Proposed |
 | [0004](0004-dev-email-delivery-mailpit.md) | Dev e-mail delivery — Mailpit + Spring Mail behind a `MailSender` port | Proposed |
 | [0005](0005-session-idle-windows-remember-me.md) | Two session idle windows via Spring Session remember-me (BR12) | Proposed |
+| [0006](0006-content-module-home.md) | Module map revision — `domain.content` (Home banners and notices, SPEC-0005) | Proposed |
