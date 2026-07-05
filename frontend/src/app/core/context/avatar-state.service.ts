@@ -1,39 +1,78 @@
-import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable, signal } from '@angular/core';
 
 /**
- * Shared avatar state (SPEC-0006 BR3): the beneficiary photo is served by
- * `GET /api/beneficiaries/{id}/photo` (200 bytes / 404 = no photo), reached through each
- * beneficiary's `avatarUrl`. When a photo is uploaded or removed anywhere in the app, every place
- * the avatar appears (Home card, Perfil header, the Alterar Foto screen) must reflect it without a
- * new login. This service is that single source of truth: it holds a per-beneficiary override on
- * top of the URL the backend last reported, so consumers re-render immediately.
+ * Shared avatar state (SPEC-0006 BR3). The beneficiary photo is served by
+ * `GET /api/beneficiaries/{id}/photo` under `/api/**` with a mandatory Bearer token, so it CANNOT
+ * be loaded via a plain `<img src>` (the OIDC interceptor only signs XHR/fetch, not `<img>`
+ * requests). This service blob-fetches the photo through HttpClient (the interceptor injects the
+ * token), turns it into an object URL and exposes it as a signal — so every place the avatar
+ * appears (Home card, Perfil header, Alterar Foto) renders the same authenticated bytes and updates
+ * without a new login.
  *
- * - no override for an id → the caller's `fallback` (the backend `avatarUrl`) is used;
- * - after an upload → the photo endpoint with a cache-buster, so the `<img>` reloads the new bytes;
- * - after a removal → `null`, forcing the placeholder without hitting the (now 404) endpoint.
+ * - `load` fetches the photo blob; 404 (no photo) → null → placeholder.
+ * - `setFromBlob` reuses the bytes we already hold after an upload (no extra round-trip).
+ * - `remove` forces the placeholder.
+ * - object URLs are revoked whenever the entry for a beneficiary is replaced, so repeated photo
+ *   changes never leak.
  */
 @Injectable({ providedIn: 'root' })
 export class AvatarStateService {
-  private readonly overrides = signal<Record<string, string | null>>({});
+  private readonly http = inject(HttpClient);
 
-  /** The avatar URL to render for a beneficiary: a local override (upload/removal) wins over the
-   * backend fallback; when neither is known the placeholder is used (null). */
-  resolve(beneficiaryId: string | undefined, fallback: string | null): string | null {
+  /** Per-beneficiary object URL: a string when a photo is loaded, null when there is none. */
+  private readonly urls = signal<Record<string, string | null>>({});
+
+  /** The object URL to render for a beneficiary, or null for the placeholder. */
+  avatarUrl(beneficiaryId: string | undefined): string | null {
     if (!beneficiaryId) {
-      return fallback;
+      return null;
     }
-    const map = this.overrides();
-    return beneficiaryId in map ? map[beneficiaryId] : fallback;
+    const map = this.urls();
+    return beneficiaryId in map ? map[beneficiaryId] : null;
   }
 
-  /** Records a fresh photo for the beneficiary (BR3): cache-busted so every bound `<img>` reloads. */
-  onPhotoChanged(beneficiaryId: string): void {
-    const url = `/api/beneficiaries/${beneficiaryId}/photo?v=${Date.now()}`;
-    this.overrides.update((map) => ({ ...map, [beneficiaryId]: url }));
+  /** Blob-fetches the beneficiary's photo (Bearer added by the interceptor); 404 → placeholder. */
+  load(beneficiaryId: string): void {
+    this.http.get(`/api/beneficiaries/${beneficiaryId}/photo`, { responseType: 'blob' }).subscribe({
+      next: (blob) => this.setFromBlob(beneficiaryId, blob),
+      error: () => this.setNull(beneficiaryId),
+    });
   }
 
-  /** Records the removal (BR3): the placeholder shows everywhere immediately. */
-  onPhotoRemoved(beneficiaryId: string): void {
-    this.overrides.update((map) => ({ ...map, [beneficiaryId]: null }));
+  /** Publishes a photo we already hold (the just-uploaded/cropped blob) — no extra fetch (BR3). */
+  setFromBlob(beneficiaryId: string, blob: Blob): void {
+    const url = this.createObjectUrl(blob);
+    this.revoke(beneficiaryId);
+    this.urls.update((map) => ({ ...map, [beneficiaryId]: url }));
+  }
+
+  /** Records a removal (BR3): the placeholder shows everywhere immediately. */
+  remove(beneficiaryId: string): void {
+    this.setNull(beneficiaryId);
+  }
+
+  private setNull(beneficiaryId: string): void {
+    this.revoke(beneficiaryId);
+    this.urls.update((map) => ({ ...map, [beneficiaryId]: null }));
+  }
+
+  private revoke(beneficiaryId: string): void {
+    const existing = this.urls()[beneficiaryId];
+    if (existing) {
+      try {
+        URL.revokeObjectURL(existing);
+      } catch {
+        // environment (jsdom) without object-URL support — nothing to revoke
+      }
+    }
+  }
+
+  private createObjectUrl(blob: Blob): string | null {
+    try {
+      return URL.createObjectURL(blob);
+    } catch {
+      return null;
+    }
   }
 }

@@ -39,6 +39,8 @@ describe('PerfilMenu (SPEC-0006 BR1/BR9/BR10)', () => {
 
   beforeEach(async () => {
     auth.logout.mockClear();
+    URL.createObjectURL = vi.fn(() => 'blob:mock');
+    URL.revokeObjectURL = vi.fn();
     await TestBed.configureTestingModule({
       imports: [PerfilMenu],
       providers: [
@@ -103,7 +105,7 @@ describe('PerfilMenu (SPEC-0006 BR1/BR9/BR10)', () => {
   it('reflects an avatar change from the shared state without reload (BR3)', async () => {
     const fixture = await create();
     expect(fixture.componentInstance.avatarUrl()).toBeNull();
-    TestBed.inject(AvatarStateService).onPhotoChanged('maria-id');
-    expect(fixture.componentInstance.avatarUrl()).toMatch(/^\/api\/beneficiaries\/maria-id\/photo\?v=\d+$/);
+    TestBed.inject(AvatarStateService).setFromBlob('maria-id', new Blob(['x']));
+    expect(fixture.componentInstance.avatarUrl()).toBe('blob:mock');
   });
 });

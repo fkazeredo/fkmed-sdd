@@ -4,15 +4,12 @@ import { shareReplay, tap } from 'rxjs/operators';
 import { LegalApi, LegalDocumentsCurrent, LegalDocumentType } from './legal.api';
 
 /**
- * Shared legal-documents state (SPEC-0006 BR8). Both the interception guard and the legal pages
- * read the single cached `current` snapshot. The snapshot is loaded once per session (the guard's
- * first navigation triggers it) and mutated in place as the user accepts a version, so
- * `hasPending()` flips to false the moment acceptance succeeds and normal navigation resumes.
- *
- * NOTE (contract): the frozen `GET /api/legal-documents/current` summary lists only
- * `{version, publishedAt, acceptedByMe}` per document, but BR8 requires the pages to render the
- * current *text*; `LegalDocument.body` is therefore optional and rendered when the server provides
- * it. Flagged to the architect as a contract point to re-sync against the real OpenAPI snapshot.
+ * Shared legal-documents state (SPEC-0006 BR8). The interception guard and the acceptance screen
+ * read the single cached `current` snapshot (version + publication date + my acceptance state, no
+ * body). The snapshot is loaded once per session (the guard's first navigation triggers it) and
+ * mutated in place as the user accepts a version, so `hasPending()` flips to false the moment
+ * acceptance succeeds and normal navigation resumes. The document *text* is fetched separately from
+ * `GET /api/legal-documents/{type}` (LegalApi.getDocument) by whoever renders it.
  */
 @Injectable({ providedIn: 'root' })
 export class LegalDocumentsService {

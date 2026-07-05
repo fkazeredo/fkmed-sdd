@@ -114,6 +114,9 @@
               {{ 'perfil.cadastro.validacao.telefone' | translate }}
             </p>
           }
+          @if (errorField() === 'landline') {
+            <p class="mt-1 text-sm text-red-600" data-testid="server-error-landline">{{ errorKey() | translate }}</p>
+          }
         </div>
 
         <div>

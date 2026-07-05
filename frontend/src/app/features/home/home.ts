@@ -96,15 +96,10 @@ export class Home implements OnInit, OnDestroy {
   readonly cardLoading = signal(true);
   readonly cardError = signal(false);
   readonly summary = signal<BeneficiarySummary | null>(null);
-  readonly avatarBroken = signal(false);
 
-  // SPEC-0006 BR3: the avatar reflects the shared avatar state, so a photo changed in the Perfil
-  // area shows here without a new login; it falls back to the backend avatarUrl otherwise.
-  readonly avatarUrl = computed(() => {
-    const id = this.context.active()?.beneficiaryId;
-    const fallback = this.summary()?.avatarUrl ?? null;
-    return id ? this.avatar.resolve(id, fallback) : fallback;
-  });
+  // SPEC-0006 BR3: the avatar reflects the shared avatar state (a Bearer-authenticated blob), so a
+  // photo changed in the Perfil area shows here without a new login; null → the initial placeholder.
+  readonly avatarUrl = computed(() => this.avatar.avatarUrl(this.context.active()?.beneficiaryId));
 
   // Content (BR6/BR7/BR8).
   private readonly banners = signal<HomeBanner[]>([]);
@@ -148,11 +143,14 @@ export class Home implements OnInit, OnDestroy {
   loadSummary(beneficiaryId: string): void {
     this.cardLoading.set(true);
     this.cardError.set(false);
-    this.avatarBroken.set(false);
     this.beneficiaryApi.getBeneficiary(beneficiaryId).subscribe({
       next: (response) => {
         this.summary.set(response);
         this.cardLoading.set(false);
+        // SPEC-0006 BR3: blob-fetch the avatar only when the backend reports one (avoids a 404).
+        if (response.avatarUrl) {
+          this.avatar.load(beneficiaryId);
+        }
       },
       error: () => {
         this.cardError.set(true);
@@ -193,11 +191,6 @@ export class Home implements OnInit, OnDestroy {
 
   onAvatarClick(): void {
     this.dialogMessageKey.set('home.cartao.avatarEmBreve');
-  }
-
-  /** The photo endpoint 404s when there is no photo — fall back to the initial (SPEC-0006 BR3). */
-  onAvatarImageError(): void {
-    this.avatarBroken.set(true);
   }
 
   onShortcutClick(shortcut: QuickAccessShortcut): void {
