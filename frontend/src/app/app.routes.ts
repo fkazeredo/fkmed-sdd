@@ -47,6 +47,13 @@ export const routes: Routes = [
         path: 'meu-plano',
         loadComponent: () => import('./features/my-plan/my-plan').then((m) => m.MyPlan),
       },
+      // SPEC-0007 (Phase 2): the Digital Card screen — reachable via the shell nav
+      // (nav-carteirinha); the Home "Acesso Rápido" shortcut for it stays disabled/"em breve"
+      // for now (SPEC-0005 phased-delivery note is Home's own scope, not touched here).
+      {
+        path: 'carteirinha',
+        loadComponent: () => import('./features/card/digital-card').then((m) => m.DigitalCard),
+      },
       // Segurança (SPEC-0002 AC-8): reachable via a direct route for now — the full Perfil menu
       // is SPEC-0006.
       {
