@@ -25,3 +25,4 @@ old one.
 | [0008](DL-0008-phase2-notification-centralization-scope.md) | 2026-07-05 | 2 / notifications | 0004, 0006 | Medium | Cheap | Phase-2 notification centralization scope |
 | [0009](DL-0009-digital-card-pdf-layout.md) | 2026-07-05 | 2 / digital-card | 0007 | High | Cheap | Digital-card PDF layout (OQ1) |
 | [0010](DL-0010-digital-card-plan-category-value.md) | 2026-07-05 | 2 / digital-card | 0007 | Medium | Cheap | Digital-card `planCategory` column and seeded value |
+| [0011](DL-0011-profile-and-legal-documents-design.md) | 2026-07-05 | 2 / profile | 0006 | Medium | Cheap | Profile & legal-document design (module placement, code-space mapping, current-version source, UF no-cache) |
