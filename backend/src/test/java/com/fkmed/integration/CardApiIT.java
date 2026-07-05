@@ -7,7 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fkmed.infra.security.TokenClaims;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,9 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 /**
  * SPEC-0007 (Digital Card): card + data sheet, PDF download, family-scope reuse (404), the BR10
- * inactive state (409) and the BR7 dependent-view audit entry.
+ * inactive state (409) and the BR7 dependent-view audit entry. The caller's card is resolved
+ * server-side from the authenticated account (ADR-0009): MARIA is seeded by Flyway V3, PEDRO's
+ * account is a disposable fixture created here.
  */
 class CardApiIT extends AbstractIntegrationTest {
 
@@ -27,6 +29,7 @@ class CardApiIT extends AbstractIntegrationTest {
   private static final String MARIA_ACCOUNT_ID = "d4e5f6a7-8b9c-4d0e-9f1a-2b3c4d5e6f70";
   private static final String PEDRO_CARD = "001234575";
   private static final String PEDRO_ID = "9c8b7a6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
+  private static final String PEDRO_EMAIL = PedroAccountFixture.PEDRO_EMAIL;
   private static final String PLAN_ID = "b7e8c9d0-5a4f-4c3e-9b2a-1f0e8d7c6b5a";
   private static final String PLAN_NAME = "PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP";
 
@@ -55,6 +58,14 @@ class CardApiIT extends AbstractIntegrationTest {
         PLAN_ID,
         INACTIVE_CARD,
         MARIA_ID);
+    // PEDRO (dependent) has no Flyway-seeded account; a disposable one lets server-side card
+    // resolution (ADR-0009) yield PEDRO_CARD.
+    PedroAccountFixture.seed(jdbc);
+  }
+
+  @AfterEach
+  void removePedroAccount() {
+    PedroAccountFixture.remove(jdbc);
   }
 
   @Test
@@ -65,7 +76,7 @@ class CardApiIT extends AbstractIntegrationTest {
   @Test
   void card_asMaria_ofHerself_returnsAc1Values() throws Exception {
     mockMvc
-        .perform(get("/api/cards/{id}", MARIA_ID).with(cardOf(MARIA_CARD)))
+        .perform(get("/api/cards/{id}", MARIA_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.fullName").value("MARIA CLARA SOUZA LIMA"))
         .andExpect(jsonPath("$.cardNumber").value(MARIA_CARD))
@@ -82,7 +93,7 @@ class CardApiIT extends AbstractIntegrationTest {
     long before = countAuditEvents();
 
     mockMvc
-        .perform(get("/api/cards/{id}", PEDRO_ID).with(cardOf(MARIA_CARD, MARIA_EMAIL)))
+        .perform(get("/api/cards/{id}", PEDRO_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.fullName").value("PEDRO SOUZA LIMA"))
         .andExpect(jsonPath("$.cardNumber").value(PEDRO_CARD))
@@ -102,7 +113,7 @@ class CardApiIT extends AbstractIntegrationTest {
     long before = countAuditEvents();
 
     mockMvc
-        .perform(get("/api/cards/{id}", MARIA_ID).with(cardOf(MARIA_CARD, MARIA_EMAIL)))
+        .perform(get("/api/cards/{id}", MARIA_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isOk());
 
     assertThat(countAuditEvents()).isEqualTo(before);
@@ -111,7 +122,7 @@ class CardApiIT extends AbstractIntegrationTest {
   @Test
   void card_asPedro_ofMaria_returns404WithoutRevealingExistence() throws Exception {
     mockMvc
-        .perform(get("/api/cards/{id}", MARIA_ID).with(cardOf(PEDRO_CARD)))
+        .perform(get("/api/cards/{id}", MARIA_ID).with(authAs(PEDRO_EMAIL)))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("context.beneficiary-not-accessible"));
   }
@@ -120,7 +131,8 @@ class CardApiIT extends AbstractIntegrationTest {
   void card_ofUnknownId_returns404() throws Exception {
     mockMvc
         .perform(
-            get("/api/cards/{id}", "00000000-0000-0000-0000-000000000000").with(cardOf(MARIA_CARD)))
+            get("/api/cards/{id}", "00000000-0000-0000-0000-000000000000")
+                .with(authAs(MARIA_EMAIL)))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("context.beneficiary-not-accessible"));
   }
@@ -128,7 +140,7 @@ class CardApiIT extends AbstractIntegrationTest {
   @Test
   void card_ofInactiveBeneficiary_returns409CardUnavailable() throws Exception {
     mockMvc
-        .perform(get("/api/cards/{id}", INACTIVE_ID).with(cardOf(MARIA_CARD)))
+        .perform(get("/api/cards/{id}", INACTIVE_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.code").value("card.unavailable"))
         .andExpect(
@@ -140,7 +152,7 @@ class CardApiIT extends AbstractIntegrationTest {
   void cardPdf_asMaria_ofHerself_returnsAPdfDocument() throws Exception {
     byte[] pdf =
         mockMvc
-            .perform(get("/api/cards/{id}/pdf", MARIA_ID).with(cardOf(MARIA_CARD)))
+            .perform(get("/api/cards/{id}/pdf", MARIA_ID).with(authAs(MARIA_EMAIL)))
             .andExpect(status().isOk())
             .andExpect(header().string("Content-Type", "application/pdf"))
             .andExpect(
@@ -157,7 +169,7 @@ class CardApiIT extends AbstractIntegrationTest {
   @Test
   void cardPdf_asPedro_ofMaria_returns404() throws Exception {
     mockMvc
-        .perform(get("/api/cards/{id}/pdf", MARIA_ID).with(cardOf(PEDRO_CARD)))
+        .perform(get("/api/cards/{id}/pdf", MARIA_ID).with(authAs(PEDRO_EMAIL)))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("context.beneficiary-not-accessible"));
   }
@@ -165,7 +177,7 @@ class CardApiIT extends AbstractIntegrationTest {
   @Test
   void cardPdf_ofInactiveBeneficiary_returns409() throws Exception {
     mockMvc
-        .perform(get("/api/cards/{id}/pdf", INACTIVE_ID).with(cardOf(MARIA_CARD)))
+        .perform(get("/api/cards/{id}/pdf", INACTIVE_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.code").value("card.unavailable"));
   }
@@ -175,12 +187,7 @@ class CardApiIT extends AbstractIntegrationTest {
         "select count(*) from audit_event where event_type = 'card.dependent-viewed'", Long.class);
   }
 
-  private static RequestPostProcessor cardOf(String cardNumber) {
-    return jwt().jwt(jwt -> jwt.claim(TokenClaims.BENEFICIARY_CARD, cardNumber));
-  }
-
-  private static RequestPostProcessor cardOf(String cardNumber, String subjectEmail) {
-    return jwt()
-        .jwt(jwt -> jwt.subject(subjectEmail).claim(TokenClaims.BENEFICIARY_CARD, cardNumber));
+  private static RequestPostProcessor authAs(String email) {
+    return jwt().jwt(jwt -> jwt.subject(email));
   }
 }
