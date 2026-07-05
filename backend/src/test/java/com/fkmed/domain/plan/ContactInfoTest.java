@@ -2,7 +2,9 @@ package com.fkmed.domain.plan;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -57,6 +59,35 @@ class ContactInfoTest {
   void invalidContactEmail_isRejected() {
     assertThatThrownBy(() -> base().apply(onlyEmail("not-an-email"), UF))
         .isInstanceOf(ContactEmailInvalidException.class);
+  }
+
+  @Test
+  void multiLabelDomainEmail_isAccepted() {
+    // Semantics preserved by the linear pattern: a domain with several dot-separated labels stays
+    // valid (regression guard for the ReDoS rewrite of the EMAIL pattern).
+    ContactInfo updated = base().apply(onlyEmail("maria@correio.fkmed.com.br"), UF);
+    assertThat(updated.getContactEmail()).isEqualTo("maria@correio.fkmed.com.br");
+  }
+
+  @Test
+  void emailWithoutDotInDomain_isRejected() {
+    // Semantics preserved: an at without a dotted domain is still invalid.
+    assertThatThrownBy(() -> base().apply(onlyEmail("maria@localhost"), UF))
+        .isInstanceOf(ContactEmailInvalidException.class);
+  }
+
+  @Test
+  void adversarialEmail_isRejectedWithoutCatastrophicBacktracking() {
+    // Regression for the CodeQL HIGH "polynomial regular expression used on uncontrolled data": the
+    // previous ambiguous pattern `[^@\s]+\.[^@\s]+` backtracked in O(n^2) on inputs like
+    // `a@` + `.`×n + `@`. The linear pattern (plus the RFC length bound) must reject this crafted
+    // input in bounded time instead of hanging. This test times out (fails) on the old code.
+    String adversarial = "a@" + ".".repeat(40_000) + "@";
+    assertTimeoutPreemptively(
+        Duration.ofSeconds(2),
+        () ->
+            assertThatThrownBy(() -> base().apply(onlyEmail(adversarial), UF))
+                .isInstanceOf(ContactEmailInvalidException.class));
   }
 
   @Test

@@ -91,7 +91,11 @@ test('Sair pelo menu Perfil: confirmação encerra a sessão e exige novo login 
 
   await page.getByTestId('nav-perfil').click();
   await page.getByTestId('perfil-item-sair').click();
-  await expect(page.getByTestId('perfil-sair-dialog')).toBeVisible();
+  // The confirmation is a PrimeNG p-dialog whose host element (data-testid="perfil-sair-dialog")
+  // carries no visible box — the dialog content renders in the overlay. Assert the dialog's actual
+  // content (its message + confirm action), which is what appears on screen (BR9).
+  await expect(page.getByTestId('perfil-sair-mensagem')).toBeVisible();
+  await expect(page.getByTestId('perfil-sair-confirmar')).toBeVisible();
   await page.getByTestId('perfil-sair-confirmar').click();
 
   // Session ended: reaching an internal screen requires logging in again.

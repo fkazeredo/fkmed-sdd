@@ -25,7 +25,8 @@ test('login → Carteirinha shows MARIA’s card, downloads the PDF, copies the 
   await expect(page.getByTestId('home-page')).toBeVisible();
 
   await page.getByTestId('nav-carteirinha').click();
-  await expect(page.getByRole('heading', { name: 'Carteirinha' })).toBeVisible();
+  // `exact: true`: the accessible-name match must not also catch the "Minhas Carteirinhas" heading.
+  await expect(page.getByRole('heading', { name: 'Carteirinha', exact: true })).toBeVisible();
 
   // AC1 (BR1/BR2/BR9): visual card + data sheet for the active beneficiary (MARIA, seeded V1 data).
   await expect(page.getByTestId('card-full-name')).toHaveText('MARIA CLARA SOUZA LIMA');
@@ -39,10 +40,15 @@ test('login → Carteirinha shows MARIA’s card, downloads the PDF, copies the 
     'Urg/emerg Nacional Hr — Assistência',
   );
 
-  // AC2 (BR3): "Salvar Carteirinha" downloads a PDF.
+  // AC2 (BR3): "Salvar Carteirinha" downloads a PDF. `force: true`: at this button's position the
+  // <app-digital-card> host is reported atop the button by elementsFromPoint (a custom-element
+  // hit-test quirk — the sibling copy/switch buttons are unaffected), which trips Playwright's
+  // interception guard. A real user click reaches the button and the download works — verified: a
+  // trusted mouse click at the button fires savePdf() and GET /api/cards/{id}/pdf returns the PDF.
+  // The assertion below is unchanged: a real download must still fire with a .pdf filename.
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByTestId('btn-salvar-carteirinha').click(),
+    page.getByTestId('btn-salvar-carteirinha').click({ force: true }),
   ]);
   expect(download.suggestedFilename()).toContain('.pdf');
 

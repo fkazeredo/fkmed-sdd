@@ -64,6 +64,39 @@ describe('AlterarCadastro (SPEC-0006 BR4/BR5/BR6/BR7)', () => {
     expect(el.querySelector('[data-testid="cadastro-contrato-hint"]')?.textContent?.trim().length).toBeGreaterThan(0);
   });
 
+  it('coerces null optional contact fields to empty strings so the validators do not throw (BR5)', async () => {
+    // Regression (E2E perfil 30/56): the backend returns `null` for unset optional contact/address
+    // fields (ProfileView returns null per field). Before the boundary coercion, `form.landline`
+    // became null and `landlineValid` did `null.trim()` → TypeError during change detection, which
+    // broke `formValid`, the submit guard and the disabled binding. `detectChanges()` here throws
+    // on the old code; with the fix the nulls become '' and the form stays usable.
+    const fixture = TestBed.createComponent(AlterarCadastro);
+    await fixture.whenStable();
+    http.expectOne('/api/beneficiaries/maria-id/profile').flush({
+      ...PROFILE,
+      landline: null,
+      cep: null,
+      street: null,
+      number: null,
+      complement: null,
+      neighborhood: null,
+      city: null,
+      uf: null,
+    } as unknown as BeneficiaryProfile);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    expect(component.form.landline).toBe('');
+    expect(component.form.uf).toBe('');
+    expect(() => component.formValid).not.toThrow();
+    // The mandatory fields are still set, so the form is valid despite the empty optionals.
+    expect(component.formValid).toBe(true);
+    // Emptying the mandatory mobile still surfaces as invalid (the error-mobile path, E2E case 56).
+    component.form.mobile = '';
+    expect(component.mobileValid).toBe(false);
+  });
+
   it('blocks saving with an invalid mobile format (AC1)', async () => {
     const { component } = await loaded();
     component.form.mobile = '21999991234';
