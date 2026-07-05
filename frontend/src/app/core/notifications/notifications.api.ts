@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 /**
  * A single notification (SPEC-0004 BR1): title, short text, timestamp, read/unread state
@@ -26,25 +27,32 @@ export interface NotificationListResponse {
 }
 
 /**
- * A notification-event-type catalog entry (SPEC-0004 BR5/BR7): registry data (code +
+ * A notification-event-type catalog entry (SPEC-0004 BR5/BR7): registry data (`type` code +
  * description) seeded by migration, the account's current e-mail opt-out and whether the type
  * is mandatory (security/account events — MUST NOT be disableable).
  */
 export interface NotificationPreference {
-  code: string;
+  type: string;
   description: string;
   emailOptOut: boolean;
   mandatory: boolean;
 }
 
+/**
+ * GET/PUT /api/notifications/preferences response envelope (real backend contract, OpenAPI
+ * snapshot): the catalog is wrapped in `{ preferences: [...] }`, never a bare array.
+ */
+export interface NotificationPreferencesResponse {
+  preferences: NotificationPreference[];
+}
+
 const DEFAULT_PAGE_SIZE = 20;
 
 /**
- * Contract of the notification endpoints (SPEC-0004, frozen by the architect's slice plan — no
- * committed OpenAPI snapshot yet since the backend module isn't built on this branch; the PUT
- * preferences body shape below — single `{code, emailOptOut}` — is this dev's minimal reading
- * of "PUT /api/notifications/preferences" and is flagged for the architect to confirm/re-sync
- * once the real backend contract lands).
+ * Contract of the notification endpoints (SPEC-0004), matching the real backend OpenAPI
+ * snapshot. Preferences use an envelope (`{ preferences: [...] }`) and the event type key is
+ * `type`; PUT is a batch that returns the updated catalog (200), so the service unwraps the
+ * envelope and the caller reflects the returned catalog rather than assuming void.
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationsApi {
@@ -65,10 +73,19 @@ export class NotificationsApi {
   }
 
   getPreferences(): Observable<NotificationPreference[]> {
-    return this.http.get<NotificationPreference[]>('/api/notifications/preferences');
+    return this.http
+      .get<NotificationPreferencesResponse>('/api/notifications/preferences')
+      .pipe(map((response) => response.preferences));
   }
 
-  updatePreference(code: string, emailOptOut: boolean): Observable<void> {
-    return this.http.put<void>('/api/notifications/preferences', { code, emailOptOut });
+  /** Toggles a single event type's e-mail opt-out. The backend accepts a batch and returns the
+   * full updated catalog (200) — a one-element batch serves the per-type toggle UX, and the
+   * returned catalog is what the caller renders. */
+  updatePreference(type: string, emailOptOut: boolean): Observable<NotificationPreference[]> {
+    return this.http
+      .put<NotificationPreferencesResponse>('/api/notifications/preferences', {
+        preferences: [{ type, emailOptOut }],
+      })
+      .pipe(map((response) => response.preferences));
   }
 }

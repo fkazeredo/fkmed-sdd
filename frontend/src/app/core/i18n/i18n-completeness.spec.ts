@@ -311,10 +311,12 @@ describe('i18n completeness (pt-BR)', () => {
     // defensive mandatory-refusal error banner.
     const notificationPreferences = TestBed.createComponent(NotificationPreferences);
     await notificationPreferences.whenStable();
-    http.expectOne({ url: '/api/notifications/preferences', method: 'GET' }).flush([
-      { code: 'reimbursement.paid', description: 'Reembolso pago', emailOptOut: false, mandatory: false },
-      { code: 'auth.password-changed', description: 'Senha alterada', emailOptOut: false, mandatory: true },
-    ]);
+    http.expectOne({ url: '/api/notifications/preferences', method: 'GET' }).flush({
+      preferences: [
+        { type: 'reimbursement.paid', description: 'Reembolso pago', emailOptOut: false, mandatory: false },
+        { type: 'auth.password-changed', description: 'Senha alterada', emailOptOut: false, mandatory: true },
+      ],
+    });
     await notificationPreferences.whenStable();
     notificationPreferences.detectChanges();
     (

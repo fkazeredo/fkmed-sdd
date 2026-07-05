@@ -6,20 +6,22 @@ import { NotificationPreference } from '../../core/notifications/notifications.a
 import { NotificationPreferences } from './notification-preferences';
 
 const OPTIONAL: NotificationPreference = {
-  code: 'reimbursement.paid',
+  type: 'reimbursement.paid',
   description: 'Reembolso pago',
   emailOptOut: false,
   mandatory: false,
 };
 const MANDATORY: NotificationPreference = {
-  code: 'auth.password-changed',
+  type: 'auth.password-changed',
   description: 'Senha alterada',
   emailOptOut: false,
   mandatory: true,
 };
 
 /** SPEC-0004 BR7: preferences screen — e-mail opt-out per event type; mandatory types render
- * locked and reject the 422 defensively even though the UI never lets the user attempt it. */
+ * locked and reject the 422 defensively even though the UI never lets the user attempt it.
+ * Real backend contract (OpenAPI snapshot): GET/PUT return the catalog wrapped in
+ * `{ preferences: [...] }` with a `type` key; PUT is a batch that returns the updated catalog. */
 describe('NotificationPreferences', () => {
   let http: HttpTestingController;
 
@@ -40,13 +42,13 @@ describe('NotificationPreferences', () => {
   }
 
   function flushCatalog(catalog: NotificationPreference[]): void {
-    http.expectOne({ url: '/api/notifications/preferences', method: 'GET' }).flush(catalog);
+    http.expectOne({ url: '/api/notifications/preferences', method: 'GET' }).flush({ preferences: catalog });
   }
 
   it('shows the loading state before the catalog resolves', async () => {
     const fixture = await setup();
     expect(fixture.nativeElement.textContent).toContain('Carregando…');
-    http.expectOne({ url: '/api/notifications/preferences', method: 'GET' }).flush([]);
+    http.expectOne({ url: '/api/notifications/preferences', method: 'GET' }).flush({ preferences: [] });
   });
 
   it('shows the empty state when the catalog is empty', async () => {
@@ -94,7 +96,7 @@ describe('NotificationPreferences', () => {
     // No PUT is ever sent — the click is a no-op on a disabled/mandatory row.
   });
 
-  it('toggling an optional type calls PUT and flips the label on success', async () => {
+  it('toggling an optional type sends the batch PUT and reflects the returned catalog (label flips)', async () => {
     const fixture = await setup();
     flushCatalog([OPTIONAL]);
     await fixture.whenStable();
@@ -108,8 +110,9 @@ describe('NotificationPreferences', () => {
 
     toggle.click();
     const req = http.expectOne({ url: '/api/notifications/preferences', method: 'PUT' });
-    expect(req.request.body).toEqual({ code: 'reimbursement.paid', emailOptOut: true });
-    req.flush(null);
+    expect(req.request.body).toEqual({ preferences: [{ type: 'reimbursement.paid', emailOptOut: true }] });
+    // Real backend returns 200 + the updated catalog; the screen renders it verbatim.
+    req.flush({ preferences: [{ ...OPTIONAL, emailOptOut: true }] });
     await fixture.whenStable();
     fixture.detectChanges();
 
