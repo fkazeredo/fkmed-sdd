@@ -1,0 +1,94 @@
+<section class="mx-auto max-w-2xl p-4" aria-labelledby="detalhe-title" data-testid="detalhe-page">
+  <h1 id="detalhe-title" class="sr-only">{{ 'rede.detalhe.title' | translate }}</h1>
+
+  @if (loading()) {
+    <p class="text-slate-500" role="status">{{ 'common.loading' | translate }}</p>
+  } @else if (unavailable()) {
+    <div class="rounded-lg bg-amber-50 p-4 text-amber-800" role="alert" data-testid="detalhe-indisponivel">
+      {{ 'rede.detalhe.indisponivel' | translate }}
+    </div>
+  } @else if (errorKey(); as key) {
+    <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert" data-testid="detalhe-erro">
+      {{ key | translate }}
+    </div>
+  } @else if (provider(); as p) {
+    <article class="rounded-xl bg-white p-5 shadow">
+      <p class="text-xl font-semibold text-teal-800" data-testid="detalhe-nome">{{ p.name }}</p>
+      <p class="text-sm text-slate-600" data-testid="detalhe-servico">{{ p.serviceType }}</p>
+
+      <div class="mt-4">
+        <h2 class="mb-1 text-sm font-medium text-slate-500">{{ 'rede.detalhe.especialidades' | translate }}</h2>
+        <ul class="flex flex-wrap gap-1" data-testid="detalhe-especialidades">
+          @for (specialty of p.specialties; track specialty) {
+            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{{ specialty }}</li>
+          }
+        </ul>
+      </div>
+
+      <div class="mt-4">
+        <h2 class="mb-1 text-sm font-medium text-slate-500">{{ 'rede.detalhe.endereco' | translate }}</h2>
+        <p data-testid="detalhe-endereco">{{ fullAddress() }}</p>
+      </div>
+
+      <div class="mt-4">
+        <h2 class="mb-1 text-sm font-medium text-slate-500">{{ 'rede.detalhe.telefone' | translate }}</h2>
+        <a class="text-teal-700 underline" [href]="'tel:' + p.phone" data-testid="detalhe-telefone">{{ p.phone }}</a>
+      </div>
+
+      @if (p.seals.length > 0) {
+        <div class="mt-4">
+          <h2 class="mb-1 text-sm font-medium text-slate-500">{{ 'rede.detalhe.selos' | translate }}</h2>
+          <div class="flex flex-wrap gap-2">
+            @for (seal of p.seals; track seal.code) {
+              <div>
+                <button
+                  type="button"
+                  class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700"
+                  [attr.title]="seal.description"
+                  [attr.data-testid]="'detalhe-selo-' + seal.code"
+                  (click)="toggleSeal(seal.code)"
+                >
+                  {{ seal.name }}
+                </button>
+                @if (openSealCode() === seal.code) {
+                  <p
+                    class="mt-1 max-w-xs text-xs text-slate-500"
+                    [attr.data-testid]="'detalhe-selo-desc-' + seal.code"
+                  >
+                    {{ seal.description }}
+                  </p>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="mt-6 flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="flex items-center gap-2 rounded bg-teal-700 px-4 py-2 text-sm text-white"
+          data-testid="detalhe-tracar-rota"
+          (click)="tracarRota()"
+        >
+          <i class="pi pi-directions" aria-hidden="true"></i>
+          {{ 'rede.detalhe.tracarRota' | translate }}
+        </button>
+        <button
+          type="button"
+          class="flex items-center gap-2 rounded border border-teal-700 px-4 py-2 text-sm text-teal-700"
+          data-testid="detalhe-copiar-endereco"
+          (click)="copiarEndereco()"
+        >
+          <i class="pi pi-copy" aria-hidden="true"></i>
+          {{ 'rede.detalhe.copiarEndereco' | translate }}
+        </button>
+        @if (addressCopied()) {
+          <span class="self-center text-xs font-medium text-teal-700" role="status" data-testid="detalhe-endereco-copiado">
+            {{ 'rede.detalhe.enderecoCopiado' | translate }}
+          </span>
+        }
+      </div>
+    </article>
+  }
+</section>

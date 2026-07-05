@@ -22,6 +22,14 @@ import { AlterarFoto } from '../../features/perfil/alterar-foto';
 import { AlterarCadastro } from '../../features/perfil/alterar-cadastro';
 import { LegalDocumentPage } from '../../features/perfil/legal-document';
 import { LegalAcceptance } from '../../features/perfil/legal-acceptance';
+import { RedeHub } from '../../features/rede/rede-hub';
+import { NetworkSearch } from '../../features/rede/network-search';
+import { NetworkServiceType } from '../../features/rede/network-service-type';
+import { NetworkSpecialty } from '../../features/rede/network-specialty';
+import { NetworkResults } from '../../features/rede/network-results';
+import { NetworkProviderDetail } from '../../features/rede/network-provider-detail';
+import { NetworkFunnelState } from '../../features/rede/network-funnel-state.service';
+import { CONSULTORIOS_SERVICE_TYPE_CODE } from '../../features/rede/network.api';
 import { APP_VERSION } from '../config/app-version';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
@@ -55,6 +63,12 @@ describe('i18n completeness (pt-BR)', () => {
         AlterarCadastro,
         LegalDocumentPage,
         LegalAcceptance,
+        RedeHub,
+        NetworkSearch,
+        NetworkServiceType,
+        NetworkSpecialty,
+        NetworkResults,
+        NetworkProviderDetail,
       ],
       providers: [
         provideRouter([]),
@@ -458,6 +472,146 @@ describe('i18n completeness (pt-BR)', () => {
     expect(
       Array.from(handler.missing),
       'SPEC-0006 Perfil UI keys missing from the pt-BR bundle',
+    ).toHaveLength(0);
+  });
+
+  it('renders every SPEC-0008 Rede screen without a missing translation', () => {
+    const handler = TestBed.inject(MissingTranslationHandler) as ReportMissingTranslationHandler;
+    const http = TestBed.inject(HttpTestingController);
+    const funnel = TestBed.inject(NetworkFunnelState);
+    sessionStorage.removeItem('fkmed.networkFunnel');
+    funnel.clear();
+
+    // Rede hub: 4 cards, one enabled, three "em breve" — no HTTP calls.
+    const hub = TestBed.createComponent(RedeHub);
+    hub.detectChanges();
+
+    // NetworkSearch: the locality funnel (State → Municipality → Neighborhood) and the name
+    // search, including the optional municipality filter (only offered for a single-state
+    // coverage) and the shared searchable-list's empty state.
+    const search = TestBed.createComponent(NetworkSearch);
+    search.detectChanges();
+    http.expectOne('/api/network/states').flush({ items: [{ code: 'RJ', name: 'Rio de Janeiro' }] });
+    search.detectChanges();
+
+    (search.nativeElement.querySelector('[data-testid="funil-uf"]') as HTMLElement).click();
+    search.detectChanges();
+    (search.nativeElement.querySelector('[data-testid="option-item-RJ"]') as HTMLElement).click();
+    search.detectChanges();
+
+    (search.nativeElement.querySelector('[data-testid="funil-municipio"]') as HTMLElement).click();
+    search.detectChanges();
+    http
+      .expectOne((request) => request.url === '/api/network/municipalities')
+      .flush({ items: ['Rio de Janeiro', 'Niterói'] });
+    search.detectChanges();
+    const municipioInput = search.nativeElement.querySelector(
+      '[data-testid="funil-municipio-dialog"] [data-testid="option-search-input"]',
+    ) as HTMLInputElement;
+    municipioInput.value = 'zzz';
+    municipioInput.dispatchEvent(new Event('input'));
+    search.detectChanges();
+    http.expectOne((request) => request.url === '/api/network/municipalities').flush({ items: [] });
+    search.detectChanges();
+    municipioInput.value = '';
+    municipioInput.dispatchEvent(new Event('input'));
+    search.detectChanges();
+    http.expectOne((request) => request.url === '/api/network/municipalities').flush({ items: ['Rio de Janeiro'] });
+    search.detectChanges();
+    (search.nativeElement.querySelector('[data-testid="option-item-Rio de Janeiro"]') as HTMLElement).click();
+    search.detectChanges();
+
+    (search.nativeElement.querySelector('[data-testid="funil-bairro"]') as HTMLElement).click();
+    search.detectChanges();
+    http
+      .expectOne((request) => request.url === '/api/network/neighborhoods')
+      .flush({ items: ['Centro', 'Copacabana'] });
+    search.detectChanges();
+    (search.nativeElement.querySelector('[data-testid="funil-bairro-todos"]') as HTMLElement).click();
+    search.detectChanges();
+
+    // Name search's optional municipality filter (only one covered state → available).
+    (search.nativeElement.querySelector('[data-testid="nome-municipio-filtro"]') as HTMLElement)?.click();
+    search.detectChanges();
+    http
+      .expectOne((request) => request.url === '/api/network/municipalities')
+      .flush({ items: ['Rio de Janeiro'] });
+    search.detectChanges();
+    (search.nativeElement.querySelector('[data-testid="option-item-Rio de Janeiro"]') as HTMLElement)?.click();
+    search.detectChanges();
+
+    // NetworkServiceType: locality summary (BR11) + the registry list.
+    funnel.setUf('RJ', 'Rio de Janeiro');
+    funnel.setMunicipality('Rio de Janeiro');
+    funnel.setNeighborhood('Centro');
+    const serviceType = TestBed.createComponent(NetworkServiceType);
+    serviceType.detectChanges();
+    http.expectOne('/api/network/service-types').flush({
+      items: [{ code: CONSULTORIOS_SERVICE_TYPE_CODE, name: 'Consultórios–Clínicas–Terapias' }],
+    });
+    serviceType.detectChanges();
+
+    // NetworkSpecialty: reached only for CONSULTORIOS.
+    funnel.setServiceType(CONSULTORIOS_SERVICE_TYPE_CODE, 'Consultórios–Clínicas–Terapias');
+    const specialty = TestBed.createComponent(NetworkSpecialty);
+    specialty.detectChanges();
+    http.expectOne('/api/network/specialties').flush({ items: [{ code: 'CARDIOLOGIA', name: 'Cardiologia' }] });
+    specialty.detectChanges();
+
+    // NetworkResults: empty state (BR10, funnel mode) — dataReferencia renders alongside it.
+    funnel.setSpecialty('CARDIOLOGIA', 'Cardiologia');
+    const resultsEmpty = TestBed.createComponent(NetworkResults);
+    resultsEmpty.detectChanges();
+    http
+      .expectOne((request) => request.url === '/api/network/providers')
+      .flush({ referenceDate: '2026-07-04', items: [] });
+    resultsEmpty.detectChanges();
+
+    // NetworkResults: the 422 network.query-too-short mapped message.
+    const resultsError = TestBed.createComponent(NetworkResults);
+    resultsError.detectChanges();
+    http
+      .expectOne((request) => request.url === '/api/network/providers')
+      .flush({ code: 'network.query-too-short' }, { status: 422, statusText: 'Unprocessable Entity' });
+    resultsError.detectChanges();
+
+    // NetworkProviderDetail: full detail (seals, route/copy actions) + the unavailable state.
+    const detail = TestBed.createComponent(NetworkProviderDetail);
+    detail.detectChanges();
+    http
+      .expectOne((request) => request.url === '/api/network/providers/')
+      .flush({
+        id: 'p1',
+        name: 'Dr. João Cardiologista',
+        serviceType: 'Consultórios–Clínicas–Terapias',
+        specialties: ['Cardiologia'],
+        address: {
+          cep: '20000-000',
+          street: 'Rua das Flores',
+          number: '10',
+          complement: null,
+          neighborhood: 'Centro',
+          municipality: 'Rio de Janeiro',
+          uf: 'RJ',
+        },
+        phone: '(21) 99999-0000',
+        seals: [{ code: 'QUALI', name: 'Selo Qualidade', description: 'Excelente avaliação' }],
+      });
+    detail.detectChanges();
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    (detail.nativeElement.querySelector('[data-testid="detalhe-copiar-endereco"]') as HTMLElement).click();
+    detail.detectChanges();
+
+    const detailUnavailable = TestBed.createComponent(NetworkProviderDetail);
+    detailUnavailable.detectChanges();
+    http
+      .expectOne((request) => request.url === '/api/network/providers/')
+      .flush({ code: 'network.provider-unavailable' }, { status: 410, statusText: 'Gone' });
+    detailUnavailable.detectChanges();
+
+    expect(
+      Array.from(handler.missing),
+      'SPEC-0008 Rede UI keys missing from the pt-BR bundle',
     ).toHaveLength(0);
   });
 });

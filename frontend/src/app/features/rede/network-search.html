@@ -1,0 +1,172 @@
+<section class="mx-auto max-w-2xl p-4" aria-labelledby="network-search-title" data-testid="network-search-page">
+  <h1 id="network-search-title" class="mb-4 text-2xl font-semibold text-teal-800">
+    {{ 'rede.busca.title' | translate }}
+  </h1>
+
+  <!-- Name search (BR8) -->
+  <div class="mb-6 rounded-xl bg-white p-5 shadow" data-testid="nome-secao">
+    <h2 class="mb-3 text-lg font-medium text-teal-800">{{ 'rede.busca.nome.title' | translate }}</h2>
+    <label for="nome-input" class="mb-1 block text-sm text-slate-600">
+      {{ 'rede.busca.nome.label' | translate }}
+    </label>
+    <input
+      id="nome-input"
+      type="text"
+      class="mb-2 w-full rounded border border-slate-300 px-3 py-2"
+      data-testid="nome-input"
+      [(ngModel)]="nameQuery"
+      (keyup.enter)="buscarNome()"
+    />
+
+    @if (nomeMunicipioFiltroDisponivel()) {
+      <div class="mb-3">
+        <button
+          type="button"
+          class="rounded border border-slate-300 px-3 py-1 text-sm text-slate-700"
+          data-testid="nome-municipio-filtro"
+          (click)="openNomeMunicipioDialog()"
+        >
+          {{ nomeMunicipio() ?? ('rede.busca.nome.municipioFiltro' | translate) }}
+        </button>
+        @if (nomeMunicipio()) {
+          <button
+            type="button"
+            class="ml-2 text-sm text-slate-500 underline"
+            data-testid="nome-municipio-filtro-limpar"
+            (click)="clearNomeMunicipio()"
+          >
+            {{ 'rede.busca.nome.municipioFiltroLimpar' | translate }}
+          </button>
+        }
+      </div>
+    }
+
+    <button
+      type="button"
+      class="w-full rounded bg-teal-700 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+      data-testid="nome-buscar"
+      [disabled]="!nameSearchValid"
+      (click)="buscarNome()"
+    >
+      {{ 'rede.busca.nome.buscar' | translate }}
+    </button>
+  </div>
+
+  <!-- Locality funnel (BR1/BR2) -->
+  <div class="rounded-xl bg-white p-5 shadow" data-testid="funil-secao">
+    <h2 class="mb-3 text-lg font-medium text-teal-800">{{ 'rede.busca.funil.title' | translate }}</h2>
+
+    <label for="funil-uf" class="mb-1 block text-sm text-slate-600">{{ 'rede.busca.funil.estado' | translate }}</label>
+    <button
+      id="funil-uf"
+      type="button"
+      class="mb-3 w-full rounded border border-slate-300 px-3 py-2 text-left"
+      data-testid="funil-uf"
+      (click)="openUfDialog()"
+    >
+      {{ funnel.selection().ufName ?? ('rede.busca.funil.selecionar' | translate) }}
+    </button>
+
+    <label for="funil-municipio" class="mb-1 block text-sm text-slate-600">
+      {{ 'rede.busca.funil.municipio' | translate }}
+    </label>
+    <button
+      id="funil-municipio"
+      type="button"
+      class="mb-3 w-full rounded border border-slate-300 px-3 py-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
+      data-testid="funil-municipio"
+      [disabled]="!funnel.selection().uf"
+      (click)="openMunicipioDialog()"
+    >
+      {{ funnel.selection().municipality ?? ('rede.busca.funil.selecionar' | translate) }}
+    </button>
+
+    <label for="funil-bairro" class="mb-1 block text-sm text-slate-600">
+      {{ 'rede.busca.funil.bairro' | translate }}
+    </label>
+    <button
+      id="funil-bairro"
+      type="button"
+      class="mb-4 w-full rounded border border-slate-300 px-3 py-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
+      data-testid="funil-bairro"
+      [disabled]="!funnel.selection().municipality"
+      (click)="openBairroDialog()"
+    >
+      {{ funnel.selection().neighborhood ?? ('rede.busca.funil.todos' | translate) }}
+    </button>
+
+    <button
+      type="button"
+      class="w-full rounded bg-teal-700 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+      data-testid="funil-buscar"
+      [disabled]="!funnel.canSearchLocality()"
+      (click)="buscarFunil()"
+    >
+      {{ 'rede.busca.funil.buscar' | translate }}
+    </button>
+  </div>
+
+  <!-- State selection dialog (BR2) -->
+  <p-dialog
+    [visible]="ufDialogOpen()"
+    (visibleChange)="ufDialogOpen.set($event)"
+    [modal]="true"
+    [header]="'rede.busca.funil.estado' | translate"
+    [style]="{ width: '24rem' }"
+    data-testid="funil-uf-dialog"
+  >
+    <app-searchable-option-list [items]="ufOptions()" (selected)="selectUf($event)" />
+  </p-dialog>
+
+  <!-- Municipality selection dialog (BR2, server-driven filter) -->
+  <p-dialog
+    [visible]="municipioDialogOpen()"
+    (visibleChange)="municipioDialogOpen.set($event)"
+    [modal]="true"
+    [header]="'rede.busca.funil.municipio' | translate"
+    [style]="{ width: '24rem' }"
+    data-testid="funil-municipio-dialog"
+  >
+    <app-searchable-option-list
+      [items]="municipalityOptions()"
+      (selected)="selectMunicipio($event)"
+      (queryChange)="onMunicipioQueryChange($event)"
+    />
+  </p-dialog>
+
+  <!-- Neighborhood selection dialog (BR2/BR9) -->
+  <p-dialog
+    [visible]="bairroDialogOpen()"
+    (visibleChange)="bairroDialogOpen.set($event)"
+    [modal]="true"
+    [header]="'rede.busca.funil.bairro' | translate"
+    [style]="{ width: '24rem' }"
+    data-testid="funil-bairro-dialog"
+  >
+    <button
+      type="button"
+      class="mb-2 w-full rounded px-2 py-2 text-left font-medium hover:bg-slate-100"
+      data-testid="funil-bairro-todos"
+      (click)="selectTodosBairros()"
+    >
+      {{ 'rede.busca.funil.todos' | translate }}
+    </button>
+    <app-searchable-option-list [items]="neighborhoodOptions()" (selected)="selectBairro($event)" />
+  </p-dialog>
+
+  <!-- Name search's optional municipality filter dialog (BR8) -->
+  <p-dialog
+    [visible]="nomeMunicipioDialogOpen()"
+    (visibleChange)="nomeMunicipioDialogOpen.set($event)"
+    [modal]="true"
+    [header]="'rede.busca.nome.municipioFiltro' | translate"
+    [style]="{ width: '24rem' }"
+    data-testid="nome-municipio-dialog"
+  >
+    <app-searchable-option-list
+      [items]="nomeMunicipioOptionList()"
+      (selected)="selectNomeMunicipio($event)"
+      (queryChange)="onNomeMunicipioQueryChange($event)"
+    />
+  </p-dialog>
+</section>

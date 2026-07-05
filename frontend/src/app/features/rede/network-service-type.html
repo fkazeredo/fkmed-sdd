@@ -1,0 +1,30 @@
+<section class="mx-auto max-w-2xl p-4" aria-labelledby="tipo-servico-title" data-testid="tipo-servico-page">
+  <button
+    type="button"
+    class="mb-3 flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+    data-testid="tipo-servico-localidade-resumo"
+    (click)="editLocality()"
+  >
+    <i class="pi pi-map-marker text-teal-700" aria-hidden="true"></i>
+    {{ localitySummary() }}
+  </button>
+
+  <h1 id="tipo-servico-title" class="mb-4 text-2xl font-semibold text-teal-800">
+    {{ 'rede.tipoServico.title' | translate }}
+  </h1>
+
+  <ul class="flex flex-col gap-2">
+    @for (type of serviceTypes(); track type.code) {
+      <li>
+        <button
+          type="button"
+          class="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-left hover:bg-slate-50"
+          [attr.data-testid]="'tipo-servico-item-' + type.code"
+          (click)="select(type)"
+        >
+          {{ type.name }}
+        </button>
+      </li>
+    }
+  </ul>
+</section>
