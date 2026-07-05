@@ -17,6 +17,12 @@ import { Security } from '../../features/security/security';
 import { SessionExpired } from '../../features/session-expired/session-expired';
 import { NotificationCenter } from '../../features/notifications/notification-center';
 import { NotificationPreferences } from '../../features/notifications/notification-preferences';
+import { PerfilMenu } from '../../features/perfil/perfil-menu';
+import { AlterarFoto } from '../../features/perfil/alterar-foto';
+import { AlterarCadastro } from '../../features/perfil/alterar-cadastro';
+import { LegalDocumentPage } from '../../features/perfil/legal-document';
+import { LegalAcceptance } from '../../features/perfil/legal-acceptance';
+import { APP_VERSION } from '../config/app-version';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
 
@@ -44,12 +50,18 @@ describe('i18n completeness (pt-BR)', () => {
         SessionExpired,
         NotificationCenter,
         NotificationPreferences,
+        PerfilMenu,
+        AlterarFoto,
+        AlterarCadastro,
+        LegalDocumentPage,
+        LegalAcceptance,
       ],
       providers: [
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideI18n(),
+        { provide: APP_VERSION, useValue: '0.0.0-test' },
         {
           provide: AuthService,
           useValue: { username: () => 'maria', logout: vi.fn(), login: vi.fn() },
@@ -337,6 +349,97 @@ describe('i18n completeness (pt-BR)', () => {
     expect(
       Array.from(handler.missing),
       'UI keys missing from the pt-BR bundle',
+    ).toHaveLength(0);
+  });
+
+  it('renders every SPEC-0006 Perfil screen without a missing translation', async () => {
+    const handler = TestBed.inject(MissingTranslationHandler) as ReportMissingTranslationHandler;
+    const http = TestBed.inject(HttpTestingController);
+    // Seed the active-beneficiary context (real service) so the Perfil screens have an active id.
+    TestBed.inject(BeneficiaryContextService).active.set({
+      beneficiaryId: 'maria-id',
+      firstName: 'MARIA',
+      role: 'TITULAR',
+    });
+
+    // Perfil menu (BR1): header card, fixed-order items, version, LGPD accordion header and the
+    // Sair confirmation dialog (opened so its keys render).
+    const perfil = TestBed.createComponent(PerfilMenu);
+    await perfil.whenStable();
+    http.expectOne('/api/context/beneficiaries/maria-id').flush({
+      firstName: 'MARIA',
+      fullName: 'MARIA CLARA SOUZA LIMA',
+      role: 'TITULAR',
+      planName: 'PLANO MÉDICO — PRATA',
+      cardNumber: '001234567',
+      avatarUrl: null,
+    });
+    await perfil.whenStable();
+    perfil.componentInstance.askLogout();
+    perfil.detectChanges();
+
+    // Alterar Foto: both success variants and an error key.
+    const foto = TestBed.createComponent(AlterarFoto);
+    await foto.whenStable();
+    foto.componentInstance.errorKey.set('profile.photo-too-large');
+    foto.componentInstance.success.set('saved');
+    foto.detectChanges();
+    foto.componentInstance.success.set('removed');
+    foto.detectChanges();
+
+    // Alterar Cadastro: contract read-only labels + every field-validation message + a server
+    // field error + the success banner.
+    const cadastro = TestBed.createComponent(AlterarCadastro);
+    await cadastro.whenStable();
+    http.expectOne('/api/beneficiaries/maria-id/profile').flush({
+      fullName: 'MARIA CLARA SOUZA LIMA',
+      cpf: '***.456.789-**',
+      birthDate: '1990-05-10',
+      cardNumber: '001234567',
+      planName: 'PLANO MÉDICO',
+      contactEmail: 'maria@fkmed.com',
+      mobile: '(21) 99999-1234',
+      landline: '',
+      cep: '22222-222',
+      street: 'Rua A',
+      number: '10',
+      complement: '',
+      neighborhood: 'Centro',
+      city: 'Rio de Janeiro',
+      uf: 'RJ',
+    });
+    await cadastro.whenStable();
+    cadastro.detectChanges();
+    cadastro.componentInstance.form.contactEmail = '';
+    cadastro.componentInstance.form.mobile = '';
+    cadastro.componentInstance.form.landline = 'x';
+    cadastro.componentInstance.form.cep = 'x';
+    cadastro.componentInstance.form.uf = 'xxx';
+    cadastro.componentInstance.errorField.set('cep');
+    cadastro.componentInstance.errorKey.set('profile.cep-invalid');
+    cadastro.componentInstance.success.set(true);
+    cadastro.detectChanges();
+
+    // Legal document page (TERMS by default) — triggers the single legal snapshot load.
+    const legalDoc = TestBed.createComponent(LegalDocumentPage);
+    await legalDoc.whenStable();
+    http.expectOne('/api/legal-documents/current').flush({
+      terms: { version: '2.0', publishedAt: '2026-06-01', acceptedByMe: false, body: 'Texto dos termos.' },
+      privacy: { version: '1.0', publishedAt: '2026-01-01', acceptedByMe: true, body: 'Texto de privacidade.' },
+    });
+    await legalDoc.whenStable();
+    legalDoc.detectChanges();
+
+    // Legal acceptance (interception screen): reuses the cached snapshot (TERMS pending, so it
+    // shows the document instead of redirecting); force the outdated-version message too.
+    const aceite = TestBed.createComponent(LegalAcceptance);
+    await aceite.whenStable();
+    aceite.componentInstance.errorKey.set('legal.version-outdated');
+    aceite.detectChanges();
+
+    expect(
+      Array.from(handler.missing),
+      'SPEC-0006 Perfil UI keys missing from the pt-BR bundle',
     ).toHaveLength(0);
   });
 });

@@ -1,0 +1,23 @@
+<section class="mx-auto max-w-2xl p-4" aria-labelledby="legal-title" data-testid="legal-document-page">
+  <h1 id="legal-title" class="mb-2 text-2xl font-semibold text-teal-800" data-testid="legal-title">
+    {{ titleKey() | translate }}
+  </h1>
+
+  @if (loading()) {
+    <p class="text-slate-500" role="status">{{ 'common.loading' | translate }}</p>
+  } @else if (loadError()) {
+    <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">{{ 'common.error' | translate }}</div>
+  } @else if (doc(); as document) {
+    <p class="mb-4 text-sm text-slate-500" data-testid="legal-meta">
+      {{ 'perfil.legal.versao' | translate }} {{ document.version }} ·
+      {{ 'perfil.legal.publicadoEm' | translate }} {{ document.publishedAt | date: 'dd/MM/yyyy' }}
+    </p>
+    <article class="whitespace-pre-line rounded-xl bg-white p-5 text-slate-700 shadow" data-testid="legal-body">
+      @if (document.body) {
+        {{ document.body }}
+      } @else {
+        <span class="text-slate-500">{{ 'perfil.legal.semTexto' | translate }}</span>
+      }
+    </article>
+  }
+</section>

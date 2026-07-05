@@ -13,6 +13,7 @@ import { AccordionModule } from 'primeng/accordion';
 import { CardModule } from 'primeng/card';
 import { CarouselModule } from 'primeng/carousel';
 import { DialogModule } from 'primeng/dialog';
+import { AvatarStateService } from '../../core/context/avatar-state.service';
 import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
 import { BeneficiarySummary, BeneficiarySummaryApi } from '../../core/context/beneficiary-summary.api';
 import { HomeApi, HomeBanner, HomeNotice } from './home.api';
@@ -87,6 +88,7 @@ export class Home implements OnInit, OnDestroy {
   private readonly homeApi = inject(HomeApi);
   private readonly beneficiaryApi = inject(BeneficiarySummaryApi);
   protected readonly context = inject(BeneficiaryContextService);
+  private readonly avatar = inject(AvatarStateService);
 
   protected readonly shortcuts = QUICK_ACCESS_SHORTCUTS;
 
@@ -94,6 +96,15 @@ export class Home implements OnInit, OnDestroy {
   readonly cardLoading = signal(true);
   readonly cardError = signal(false);
   readonly summary = signal<BeneficiarySummary | null>(null);
+  readonly avatarBroken = signal(false);
+
+  // SPEC-0006 BR3: the avatar reflects the shared avatar state, so a photo changed in the Perfil
+  // area shows here without a new login; it falls back to the backend avatarUrl otherwise.
+  readonly avatarUrl = computed(() => {
+    const id = this.context.active()?.beneficiaryId;
+    const fallback = this.summary()?.avatarUrl ?? null;
+    return id ? this.avatar.resolve(id, fallback) : fallback;
+  });
 
   // Content (BR6/BR7/BR8).
   private readonly banners = signal<HomeBanner[]>([]);
@@ -137,6 +148,7 @@ export class Home implements OnInit, OnDestroy {
   loadSummary(beneficiaryId: string): void {
     this.cardLoading.set(true);
     this.cardError.set(false);
+    this.avatarBroken.set(false);
     this.beneficiaryApi.getBeneficiary(beneficiaryId).subscribe({
       next: (response) => {
         this.summary.set(response);
@@ -181,6 +193,11 @@ export class Home implements OnInit, OnDestroy {
 
   onAvatarClick(): void {
     this.dialogMessageKey.set('home.cartao.avatarEmBreve');
+  }
+
+  /** The photo endpoint 404s when there is no photo — fall back to the initial (SPEC-0006 BR3). */
+  onAvatarImageError(): void {
+    this.avatarBroken.set(true);
   }
 
   onShortcutClick(shortcut: QuickAccessShortcut): void {
