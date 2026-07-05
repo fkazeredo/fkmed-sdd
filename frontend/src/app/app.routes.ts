@@ -110,6 +110,35 @@ export const routes: Routes = [
         path: 'aceite-legal',
         loadComponent: () => import('./features/perfil/legal-acceptance').then((m) => m.LegalAcceptance),
       },
+      // SPEC-0008 (Phase 3): the Rede hub and the Provider Network Search journey — reachable via
+      // the shell nav (nav-rede). Only "Busca de rede" is built in this phase; the hub's other 3
+      // cards (Agendamento/Telemedicina/Minha Saúde) render disabled until their specs land.
+      {
+        path: 'rede',
+        loadComponent: () => import('./features/rede/rede-hub').then((m) => m.RedeHub),
+      },
+      {
+        path: 'rede/busca',
+        loadComponent: () => import('./features/rede/network-search').then((m) => m.NetworkSearch),
+      },
+      {
+        path: 'rede/busca/tipo-servico',
+        loadComponent: () =>
+          import('./features/rede/network-service-type').then((m) => m.NetworkServiceType),
+      },
+      {
+        path: 'rede/busca/especialidade',
+        loadComponent: () => import('./features/rede/network-specialty').then((m) => m.NetworkSpecialty),
+      },
+      {
+        path: 'rede/busca/resultados',
+        loadComponent: () => import('./features/rede/network-results').then((m) => m.NetworkResults),
+      },
+      {
+        path: 'rede/busca/prestador/:id',
+        loadComponent: () =>
+          import('./features/rede/network-provider-detail').then((m) => m.NetworkProviderDetail),
+      },
     ],
   },
 ];

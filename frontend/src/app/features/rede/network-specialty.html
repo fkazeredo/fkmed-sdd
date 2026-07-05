@@ -1,0 +1,17 @@
+<section class="mx-auto max-w-2xl p-4" aria-labelledby="especialidade-title" data-testid="especialidade-page">
+  <button
+    type="button"
+    class="mb-3 flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+    data-testid="especialidade-resumo"
+    (click)="editServiceType()"
+  >
+    <i class="pi pi-map-marker text-teal-700" aria-hidden="true"></i>
+    {{ summary() }}
+  </button>
+
+  <h1 id="especialidade-title" class="mb-4 text-2xl font-semibold text-teal-800">
+    {{ 'rede.especialidade.title' | translate }}
+  </h1>
+
+  <app-searchable-option-list [items]="specialtyOptions()" (selected)="select($event)" />
+</section>
