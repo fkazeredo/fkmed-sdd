@@ -45,7 +45,9 @@ test('login → Home shows MARIA, switching to PEDRO updates the card, notices s
 
   // BR6 extended to banner buttons (phased-delivery note): the fraud-alert banner's CTA is
   // disabled with "em breve" too (AC6 deferred — Canais de Atendimento/antifraude lands Phase 5).
-  await expect(page.getByText('Alerta de golpe!')).toBeVisible();
+  // .first(): the banner carousel is [circular], so PrimeNG clones the slide for looping and the
+  // title text resolves to 2 nodes — assert the first (visible) one (matches banner-button/em-breve).
+  await expect(page.getByText('Alerta de golpe!').first()).toBeVisible();
   await expect(page.getByTestId('banner-em-breve').first()).toContainText('Em breve');
   await expect(page.getByTestId('banner-button').first()).toBeDisabled();
 });

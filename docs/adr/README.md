@@ -13,3 +13,5 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 | [0004](0004-dev-email-delivery-mailpit.md) | Dev e-mail delivery — Mailpit + Spring Mail behind a `MailSender` port | Proposed |
 | [0005](0005-session-idle-windows-remember-me.md) | Two session idle windows via Spring Session remember-me (BR12) | Proposed |
 | [0006](0006-content-module-home.md) | Module map revision — `domain.content` (Home banners and notices, SPEC-0005) | Proposed |
+| [0007](0007-module-map-notification-profile-card.md) | Module map revision — `domain.notification`, `domain.profile`, `domain.card` (Phase 2) | Proposed |
+| [0008](0008-server-side-card-pdf.md) | Server-side digital-card PDF via openhtmltopdf (HTML/CSS template) | Proposed |
