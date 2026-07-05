@@ -6,6 +6,7 @@ import { MissingTranslationHandler } from '@ngx-translate/core';
 import { AuthService } from '../auth/auth.service';
 import { BeneficiaryContextService } from '../context/beneficiary-context.service';
 import { Shell } from '../layout/shell';
+import { DigitalCard } from '../../features/card/digital-card';
 import { Home } from '../../features/home/home';
 import { MyPlan } from '../../features/my-plan/my-plan';
 import { FirstAccess } from '../../features/first-access/first-access';
@@ -31,6 +32,7 @@ describe('i18n completeness (pt-BR)', () => {
         Shell,
         Home,
         MyPlan,
+        DigitalCard,
         FirstAccess,
         EmailVerification,
         ForgotPassword,
@@ -151,6 +153,46 @@ describe('i18n completeness (pt-BR)', () => {
     home.detectChanges();
     (home.nativeElement.querySelector('[data-testid="notice-2"] p-accordion-header') as HTMLElement).click();
     home.detectChanges();
+
+    // Carteirinha (SPEC-0007): visual card + data sheet, "Salvar Carteirinha" (including its
+    // inline PDF error), "Copiar número" confirmation, "Minhas Carteirinhas" (already exercises
+    // both TITULAR/DEPENDENT role labels via the MARIA/PEDRO accessible list loaded above) and the
+    // unavailable (BR10) / scope-denial (404) error states, reusing the same instance via retry().
+    const card = TestBed.createComponent(DigitalCard);
+    await card.whenStable();
+    http.expectOne('/api/cards/pedro-id').flush({
+      fullName: 'PEDRO SOUZA LIMA',
+      cardNumber: '001234575',
+      cns: '700000000000002',
+      ansRegistration: '326305',
+      coverage: 'ESTADUAL',
+      planName: 'ADESÃO PRATA RJ QP COPART TP',
+      planCategory: 'PRATA',
+      additives: ['Urg/emerg Nacional Hr — Assistência'],
+    });
+    await card.whenStable();
+    card.detectChanges();
+    card.componentInstance.copied.set(true);
+    card.detectChanges();
+    card.componentInstance.downloading.set(true);
+    card.detectChanges();
+    card.componentInstance.downloading.set(false);
+    card.componentInstance.pdfErrorKey.set('carteirinha.erro.pdf');
+    card.detectChanges();
+
+    card.componentInstance.retry();
+    http
+      .expectOne('/api/cards/pedro-id')
+      .flush({ code: 'card.unavailable' }, { status: 409, statusText: 'Conflict' });
+    await card.whenStable();
+    card.detectChanges();
+
+    card.componentInstance.retry();
+    http
+      .expectOne('/api/cards/pedro-id')
+      .flush({ code: 'context.beneficiary-not-accessible' }, { status: 404, statusText: 'Not Found' });
+    await card.whenStable();
+    card.detectChanges();
 
     // First-access wizard: exercise every step, the field validations and the error block.
     const firstAccess = TestBed.createComponent(FirstAccess);
