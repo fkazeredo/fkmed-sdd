@@ -19,6 +19,16 @@
       <ul>
         <li>
           <a
+            routerLink="/home"
+            routerLinkActive="font-semibold text-teal-800"
+            class="block rounded px-3 py-2 hover:bg-slate-100"
+            data-testid="nav-home"
+          >
+            {{ 'nav.home' | translate }}
+          </a>
+        </li>
+        <li>
+          <a
             routerLink="/meu-plano"
             routerLinkActive="font-semibold text-teal-800"
             class="block rounded px-3 py-2 hover:bg-slate-100"

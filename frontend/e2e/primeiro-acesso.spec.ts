@@ -45,7 +45,7 @@ async function verificationLink(request: APIRequestContext, recipient: string): 
   return link;
 }
 
-test('PEDRO first access → e-mail link → confirm → login reaches Meu Plano', async ({
+test('PEDRO first access → e-mail link → confirm → login reaches Home, then Meu Plano', async ({
   page,
   request,
 }) => {
@@ -81,6 +81,9 @@ test('PEDRO first access → e-mail link → confirm → login reaches Meu Plano
   await page.getByLabel('Senha').fill('Pedro1234');
   await page.getByRole('button', { name: 'Entrar' }).click();
 
+  // SPEC-0005: login now lands on Home first; navigate to Meu Plano for the family assertions.
+  await expect(page.getByTestId('home-page')).toBeVisible();
+  await page.getByTestId('nav-meu-plano').click();
   await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
   const rows = page.getByTestId('member-row');
   await expect(rows).toHaveCount(2);

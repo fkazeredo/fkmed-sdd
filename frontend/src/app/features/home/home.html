@@ -1,0 +1,182 @@
+<section class="mx-auto max-w-5xl p-4" aria-labelledby="home-title" data-testid="home-page">
+  <h1 id="home-title" class="sr-only">{{ 'home.title' | translate }}</h1>
+
+  <!-- Beneficiary card (BR1/BR2, AC1/AC5) -->
+  <p-card styleClass="mb-6" data-testid="beneficiary-card">
+    @if (cardLoading() && !summary()) {
+      <p class="text-slate-500" role="status">{{ 'common.loading' | translate }}</p>
+    } @else if (cardError() && !summary()) {
+      <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">
+        <p class="mb-2">{{ 'common.error' | translate }}</p>
+        <button type="button" class="rounded bg-red-700 px-3 py-1 text-white" (click)="retryCard()">
+          {{ 'common.retry' | translate }}
+        </button>
+      </div>
+    } @else if (summary(); as beneficiary) {
+      <div class="flex items-center gap-4">
+        <button
+          type="button"
+          class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal-600 text-xl font-semibold text-white"
+          data-testid="card-avatar"
+          [attr.aria-label]="'home.cartao.avatarLabel' | translate"
+          (click)="onAvatarClick()"
+        >
+          @if (beneficiary.avatarUrl) {
+            <img [src]="beneficiary.avatarUrl" [alt]="beneficiary.fullName" class="h-full w-full rounded-full object-cover" />
+          } @else {
+            {{ initialOf(beneficiary.firstName) }}
+          }
+        </button>
+        <div>
+          <p class="text-xl font-semibold text-teal-800" data-testid="card-greeting">
+            {{ 'home.cartao.saudacao' | translate }} {{ beneficiary.firstName.toUpperCase() }}
+          </p>
+          <p class="text-xs font-medium tracking-wide text-slate-500" data-testid="card-plano-label">
+            {{ 'home.cartao.planoMedico' | translate }}
+          </p>
+          <p class="text-sm text-slate-700" data-testid="card-plan-name">{{ beneficiary.planName }}</p>
+          <p class="flex items-center gap-1 text-sm text-slate-600" data-testid="card-number">
+            <i class="pi pi-id-card text-teal-700" aria-hidden="true"></i>
+            {{ beneficiary.cardNumber }}
+          </p>
+        </div>
+      </div>
+    }
+  </p-card>
+
+  <!-- Acesso Rápido (BR3/BR4/BR5) -->
+  <section class="mb-6" aria-labelledby="home-quick-access-title">
+    <h2 id="home-quick-access-title" class="mb-3 text-lg font-medium text-teal-800">
+      {{ 'home.acessoRapido.title' | translate }}
+    </h2>
+    <p-carousel [value]="shortcuts" [numVisible]="4" [numScroll]="4" [showIndicators]="true" [showNavigators]="true">
+      <ng-template #item let-shortcut>
+        <div class="flex justify-center p-2">
+          <button
+            type="button"
+            class="flex w-28 flex-col items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 text-center text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="!shortcut.enabled"
+            [attr.data-testid]="'shortcut-' + shortcut.key"
+            (click)="onShortcutClick(shortcut)"
+          >
+            <i [class]="shortcut.icon + ' text-2xl text-teal-700'" aria-hidden="true"></i>
+            <span>{{ shortcut.labelKey | translate }}</span>
+            @if (!shortcut.enabled) {
+              <span
+                class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500"
+                [attr.data-testid]="'shortcut-' + shortcut.key + '-em-breve'"
+              >
+                {{ 'home.emBreve' | translate }}
+              </span>
+            }
+          </button>
+        </div>
+      </ng-template>
+    </p-carousel>
+  </section>
+
+  <!-- Banners (BR6/BR8) -->
+  @if (sortedBanners().length > 0) {
+    <section
+      class="mb-6"
+      aria-labelledby="home-banners-title"
+      data-testid="home-banners"
+      (mouseenter)="pauseBannerRotation()"
+      (mouseleave)="resumeBannerRotation()"
+      (focusin)="pauseBannerRotation()"
+      (focusout)="resumeBannerRotation()"
+    >
+      <h2 id="home-banners-title" class="sr-only">{{ 'home.banners.title' | translate }}</h2>
+      <p-carousel
+        [value]="sortedBanners()"
+        [page]="bannerPage()"
+        (onPage)="onBannerPageChange($event)"
+        [numVisible]="1"
+        [numScroll]="1"
+        [circular]="true"
+        [showIndicators]="true"
+        [showNavigators]="true"
+      >
+        <ng-template #item let-banner>
+          <div class="rounded-xl bg-white p-5 shadow" data-testid="banner-item">
+            @if (banner.imageUrl) {
+              <img [src]="banner.imageUrl" [alt]="banner.title" class="mb-3 h-32 w-full rounded object-cover" />
+            }
+            <h3 class="mb-1 text-lg font-medium text-teal-800">{{ banner.title }}</h3>
+            <p class="mb-3 text-sm text-slate-600">{{ banner.text }}</p>
+            <button
+              type="button"
+              class="flex items-center gap-2 rounded bg-teal-700 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+              disabled
+              data-testid="banner-button"
+            >
+              {{ banner.buttonLabel }}
+              <span class="rounded-full bg-white/20 px-2 py-0.5 text-xs" data-testid="banner-em-breve">
+                {{ 'home.emBreve' | translate }}
+              </span>
+            </button>
+          </div>
+        </ng-template>
+      </p-carousel>
+    </section>
+  }
+
+  <!-- Avisos (BR7/BR8) -->
+  @if (sortedNotices().length > 0) {
+    <section aria-labelledby="home-notices-title" data-testid="home-notices">
+      <h2 id="home-notices-title" class="mb-3 text-lg font-medium text-teal-800">
+        {{ 'home.avisos.title' | translate }}
+      </h2>
+      <p-accordion [value]="openNoticeValue()" (valueChange)="onNoticeValueChange($event)">
+        @for (notice of sortedNotices(); track notice.order) {
+          <p-accordion-panel [value]="notice.order" [attr.data-testid]="'notice-' + notice.order">
+            <p-accordion-header>
+              <span
+                class="font-medium"
+                [class.text-red-700]="notice.severity === 'ALERT'"
+                [class.text-slate-700]="notice.severity === 'INFORMATIVE'"
+              >
+                {{ notice.title }}
+              </span>
+              @if (notice.severity === 'ALERT') {
+                <span
+                  class="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700"
+                  data-testid="notice-alert-tag"
+                >
+                  {{ 'home.avisos.alerta' | translate }}
+                </span>
+              }
+            </p-accordion-header>
+            <p-accordion-content>
+              <p class="text-sm text-slate-600">{{ notice.body }}</p>
+            </p-accordion-content>
+          </p-accordion-panel>
+        }
+      </p-accordion>
+    </section>
+  }
+
+  <!-- "Em breve" informational dialog (avatar / Reconhecimento Facial) -->
+  <p-dialog
+    [visible]="dialogMessageKey() !== null"
+    (visibleChange)="onDialogVisibleChange($event)"
+    [modal]="true"
+    [header]="'home.dialog.titulo' | translate"
+    [style]="{ width: '24rem' }"
+    data-testid="home-dialog"
+  >
+    @if (dialogMessageKey(); as key) {
+      <p data-testid="home-dialog-mensagem">{{ key | translate }}</p>
+    }
+    <ng-template #footer>
+      <button
+        type="button"
+        class="rounded bg-teal-700 px-4 py-2 text-white"
+        data-testid="home-dialog-close"
+        (click)="closeDialog()"
+      >
+        {{ 'common.fechar' | translate }}
+      </button>
+    </ng-template>
+  </p-dialog>
+</section>

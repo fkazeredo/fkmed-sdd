@@ -44,6 +44,7 @@ describe('Shell', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('[data-testid="brand"]')?.textContent).toContain('FKMed');
     expect(el.querySelector('[data-testid="username"]')?.textContent).toContain('maria');
+    expect(el.querySelector('[data-testid="nav-home"]')?.textContent).toContain('Início');
     expect(el.querySelector('[data-testid="nav-meu-plano"]')?.textContent).toContain('Meu Plano');
     expect(el.querySelector('[data-testid="nav-seguranca"]')?.textContent).toContain('Segurança');
     expect(el.textContent).toContain('Mais funcionalidades em breve');

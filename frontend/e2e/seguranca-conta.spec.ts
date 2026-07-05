@@ -75,7 +75,8 @@ test('esqueci minha senha → Mailpit → redefinir senha → nova senha funcion
   await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
   await page.getByLabel('Senha').fill(RESET_PASSWORD);
   await page.getByRole('button', { name: 'Entrar' }).click();
-  await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
+  // SPEC-0005: login now lands on Home first (was Meu Plano).
+  await expect(page.getByTestId('home-page')).toBeVisible();
 
   // The old password no longer works (BR10: reset replaces the credential outright).
   await page.getByRole('button', { name: 'Sair' }).click();
@@ -92,7 +93,8 @@ test('Segurança: troca de senha autenticada → novo login funciona (BR11, AC-8
   await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
   await page.getByLabel('Senha').fill(RESET_PASSWORD);
   await page.getByRole('button', { name: 'Entrar' }).click();
-  await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
+  // SPEC-0005: login now lands on Home first (was Meu Plano); the nav is reachable regardless.
+  await expect(page.getByTestId('home-page')).toBeVisible();
 
   await page.getByTestId('nav-seguranca').click();
   await expect(page.getByRole('heading', { name: 'Segurança' })).toBeVisible();
@@ -109,7 +111,8 @@ test('Segurança: troca de senha autenticada → novo login funciona (BR11, AC-8
   await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
   await page.getByLabel('Senha').fill(CHANGED_PASSWORD);
   await page.getByRole('button', { name: 'Entrar' }).click();
-  await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
+  // SPEC-0005: login now lands on Home first (was Meu Plano).
+  await expect(page.getByTestId('home-page')).toBeVisible();
 
   // Leaves unauthenticated for the next (lockout) test.
   await page.getByRole('button', { name: 'Sair' }).click();
