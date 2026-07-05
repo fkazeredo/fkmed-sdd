@@ -36,7 +36,13 @@ export const routes: Routes = [
     component: Shell,
     canActivate: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'meu-plano' },
+      // SPEC-0005: Home is the new default child — the daily entry point after login. Meu Plano
+      // remains reachable through the shell nav (nav-meu-plano).
+      { path: '', pathMatch: 'full', redirectTo: 'home' },
+      {
+        path: 'home',
+        loadComponent: () => import('./features/home/home').then((m) => m.Home),
+      },
       {
         path: 'meu-plano',
         loadComponent: () => import('./features/my-plan/my-plan').then((m) => m.MyPlan),
