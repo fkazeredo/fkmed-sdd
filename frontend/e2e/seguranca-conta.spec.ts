@@ -3,18 +3,25 @@ import { APIRequestContext, expect, test } from '@playwright/test';
 /**
  * SPEC-0002 account-security journeys over the isolated stack (real backend, real e-mail via
  * Mailpit): forgot/reset password (BR10), authenticated password change (BR11) and the lockout
- * message (BR8). All three tests mutate MARIA's seeded account and MUST run in this file's
- * declaration order (Playwright preserves in-file order) — each depends on the password left by
- * the previous one, and the last test deliberately locks the account for 15 real minutes. This
- * file's name is chosen to sort after `meu-plano.spec.ts` (which logs in as MARIA with her
- * ORIGINAL seeded password) — see the `workers: 1` rationale in playwright.config.ts.
+ * message (BR8). All three tests mutate and eventually lock a disposable account seeded
+ * specifically for this file — `seguranca-e2e@fkmed.local` (its own family, one titular, no
+ * dependents) — and MUST run in this file's declaration order (Playwright preserves in-file
+ * order): each depends on the password left by the previous one, and the last test deliberately
+ * locks the account for 15 real minutes. MARIA's canonical account (used by `meu-plano.spec.ts`
+ * and `primeiro-acesso.spec.ts`) is never touched by this file — there is no longer a
+ * file-naming/ordering coupling to it (previously this file had to sort after `meu-plano.spec.ts`
+ * to avoid racing MARIA's login; that hack is gone now that the account under test here is
+ * disposable). `workers: 1` still applies (see playwright.config.ts): the isolated stack seeds its
+ * data once per `docker compose up`, not once per spec file, so this file's own account-locking
+ * test would otherwise race any other spec run concurrently — not because of MARIA anymore, but
+ * because the disposable account itself must not be touched by two spec files at once.
  */
 
 const MAILPIT = 'http://localhost:8025';
-const MARIA_EMAIL = 'maria@fkmed.local';
-const ORIGINAL_PASSWORD = 'maria12345';
-const RESET_PASSWORD = 'MariaReset01';
-const CHANGED_PASSWORD = 'MariaTroca02';
+const SEGURANCA_EMAIL = 'seguranca-e2e@fkmed.local';
+const ORIGINAL_PASSWORD = 'seguranca12345';
+const RESET_PASSWORD = 'SegE2eReset01';
+const CHANGED_PASSWORD = 'SegE2eTroca02';
 
 /** Polls Mailpit for the newest message to {@code recipient} and returns its reset-password link. */
 async function resetLink(request: APIRequestContext, recipient: string): Promise<string> {
@@ -49,11 +56,11 @@ test('esqueci minha senha → Mailpit → redefinir senha → nova senha funcion
 }) => {
   await page.goto('/recuperar-senha');
   await expect(page.getByRole('heading', { name: 'Esqueci minha senha' })).toBeVisible();
-  await page.getByLabel('E-mail').fill(MARIA_EMAIL);
+  await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
   await page.getByTestId('forgot-password-submit').click();
   await expect(page.getByTestId('forgot-password-done')).toBeVisible();
 
-  const link = await resetLink(request, MARIA_EMAIL);
+  const link = await resetLink(request, SEGURANCA_EMAIL);
   await page.goto(new URL(link).pathname + new URL(link).search);
 
   await expect(page.getByRole('heading', { name: 'Redefinir senha' })).toBeVisible();
@@ -65,7 +72,7 @@ test('esqueci minha senha → Mailpit → redefinir senha → nova senha funcion
   // The new password works.
   await page.getByTestId('reset-password-login').click();
   await expect(page.getByRole('heading', { name: 'Entrar no FKMed' })).toBeVisible();
-  await page.getByLabel('E-mail').fill(MARIA_EMAIL);
+  await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
   await page.getByLabel('Senha').fill(RESET_PASSWORD);
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
@@ -73,7 +80,7 @@ test('esqueci minha senha → Mailpit → redefinir senha → nova senha funcion
   // The old password no longer works (BR10: reset replaces the credential outright).
   await page.getByRole('button', { name: 'Sair' }).click();
   await expect(page.getByRole('heading', { name: 'Entrar no FKMed' })).toBeVisible();
-  await page.getByLabel('E-mail').fill(MARIA_EMAIL);
+  await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
   await page.getByLabel('Senha').fill(ORIGINAL_PASSWORD);
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page.getByText('Dados de acesso inválidos.')).toBeVisible();
@@ -82,14 +89,14 @@ test('esqueci minha senha → Mailpit → redefinir senha → nova senha funcion
 test('Segurança: troca de senha autenticada → novo login funciona (BR11, AC-8)', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Entrar no FKMed' })).toBeVisible();
-  await page.getByLabel('E-mail').fill(MARIA_EMAIL);
+  await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
   await page.getByLabel('Senha').fill(RESET_PASSWORD);
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
 
   await page.getByTestId('nav-seguranca').click();
   await expect(page.getByRole('heading', { name: 'Segurança' })).toBeVisible();
-  await expect(page.getByTestId('security-email')).toHaveText(MARIA_EMAIL);
+  await expect(page.getByTestId('security-email')).toHaveText(SEGURANCA_EMAIL);
 
   await page.getByLabel('Senha atual').fill(RESET_PASSWORD);
   await page.getByLabel('Nova senha', { exact: true }).fill(CHANGED_PASSWORD);
@@ -99,7 +106,7 @@ test('Segurança: troca de senha autenticada → novo login funciona (BR11, AC-8
 
   await page.getByRole('button', { name: 'Sair' }).click();
   await expect(page.getByRole('heading', { name: 'Entrar no FKMed' })).toBeVisible();
-  await page.getByLabel('E-mail').fill(MARIA_EMAIL);
+  await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
   await page.getByLabel('Senha').fill(CHANGED_PASSWORD);
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page.getByRole('heading', { name: 'Meu Plano' })).toBeVisible();
@@ -113,7 +120,7 @@ test('bloqueio após 5 tentativas erradas exibe a mensagem de bloqueio (BR8)', a
   await expect(page.getByRole('heading', { name: 'Entrar no FKMed' })).toBeVisible();
 
   for (let attempt = 0; attempt < 5; attempt++) {
-    await page.getByLabel('E-mail').fill(MARIA_EMAIL);
+    await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
     await page.getByLabel('Senha').fill('senha-errada-de-proposito');
     await page.getByRole('button', { name: 'Entrar' }).click();
     await expect(page.getByText('Dados de acesso inválidos.')).toBeVisible();
@@ -121,7 +128,7 @@ test('bloqueio após 5 tentativas erradas exibe a mensagem de bloqueio (BR8)', a
 
   // 6th attempt, even with a different (irrelevant) password: the account is now locked
   // (BR8/DL-0002) — the UI shows the lock state instead of the generic invalid-credentials one.
-  await page.getByLabel('E-mail').fill(MARIA_EMAIL);
+  await page.getByLabel('E-mail').fill(SEGURANCA_EMAIL);
   await page.getByLabel('Senha').fill(CHANGED_PASSWORD);
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(

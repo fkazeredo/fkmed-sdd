@@ -23,6 +23,7 @@ class GlobalExceptionHandlerTest {
         "plan.not-found", ptBr, "Nenhum plano vinculado ao seu usuário foi encontrado.");
     messages.addMessage("internal.error", ptBr, "Ocorreu um erro inesperado.");
     messages.addMessage("access.denied", ptBr, "Você não tem permissão para acessar este recurso.");
+    messages.addMessage("auth.concurrent-update", ptBr, "Acesso simultâneo — tente novamente.");
     handler = new GlobalExceptionHandler(messages);
   }
 
@@ -63,6 +64,19 @@ class GlobalExceptionHandlerTest {
     assertThat(response.getBody().message())
         .isEqualTo("Nenhum plano vinculado ao seu usuário foi encontrado.");
     assertThat(response.getBody().fields()).isEmpty();
+  }
+
+  @Test
+  void optimisticLockConflict_isTranslatedTo409_domainErrorContract_notARawFrameworkException() {
+    // Débito técnico A (DL-0005): the raw framework exception must never leak; it renders as the
+    // domain auth.concurrent-update / 409 contract, retryable by the client.
+    ResponseEntity<ApiErrorResponse> response =
+        handler.handleOptimisticLock(
+            new org.springframework.orm.ObjectOptimisticLockingFailureException(
+                Object.class, java.util.UUID.randomUUID()));
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(response.getBody().code()).isEqualTo("auth.concurrent-update");
+    assertThat(response.getBody().message()).isEqualTo("Acesso simultâneo — tente novamente.");
   }
 
   @Test

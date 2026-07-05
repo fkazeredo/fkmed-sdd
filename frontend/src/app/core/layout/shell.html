@@ -2,6 +2,7 @@
   <header class="flex items-center justify-between bg-teal-800 px-4 py-3 text-white shadow">
     <span class="text-xl font-semibold" data-testid="brand">{{ 'app.title' | translate }}</span>
     <div class="flex items-center gap-3">
+      <app-beneficiary-selector />
       <span class="text-sm" [attr.aria-label]="'shell.loggedUser' | translate"
             data-testid="username">{{ auth.username() }}</span>
       <p-button

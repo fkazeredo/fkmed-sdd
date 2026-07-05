@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { MissingTranslationHandler } from '@ngx-translate/core';
 import { AuthService } from '../auth/auth.service';
+import { BeneficiaryContextService } from '../context/beneficiary-context.service';
 import { Shell } from '../layout/shell';
 import { MyPlan } from '../../features/my-plan/my-plan';
 import { FirstAccess } from '../../features/first-access/first-access';
@@ -18,8 +19,9 @@ import { TRANSLATIONS } from './translations';
 /**
  * SPEC-0001 AC5 / SPEC-0002 BR16: every visible UI string of the slice resolves from the pt-BR
  * bundle. Renders every screen of the slice — including all branches of the first-access,
- * verification, password-recovery, Segurança and session-expiry flows — with a recording
- * MissingTranslationHandler; a single missing key fails.
+ * verification, password-recovery, Segurança and session-expiry flows, and the SPEC-0003
+ * active-beneficiary selector (both TITULAR and DEPENDENT role labels) embedded in the shell —
+ * with a recording MissingTranslationHandler; a single missing key fails.
  */
 describe('i18n completeness (pt-BR)', () => {
   beforeEach(async () => {
@@ -60,6 +62,17 @@ describe('i18n completeness (pt-BR)', () => {
     const http = TestBed.inject(HttpTestingController);
 
     const shell = TestBed.createComponent(Shell);
+    await shell.whenStable();
+    // SPEC-0003 BR5: the shell loads the active-beneficiary context on init — flush both a
+    // TITULAR and a DEPENDENT beneficiary, then switch the active one, to exercise both role
+    // labels (contexto.papel.TITULAR / contexto.papel.DEPENDENT) through the selector.
+    http.expectOne('/api/context/accessible-beneficiaries').flush([
+      { beneficiaryId: 'maria-id', firstName: 'MARIA', role: 'TITULAR' },
+      { beneficiaryId: 'pedro-id', firstName: 'PEDRO', role: 'DEPENDENT' },
+    ]);
+    await shell.whenStable();
+    shell.detectChanges();
+    TestBed.inject(BeneficiaryContextService).setActive('pedro-id');
     await shell.whenStable();
     shell.detectChanges();
 

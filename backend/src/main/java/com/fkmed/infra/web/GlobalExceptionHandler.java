@@ -1,10 +1,12 @@
 package com.fkmed.infra.web;
 
 import com.fkmed.domain.error.DomainException;
+import com.fkmed.domain.identity.ConcurrentAccountUpdateException;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +42,19 @@ public class GlobalExceptionHandler {
             exception.getCode(), exception.getArgs(), exception.getCode(), PRODUCT_LOCALE);
     return ResponseEntity.status(HttpErrorMapping.statusOf(exception))
         .body(new ApiErrorResponse(exception.getCode(), message));
+  }
+
+  /**
+   * Optimistic-lock conflict surfacing at commit in a {@code @Transactional} account mutation
+   * (change/reset password, activation) — débito técnico A (DL-0005). Translated to the domain
+   * {@link ConcurrentAccountUpdateException} (409) so the raw framework exception never leaks and
+   * the client gets the same retryable, i18n'd contract as the explicitly-thrown case.
+   */
+  @ExceptionHandler(OptimisticLockingFailureException.class)
+  ResponseEntity<ApiErrorResponse> handleOptimisticLock(
+      OptimisticLockingFailureException conflict) {
+    log.debug("optimistic-lock conflict translated to 409", conflict);
+    return handleDomainException(new ConcurrentAccountUpdateException());
   }
 
   /** Authorization denial raised below the security filter chain (403, never 500). */

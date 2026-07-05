@@ -116,5 +116,9 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'seguranca.erro.senhaFraca': 'A senha não atende aos requisitos de segurança.',
     'seguranca.biometria.title': 'Reconhecimento facial',
     'seguranca.biometria.mensagem': 'Reconhecimento facial disponível no aplicativo móvel.',
+    'contexto.papel.TITULAR': 'Responsável',
+    'contexto.papel.DEPENDENT': 'Dependente',
+    'contexto.seletor.label': 'Beneficiário ativo',
+    'contexto.erro.beneficiarioNaoAcessivel': 'Beneficiário não encontrado.',
   },
 };

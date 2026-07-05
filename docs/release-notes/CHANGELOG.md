@@ -8,6 +8,54 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.4.0] — 2026-07-04
+
+Beneficiary context & family-scope authorization + identity hardening (SPEC-0003) — Phase 1,
+slice 1.3.
+
+### Added
+
+- **Active-beneficiary context** (`domain.plan`): `GET /api/context/accessible-beneficiaries`
+  (selector source — a titular sees self + dependents, a dependent only self) and
+  `GET /api/context/beneficiaries/{id}` (scope-checked card summary). Out-of-scope requests answer
+  `404 context.beneficiary-not-accessible` without revealing the beneficiary exists (SPEC-0003
+  BR1-BR5, BR8). Server-side enforcement in the new `BeneficiaryAccess` facade (DL-0004); the
+  client's active beneficiary is convenience only.
+- **Active-beneficiary selector** in the shell header (Angular): avatar, first name and role
+  ("MARIA · Responsável"); switching updates the active context (BR5).
+
+### Hardened
+
+- **Optimistic lock on `user_account`** (Flyway V6, `@Version`): concurrent failed-login
+  increments no longer lost-update each other — each attempt runs in its own transaction with a
+  bounded retry, and a residual conflict is translated to `ConcurrentAccountUpdateException`
+  (`409 auth.concurrent-update`) instead of leaking the raw framework exception (débito técnico A,
+  DL-0005; regression `ConcurrentFailedLoginIT`).
+
+### Tests / tooling
+
+- **Account-security E2E** now runs on a dedicated disposable account (`seguranca-e2e@fkmed.local`,
+  Flyway V7 — dev-only, refused in prod by `ProdReadinessValidator`) instead of mutating MARIA's
+  canonical account (débito técnico B).
+
+## [0.3.0] — 2026-07-04
+
+Account security — lockout, recovery, password change, sessions, Segurança screen (SPEC-0002) —
+Phase 1, slice 1.2. *(Recorded retroactively: slice 1.2 merged (PR #9) without the lockstep bump;
+the version was reconciled in slice 1.3.)*
+
+### Added
+
+- **Lockout** (BR8): 5 consecutive failed logins lock the account for 15 min; attempts during the
+  lock are refused (DL-0002).
+- **Password recovery** (BR10): 30-min single-use reset link; a successful reset terminates all
+  other active sessions. **Authenticated password change** (BR11) requiring the current password.
+- **Session lifecycle** (BR12): "manter conectado" (7-day) vs session-only (30-min idle), with a
+  "Sua sessão expirou" return-route notice.
+- **Segurança screen**: change password, read-only login e-mail, mobile-biometrics info card.
+- Recovery/change events audited (BR14); recovery/change e-mails via the identity mail seam
+  (DL-0003).
+
 ## [0.2.0] — 2026-07-04
 
 First access + real login + audit foundation (SPEC-0002, SPEC-0003 foundation) — Phase 1,

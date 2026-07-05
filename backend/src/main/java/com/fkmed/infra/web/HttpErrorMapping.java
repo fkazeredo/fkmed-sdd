@@ -2,6 +2,7 @@ package com.fkmed.infra.web;
 
 import com.fkmed.domain.error.DomainException;
 import com.fkmed.domain.identity.AccountAlreadyExistsException;
+import com.fkmed.domain.identity.ConcurrentAccountUpdateException;
 import com.fkmed.domain.identity.CurrentPasswordIncorrectException;
 import com.fkmed.domain.identity.DependentUnderageException;
 import com.fkmed.domain.identity.EmailAlreadyUsedException;
@@ -9,6 +10,7 @@ import com.fkmed.domain.identity.PasswordPolicyViolationException;
 import com.fkmed.domain.identity.RegistrationNotFoundException;
 import com.fkmed.domain.identity.ResetLinkInvalidException;
 import com.fkmed.domain.identity.VerificationLinkInvalidException;
+import com.fkmed.domain.plan.BeneficiaryNotAccessibleException;
 import com.fkmed.domain.plan.PlanNotFoundException;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +29,9 @@ public final class HttpErrorMapping {
   private static final Map<Class<? extends DomainException>, HttpStatus> MAPPINGS =
       Map.ofEntries(
           Map.entry(PlanNotFoundException.class, HttpStatus.NOT_FOUND),
+          // SPEC-0003 BR2/BR3: an out-of-scope beneficiary is a not-found — existence is not
+          // revealed.
+          Map.entry(BeneficiaryNotAccessibleException.class, HttpStatus.NOT_FOUND),
           // SPEC-0002 §Error Behavior.
           Map.entry(RegistrationNotFoundException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(AccountAlreadyExistsException.class, HttpStatus.CONFLICT),
@@ -35,7 +40,9 @@ public final class HttpErrorMapping {
           Map.entry(PasswordPolicyViolationException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(VerificationLinkInvalidException.class, HttpStatus.GONE),
           Map.entry(ResetLinkInvalidException.class, HttpStatus.GONE),
-          Map.entry(CurrentPasswordIncorrectException.class, HttpStatus.UNPROCESSABLE_CONTENT));
+          Map.entry(CurrentPasswordIncorrectException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          // Débito técnico A (DL-0005): a concurrent-update conflict is retryable by the client.
+          Map.entry(ConcurrentAccountUpdateException.class, HttpStatus.CONFLICT));
 
   private HttpErrorMapping() {}
 
