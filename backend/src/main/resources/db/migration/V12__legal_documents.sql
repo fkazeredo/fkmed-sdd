@@ -5,8 +5,9 @@
 -- acceptance uniqueness guard, plus the current-version seed.
 
 -- The document catalogue: one row per published version; the current version per type is the
--- latest by `published_at`. `type` is a String code (TERMS|PRIVACY), fixed set fixed by law — the
--- API path uses the same codes; the acceptance row maps them to the SPEC-0002 document_type codes
+-- latest by `published_at`. `type` (TERMS|PRIVACY) is a small fixed product catalogue kept as a
+-- validated String code (baseline §0019), not a Java enum — the API path uses the same codes; the
+-- acceptance row maps them to the SPEC-0002 document_type codes
 -- (TERMS_OF_USE|PRIVACY_POLICY) so first-access acceptances and portal re-acceptances share one
 -- history. History is preserved: superseding a version inserts a new row, never updates one.
 create table legal_document (

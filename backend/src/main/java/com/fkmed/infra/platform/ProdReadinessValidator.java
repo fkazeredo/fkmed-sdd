@@ -33,6 +33,11 @@ public class ProdReadinessValidator implements ApplicationRunner {
   // V7).
   static final String DEV_E2E_ACCOUNT_EMAIL = "seguranca-e2e@fkmed.local";
   static final String DEV_E2E_ACCOUNT_PASSWORD = "seguranca12345";
+  // SPEC-0006 Phase 2: the disposable profile E2E identities (Flyway V13).
+  static final String DEV_PROFILE_E2E_ACCOUNT_EMAIL = "perfil-e2e@fkmed.local";
+  static final String DEV_PROFILE_E2E_ACCOUNT_PASSWORD = "perfilE2e12345";
+  static final String DEV_TERMS_E2E_ACCOUNT_EMAIL = "termos-e2e@fkmed.local";
+  static final String DEV_TERMS_E2E_ACCOUNT_PASSWORD = "termosE2e12345";
 
   private final AppSecurityProperties securityProperties;
   private final AppIdentityProperties identityProperties;
@@ -72,6 +77,18 @@ public class ProdReadinessValidator implements ApplicationRunner {
           "the dev seed account ("
               + DEV_E2E_ACCOUNT_EMAIL
               + ") must not exist in prod (SPEC-0003 débito B)");
+    }
+    if (seedAccountPresent(DEV_PROFILE_E2E_ACCOUNT_EMAIL, DEV_PROFILE_E2E_ACCOUNT_PASSWORD)) {
+      violations.add(
+          "the dev seed account ("
+              + DEV_PROFILE_E2E_ACCOUNT_EMAIL
+              + ") must not exist in prod (SPEC-0006 Phase 2)");
+    }
+    if (seedAccountPresent(DEV_TERMS_E2E_ACCOUNT_EMAIL, DEV_TERMS_E2E_ACCOUNT_PASSWORD)) {
+      violations.add(
+          "the dev seed account ("
+              + DEV_TERMS_E2E_ACCOUNT_EMAIL
+              + ") must not exist in prod (SPEC-0006 Phase 2)");
     }
     if (!violations.isEmpty()) {
       throw new IllegalStateException(
