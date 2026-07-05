@@ -14,15 +14,18 @@ import { ForgotPassword } from '../../features/password-recovery/forgot-password
 import { ResetPassword } from '../../features/password-recovery/reset-password';
 import { Security } from '../../features/security/security';
 import { SessionExpired } from '../../features/session-expired/session-expired';
+import { NotificationCenter } from '../../features/notifications/notification-center';
+import { NotificationPreferences } from '../../features/notifications/notification-preferences';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
 
 /**
  * SPEC-0001 AC5 / SPEC-0002 BR16: every visible UI string of the slice resolves from the pt-BR
  * bundle. Renders every screen of the slice — including all branches of the first-access,
- * verification, password-recovery, Segurança and session-expiry flows, and the SPEC-0003
- * active-beneficiary selector (both TITULAR and DEPENDENT role labels) embedded in the shell —
- * with a recording MissingTranslationHandler; a single missing key fails.
+ * verification, password-recovery, Segurança and session-expiry flows, the SPEC-0003
+ * active-beneficiary selector (both TITULAR and DEPENDENT role labels) embedded in the shell,
+ * and the SPEC-0004 notification bell/center/preferences — with a recording
+ * MissingTranslationHandler; a single missing key fails.
  */
 describe('i18n completeness (pt-BR)', () => {
   beforeEach(async () => {
@@ -37,6 +40,8 @@ describe('i18n completeness (pt-BR)', () => {
         ResetPassword,
         Security,
         SessionExpired,
+        NotificationCenter,
+        NotificationPreferences,
       ],
       providers: [
         provideRouter([]),
@@ -72,6 +77,10 @@ describe('i18n completeness (pt-BR)', () => {
       { beneficiaryId: 'maria-id', firstName: 'MARIA', role: 'TITULAR' },
       { beneficiaryId: 'pedro-id', firstName: 'PEDRO', role: 'DEPENDENT' },
     ]);
+    // SPEC-0004 BR2: the shell also loads the unread notification count on init (the bell).
+    http
+      .expectOne((request) => request.url === '/api/notifications' && request.params.get('size') === '1')
+      .flush({ unread: 2, items: [] });
     await shell.whenStable();
     shell.detectChanges();
     TestBed.inject(BeneficiaryContextService).setActive('pedro-id');
@@ -215,6 +224,67 @@ describe('i18n completeness (pt-BR)', () => {
     security.componentInstance.errorField.set(null);
     security.componentInstance.success.set(true);
     security.detectChanges();
+
+    // Notification center (SPEC-0004): the loaded list — an unread item with a deep link, an
+    // already-read item without one — exercising the title, item content, "marcar como lida",
+    // "marcar todas como lidas" and the preferences link; then mark-all-read.
+    const notificationCenter = TestBed.createComponent(NotificationCenter);
+    await notificationCenter.whenStable();
+    http
+      .expectOne((request) => request.url === '/api/notifications' && request.params.get('page') === '0')
+      .flush({
+        unread: 1,
+        items: [
+          {
+            id: 'notif-1',
+            type: 'reimbursement.paid',
+            title: 'Reembolso pago',
+            body: 'Seu reembolso RE-20260601-0001 foi pago: R$ 120,00.',
+            link: '/reembolso/RE-20260601-0001',
+            createdAt: '2026-07-01T10:00:00Z',
+            read: false,
+          },
+          {
+            id: 'notif-2',
+            type: 'guide.status-changed',
+            title: 'Guia atualizada',
+            body: 'Sua guia teve o status atualizado.',
+            link: null,
+            createdAt: '2026-06-30T09:00:00Z',
+            read: true,
+          },
+        ],
+      });
+    await notificationCenter.whenStable();
+    notificationCenter.detectChanges();
+    (
+      notificationCenter.nativeElement.querySelector('[data-testid="notifications-mark-all"]') as HTMLElement
+    ).click();
+    http.expectOne({ url: '/api/notifications/read-all', method: 'POST' }).flush(null);
+    await notificationCenter.whenStable();
+    notificationCenter.detectChanges();
+
+    // Notification preferences (SPEC-0004 BR7): a mandatory (locked) and an optional type —
+    // toggle the optional one to exercise both the "ativado"/"desativado" labels, then force the
+    // defensive mandatory-refusal error banner.
+    const notificationPreferences = TestBed.createComponent(NotificationPreferences);
+    await notificationPreferences.whenStable();
+    http.expectOne({ url: '/api/notifications/preferences', method: 'GET' }).flush([
+      { code: 'reimbursement.paid', description: 'Reembolso pago', emailOptOut: false, mandatory: false },
+      { code: 'auth.password-changed', description: 'Senha alterada', emailOptOut: false, mandatory: true },
+    ]);
+    await notificationPreferences.whenStable();
+    notificationPreferences.detectChanges();
+    (
+      notificationPreferences.nativeElement.querySelector(
+        '[data-testid="preference-reimbursement.paid-toggle"]',
+      ) as HTMLElement
+    ).click();
+    http
+      .expectOne({ url: '/api/notifications/preferences', method: 'PUT' })
+      .flush({ code: 'notification.preference-mandatory' }, { status: 422, statusText: 'Unprocessable Entity' });
+    await notificationPreferences.whenStable();
+    notificationPreferences.detectChanges();
 
     // Sessão expirada: static notice.
     const sessionExpired = TestBed.createComponent(SessionExpired);
