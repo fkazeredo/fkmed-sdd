@@ -143,3 +143,28 @@ unit/integração e FE unit que sustentam cada AC já estão verdes).
 - ADR-0009 (e demais ADRs) seguem **Proposed** — o owner aprova/flipa no merge.
 - Atalho "Carteirinha" da Home segue desabilitado (escopo SPEC-0005) — retoque futuro, fora das 3
   specs desta entrega (decisão registrada).
+
+## Desfecho do CI (pós-abertura do PR #15)
+
+O CI (`ci.yml` + `e2e.yml` + CodeQL + gitleaks + PIT) rodou no push. Deu **2 vermelhos**, ambos
+triados (arquiteto) e corrigidos numa rodada de fix integrada ao próprio PR, levando o CI a
+**15/15 verdes**:
+
+- **CodeQL HIGH — ReDoS** em `ContactInfo` (regex de e-mail com backtracking polinomial): reescrito
+  para forma **linear** (`^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$`) + guarda de comprimento (RFC-5321);
+  regressão com `assertTimeoutPreemptively` (trava no código antigo, passa no novo).
+- **E2E — a interceptação de termos barrava conta pré-existente:** o `seguranca-e2e@` (semeado no
+  V7, antes do catálogo legal) não tinha aceite → a guarda nova do SPEC-0006 o interceptava
+  (regressão de E2E da Fase 1). **V14** semeia o aceite (espelha MARIA/V12). *Achado relevante: a
+  interceptação barra qualquer conta pré-existente sem aceite — coberto para as contas semeadas.*
+- **Bug REAL de FE achado pelo E2E (invariante 8):** ao editar o cadastro de uma conta com campos
+  de contato opcionais nulos (backend devolve `null`), o form fazia `null.trim()` → `TypeError`,
+  quebrando validação/submit. Corrigido em `alterar-cadastro.ts` (coerção `?? ''`) com **regressão
+  unit (fail-before/passes-after)** — o tipo de defeito que unit com dados mockados completos não
+  pega e o E2E pega.
+- Ajustes de spec E2E: locator ambíguo da carteirinha (`exact:true`); corrida de `count()` nas
+  notificações; asserção no conteúdo do diálogo de Sair; `force:true` num quirk de hit-test do
+  Playwright no download do PDF (download real confirmado — 200 `application/pdf`, 15.631 bytes).
+
+**Resultado:** backend **326** testes · frontend **205** · Playwright **15/15** · PIT (mutação)
+verde · CodeQL sem alertas novos — todos os **15 checks** do PR verdes.
