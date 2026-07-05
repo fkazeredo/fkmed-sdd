@@ -1,6 +1,6 @@
 # 0006 - Profile and Account
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
