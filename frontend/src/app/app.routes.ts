@@ -60,6 +60,20 @@ export const routes: Routes = [
         path: 'seguranca',
         loadComponent: () => import('./features/security/security').then((m) => m.Security),
       },
+      // SPEC-0004: notification center (reached via the shell bell, not the main nav) and its
+      // preferences screen (reached from a link inside the center).
+      {
+        path: 'notificacoes',
+        loadComponent: () =>
+          import('./features/notifications/notification-center').then((m) => m.NotificationCenter),
+      },
+      {
+        path: 'notificacoes/preferencias',
+        loadComponent: () =>
+          import('./features/notifications/notification-preferences').then(
+            (m) => m.NotificationPreferences,
+          ),
+      },
     ],
   },
 ];

@@ -1,0 +1,94 @@
+<section class="mx-auto max-w-3xl p-4" aria-labelledby="notification-center-title" data-testid="notification-center-page">
+  <div class="mb-4 flex items-center justify-between">
+    <h1 id="notification-center-title" class="text-2xl font-semibold text-teal-800">
+      {{ 'notificacoes.title' | translate }}
+    </h1>
+    <a
+      routerLink="/notificacoes/preferencias"
+      class="text-sm text-teal-700 underline"
+      data-testid="notifications-preferences-link"
+    >
+      {{ 'notificacoes.preferenciasLink' | translate }}
+    </a>
+  </div>
+
+  @if (loading()) {
+    <p class="text-slate-500" role="status">{{ 'common.loading' | translate }}</p>
+  } @else if (error()) {
+    <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert">
+      <p class="mb-2">{{ 'common.error' | translate }}</p>
+      <button type="button" class="rounded bg-red-700 px-3 py-1 text-white" (click)="load()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (items().length === 0) {
+    <p class="text-slate-500" data-testid="notifications-empty">{{ 'notificacoes.vazio' | translate }}</p>
+  } @else {
+    <div class="mb-3 flex justify-end">
+      @if (state.unread() > 0) {
+        <button
+          type="button"
+          class="text-sm text-teal-700 underline"
+          data-testid="notifications-mark-all"
+          (click)="markAllRead()"
+        >
+          {{ 'notificacoes.marcarTodasLidas' | translate }}
+        </button>
+      }
+    </div>
+
+    <ul class="space-y-2">
+      @for (item of items(); track item.id) {
+        <li
+          class="flex items-start gap-3 rounded-lg bg-white p-3 shadow-sm"
+          [class.bg-teal-50]="!item.read"
+          data-testid="notification-item"
+          [attr.data-read]="item.read"
+        >
+          <span
+            class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+            [class.bg-teal-600]="!item.read"
+            aria-hidden="true"
+          ></span>
+          <div class="min-w-0 flex-1">
+            @if (item.link) {
+              <a [routerLink]="item.link" class="font-medium text-teal-800" data-testid="notification-link">
+                {{ item.title }}
+              </a>
+            } @else {
+              <p class="font-medium text-teal-800">{{ item.title }}</p>
+            }
+            <p class="text-sm text-slate-600">{{ item.body }}</p>
+            <p class="text-xs text-slate-400" data-testid="notification-date">
+              {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+            </p>
+          </div>
+          @if (!item.read) {
+            <button
+              type="button"
+              class="shrink-0 rounded border border-teal-700 px-2 py-1 text-xs text-teal-700"
+              data-testid="notification-mark-read"
+              (click)="markRead(item)"
+            >
+              {{ 'notificacoes.marcarLida' | translate }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (hasMore()) {
+      <div class="mt-4 flex justify-center">
+        <button
+          type="button"
+          class="rounded border border-teal-700 px-4 py-2 text-sm text-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+          data-testid="notifications-load-more"
+          [disabled]="loadingMore()"
+          (click)="loadMore()"
+        >
+          {{ (loadingMore() ? 'common.processando' : 'notificacoes.carregarMais') | translate }}
+        </button>
+      </div>
+    }
+  }
+</section>
