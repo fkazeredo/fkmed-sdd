@@ -2,7 +2,7 @@
 
 > Artefato vivo em **pt-BR** (idioma do produto). Atualizado via `/manual` ao fechar toda
 > fatia com mudança visível ao usuário — a fatia só está "pronta" quando este manual
-> reflete a mudança. Versão do produto: **0.4.0** (pré-release; tag pendente do owner).
+> reflete a mudança. Versão do produto: **0.5.0** (pré-release; tag pendente do owner).
 
 ## Sobre o portal
 
@@ -42,10 +42,19 @@ orientação para verificar o e-mail — você pode solicitar um novo link.
 
 Para sair, use o botão **Sair** no canto superior direito.
 
-### 3. Meu Plano
+### 3. Início (a Home)
 
-Após entrar, o portal abre a tela **Meu Plano** (também acessível pelo menu lateral). Ela
-mostra os dados do seu contrato, vindos diretamente da operadora:
+Ao entrar, o portal abre a **Home**: o **cartão do beneficiário ativo** (saudação "Olá, {NOME}",
+plano e número da carteirinha), o **Acesso Rápido** (atalhos para as jornadas — os módulos ainda
+não liberados aparecem como "em breve", e **Reconhecimento Facial** abre o aviso de uso pelo
+aplicativo móvel), **banners** da operadora (rotação automática, com pausa ao passar o mouse) e
+**avisos** (expansíveis, um por vez, com destaque visual para alertas). Trocar o beneficiário
+ativo no topo atualiza o cartão na hora. Use **Início** no menu para voltar à Home.
+
+### 4. Meu Plano
+
+Acessível pelo menu lateral, a tela **Meu Plano** mostra os dados do seu contrato, vindos
+diretamente da operadora:
 
 - **Nome do plano** e **Registro ANS**;
 - **Abrangência** (ex.: Estadual);
@@ -57,7 +66,7 @@ mostra os dados do seu contrato, vindos diretamente da operadora:
 Enquanto os dados carregam, a tela exibe "Carregando…". Se houver falha de comunicação, uma
 mensagem de erro é mostrada com o botão **Tentar novamente**.
 
-### 4. Segurança da conta
+### 5. Segurança da conta
 
 No menu lateral, a tela **Segurança** reúne o cuidado com o seu acesso:
 
@@ -75,7 +84,7 @@ No menu lateral, a tela **Segurança** reúne o cuidado com o seu acesso:
   aviso **"Sua sessão expirou"**, retornando à tela em que estava assim que autenticar. Marcar
   **Manter conectado** no login mantém a sessão por até 7 dias.
 
-### 5. Trocar o beneficiário ativo
+### 6. Trocar o beneficiário ativo
 
 No topo do portal há o seletor de **beneficiário ativo**. O **titular** vê a si mesmo e aos seus
 **dependentes**; um dependente vê apenas a si. Ao trocar o beneficiário ativo, as telas passam a
@@ -87,6 +96,7 @@ acessíveis.
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-05 | 0.5.0 | Home (Início): cartão do beneficiário ativo, Acesso Rápido, banners e avisos — fecha a Fase 1 |
 | 2026-07-04 | 0.4.0 | Beneficiário ativo: seletor no topo do portal com escopo familiar (titular vê dependentes) |
 | 2026-07-04 | 0.3.0 | Segurança da conta: bloqueio, recuperação e troca de senha, sessão e tela Segurança |
 | 2026-07-04 | 0.2.0 | Primeiro acesso (criação de conta + verificação de e-mail) e login real com conta própria |

@@ -8,6 +8,21 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.5.0] — 2026-07-05
+
+Home (SPEC-0005) — Phase 1, slice 1.4. **Closes Phase 1.**
+
+### Added
+
+- **Home** (post-login landing): beneficiary card reflecting the **active beneficiary** (updates on
+  selector switch — the phase's headline journey); "Acesso Rápido" quick-access carousel (9 shortcuts;
+  not-yet-delivered modules disabled "em breve"; Reconhecimento Facial info dialog); operator **banner**
+  carousel (6 s rotation, pause on hover/focus) and **notices** accordion (single-open,
+  severity-distinct) — all content server-side filtered by `GET /api/content/home` (new
+  `domain.content` module, Flyway V8, ADR-0006). Navigation to not-yet-delivered modules is "em breve"
+  (SPEC-0005 AC2/AC6 deferred to Phases 2/5).
+- Post-login landing is now the **Home**; "Início" navigation entry added.
+
 ## [0.4.0] — 2026-07-04
 
 Beneficiary context & family-scope authorization + identity hardening (SPEC-0003) — Phase 1,
