@@ -1,5 +1,6 @@
 package com.fkmed.infra.web;
 
+import com.fkmed.domain.card.CardUnavailableException;
 import com.fkmed.domain.error.DomainException;
 import com.fkmed.domain.identity.AccountAlreadyExistsException;
 import com.fkmed.domain.identity.ConcurrentAccountUpdateException;
@@ -42,7 +43,10 @@ public final class HttpErrorMapping {
           Map.entry(ResetLinkInvalidException.class, HttpStatus.GONE),
           Map.entry(CurrentPasswordIncorrectException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           // Débito técnico A (DL-0005): a concurrent-update conflict is retryable by the client.
-          Map.entry(ConcurrentAccountUpdateException.class, HttpStatus.CONFLICT));
+          Map.entry(ConcurrentAccountUpdateException.class, HttpStatus.CONFLICT),
+          // SPEC-0007 BR10: an inactive beneficiary's card is unavailable, distinct from the 404
+          // out-of-scope case above.
+          Map.entry(CardUnavailableException.class, HttpStatus.CONFLICT));
 
   private HttpErrorMapping() {}
 
