@@ -1,0 +1,149 @@
+<section class="mx-auto max-w-md p-4" aria-labelledby="perfil-title" data-testid="perfil-menu-page">
+  <h1 id="perfil-title" class="sr-only">{{ 'perfil.menu.title' | translate }}</h1>
+
+  <!-- Header card (BR1) -->
+  <div class="mb-4 flex items-center gap-4 rounded-xl bg-white p-5 shadow" data-testid="perfil-header">
+    <div
+      class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-teal-600 text-2xl font-semibold text-white"
+    >
+      @if (avatarUrl() && !avatarBroken(); as url) {
+        <img [src]="url" [alt]="'perfil.menu.avatarLabel' | translate" class="h-full w-full object-cover" (error)="onAvatarError()" />
+      } @else {
+        {{ initialOf(context.active()?.firstName) }}
+      }
+    </div>
+    <div>
+      <p class="text-lg font-semibold text-teal-800" data-testid="perfil-saudacao">
+        {{ 'perfil.menu.saudacao' | translate }} {{ context.active()?.firstName?.toUpperCase() }}
+      </p>
+      <p class="text-sm text-slate-700" data-testid="perfil-plano">{{ summary()?.planName }}</p>
+      <p class="flex items-center gap-1 text-sm text-slate-600" data-testid="perfil-carteirinha">
+        <i class="pi pi-id-card text-teal-700" aria-hidden="true"></i>
+        {{ summary()?.cardNumber }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Menu items, fixed order (BR1) -->
+  <nav class="overflow-hidden rounded-xl bg-white shadow" [attr.aria-label]="'perfil.menu.title' | translate">
+    <a
+      routerLink="/perfil/foto"
+      class="flex items-center gap-3 border-b border-slate-100 px-4 py-3 text-slate-700 hover:bg-slate-50"
+      data-testid="perfil-item-alterar-foto"
+    >
+      <i class="pi pi-camera text-teal-700" aria-hidden="true"></i>
+      <span>{{ 'perfil.menu.alterarFoto' | translate }}</span>
+    </a>
+
+    <a
+      routerLink="/seguranca"
+      class="flex items-center gap-3 border-b border-slate-100 px-4 py-3 text-slate-700 hover:bg-slate-50"
+      data-testid="perfil-item-seguranca"
+    >
+      <i class="pi pi-lock text-teal-700" aria-hidden="true"></i>
+      <span>{{ 'perfil.menu.seguranca' | translate }}</span>
+    </a>
+
+    <a
+      routerLink="/perfil/cadastro"
+      class="flex items-center gap-3 border-b border-slate-100 px-4 py-3 text-slate-700 hover:bg-slate-50"
+      data-testid="perfil-item-alterar-cadastro"
+    >
+      <i class="pi pi-user-edit text-teal-700" aria-hidden="true"></i>
+      <span>{{ 'perfil.menu.alterarCadastro' | translate }}</span>
+    </a>
+
+    <div
+      class="flex items-center gap-3 border-b border-slate-100 px-4 py-3 text-slate-400"
+      data-testid="perfil-item-libras"
+    >
+      <i class="pi pi-comments" aria-hidden="true"></i>
+      <span>{{ 'perfil.menu.centralLibras' | translate }}</span>
+      <span class="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+        {{ 'home.emBreve' | translate }}
+      </span>
+    </div>
+
+    <div
+      class="flex items-center gap-3 border-b border-slate-100 px-4 py-3 text-slate-400"
+      data-testid="perfil-item-faq"
+    >
+      <i class="pi pi-question-circle" aria-hidden="true"></i>
+      <span>{{ 'perfil.menu.faq' | translate }}</span>
+      <span class="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+        {{ 'home.emBreve' | translate }}
+      </span>
+    </div>
+
+    <a
+      routerLink="/comunicado-privacidade"
+      class="flex items-center gap-3 border-b border-slate-100 px-4 py-3 text-slate-700 hover:bg-slate-50"
+      data-testid="perfil-item-privacidade"
+    >
+      <i class="pi pi-shield text-teal-700" aria-hidden="true"></i>
+      <span>{{ 'perfil.menu.privacidade' | translate }}</span>
+    </a>
+
+    <a
+      routerLink="/termos-de-uso"
+      class="flex items-center gap-3 border-b border-slate-100 px-4 py-3 text-slate-700 hover:bg-slate-50"
+      data-testid="perfil-item-termos"
+    >
+      <i class="pi pi-file text-teal-700" aria-hidden="true"></i>
+      <span>{{ 'perfil.menu.termos' | translate }}</span>
+    </a>
+
+    <button
+      type="button"
+      class="flex w-full items-center gap-3 px-4 py-3 text-left text-slate-700 hover:bg-slate-50"
+      data-testid="perfil-item-sair"
+      (click)="askLogout()"
+    >
+      <i class="pi pi-sign-out text-teal-700" aria-hidden="true"></i>
+      <span>{{ 'perfil.menu.sair' | translate }}</span>
+      <span class="ml-auto text-xs text-slate-400" data-testid="perfil-versao">
+        {{ 'perfil.menu.versao' | translate }} {{ version }}
+      </span>
+    </button>
+  </nav>
+
+  <!-- Expandable LGPD notice (same accordion the Home notices use) -->
+  <p-accordion class="mt-4 block" data-testid="perfil-lgpd">
+    <p-accordion-panel value="0">
+      <p-accordion-header>{{ 'perfil.lgpd.title' | translate }}</p-accordion-header>
+      <p-accordion-content>
+        <p class="text-sm text-slate-600" data-testid="perfil-lgpd-body">{{ 'perfil.lgpd.body' | translate }}</p>
+      </p-accordion-content>
+    </p-accordion-panel>
+  </p-accordion>
+
+  <!-- Sair confirmation (BR9) -->
+  <p-dialog
+    [visible]="confirmingLogout()"
+    (visibleChange)="onLogoutVisibleChange($event)"
+    [modal]="true"
+    [header]="'perfil.sair.titulo' | translate"
+    [style]="{ width: '22rem' }"
+    data-testid="perfil-sair-dialog"
+  >
+    <p data-testid="perfil-sair-mensagem">{{ 'perfil.sair.mensagem' | translate }}</p>
+    <ng-template #footer>
+      <button
+        type="button"
+        class="rounded border border-slate-300 px-4 py-2 text-slate-600"
+        data-testid="perfil-sair-cancelar"
+        (click)="cancelLogout()"
+      >
+        {{ 'common.no' | translate }}
+      </button>
+      <button
+        type="button"
+        class="rounded bg-red-700 px-4 py-2 text-white"
+        data-testid="perfil-sair-confirmar"
+        (click)="confirmLogout()"
+      >
+        {{ 'perfil.sair.confirmar' | translate }}
+      </button>
+    </ng-template>
+  </p-dialog>
+</section>

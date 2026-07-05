@@ -1,0 +1,238 @@
+<section class="mx-auto max-w-2xl p-4" aria-labelledby="cadastro-title" data-testid="alterar-cadastro-page">
+  <h1 id="cadastro-title" class="mb-6 text-2xl font-semibold text-teal-800">
+    {{ 'perfil.cadastro.title' | translate }}
+  </h1>
+
+  @if (loading()) {
+    <p class="text-slate-500" role="status">{{ 'common.loading' | translate }}</p>
+  } @else if (loadError()) {
+    <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert" data-testid="cadastro-load-error">
+      {{ 'common.error' | translate }}
+    </div>
+  } @else if (profile(); as data) {
+    <!-- Contract data — read-only (BR4) -->
+    <div class="mb-6 rounded-xl bg-white p-5 shadow" data-testid="cadastro-contrato">
+      <h2 class="mb-3 text-lg font-medium text-teal-800">
+        {{ 'perfil.cadastro.contrato.title' | translate }}
+      </h2>
+      <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <dt class="text-xs text-slate-500">{{ 'perfil.cadastro.contrato.nome' | translate }}</dt>
+          <dd class="text-slate-800" data-testid="contrato-nome">{{ data.fullName }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-500">{{ 'perfil.cadastro.contrato.cpf' | translate }}</dt>
+          <dd class="text-slate-800" data-testid="contrato-cpf">{{ data.cpf }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-500">{{ 'perfil.cadastro.contrato.nascimento' | translate }}</dt>
+          <dd class="text-slate-800" data-testid="contrato-nascimento">{{ data.birthDate }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-500">{{ 'perfil.cadastro.contrato.carteirinha' | translate }}</dt>
+          <dd class="text-slate-800" data-testid="contrato-carteirinha">{{ data.cardNumber }}</dd>
+        </div>
+        <div class="sm:col-span-2">
+          <dt class="text-xs text-slate-500">{{ 'perfil.cadastro.contrato.plano' | translate }}</dt>
+          <dd class="text-slate-800" data-testid="contrato-plano">{{ data.planName }}</dd>
+        </div>
+      </dl>
+      <p class="mt-3 text-sm text-slate-500" data-testid="cadastro-contrato-hint">
+        {{ 'perfil.cadastro.contrato.hint' | translate }}
+      </p>
+    </div>
+
+    <!-- Contact & address — editable (BR5/BR6/BR7) -->
+    <form class="rounded-xl bg-white p-5 shadow" (ngSubmit)="submit()" data-testid="cadastro-form">
+      @if (success()) {
+        <p class="mb-4 rounded-lg bg-green-50 p-3 text-green-700" role="status" data-testid="cadastro-success">
+          {{ 'perfil.cadastro.sucesso' | translate }}
+        </p>
+      }
+      @if (errorKey() && errorField() === null) {
+        <p class="mb-4 rounded-lg bg-red-50 p-3 text-red-700" role="alert" data-testid="cadastro-error">
+          {{ errorKey() | translate }}
+        </p>
+      }
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <label for="contactEmail" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.email' | translate }}
+          </label>
+          <input
+            id="contactEmail"
+            name="contactEmail"
+            type="email"
+            class="w-full rounded border border-slate-300 px-3 py-2"
+            [(ngModel)]="form.contactEmail"
+          />
+          @if (!emailValid) {
+            <p class="mt-1 text-sm text-red-600" data-testid="error-email">
+              {{ 'perfil.cadastro.validacao.email' | translate }}
+            </p>
+          }
+          @if (errorField() === 'contactEmail') {
+            <p class="mt-1 text-sm text-red-600" data-testid="server-error-email">{{ errorKey() | translate }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="mobile" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.celular' | translate }}
+          </label>
+          <input
+            id="mobile"
+            name="mobile"
+            class="w-full rounded border border-slate-300 px-3 py-2"
+            placeholder="(21) 99999-1234"
+            [(ngModel)]="form.mobile"
+          />
+          @if (!mobileValid) {
+            <p class="mt-1 text-sm text-red-600" data-testid="error-mobile">
+              {{ 'perfil.cadastro.validacao.celular' | translate }}
+            </p>
+          }
+          @if (errorField() === 'mobile') {
+            <p class="mt-1 text-sm text-red-600" data-testid="server-error-mobile">{{ errorKey() | translate }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="landline" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.telefone' | translate }}
+          </label>
+          <input
+            id="landline"
+            name="landline"
+            class="w-full rounded border border-slate-300 px-3 py-2"
+            placeholder="(21) 2222-1234"
+            [(ngModel)]="form.landline"
+          />
+          @if (!landlineValid) {
+            <p class="mt-1 text-sm text-red-600" data-testid="error-landline">
+              {{ 'perfil.cadastro.validacao.telefone' | translate }}
+            </p>
+          }
+        </div>
+
+        <div>
+          <label for="cep" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.cep' | translate }}
+          </label>
+          <input
+            id="cep"
+            name="cep"
+            class="w-full rounded border border-slate-300 px-3 py-2"
+            placeholder="22222-222"
+            [(ngModel)]="form.cep"
+          />
+          @if (!cepValid) {
+            <p class="mt-1 text-sm text-red-600" data-testid="error-cep">
+              {{ 'perfil.cadastro.validacao.cep' | translate }}
+            </p>
+          }
+          @if (errorField() === 'cep') {
+            <p class="mt-1 text-sm text-red-600" data-testid="server-error-cep">{{ errorKey() | translate }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="uf" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.uf' | translate }}
+          </label>
+          <input
+            id="uf"
+            name="uf"
+            maxlength="2"
+            class="w-full rounded border border-slate-300 px-3 py-2 uppercase"
+            placeholder="RJ"
+            [(ngModel)]="form.uf"
+          />
+          @if (!ufValid) {
+            <p class="mt-1 text-sm text-red-600" data-testid="error-uf">
+              {{ 'perfil.cadastro.validacao.uf' | translate }}
+            </p>
+          }
+          @if (errorField() === 'uf') {
+            <p class="mt-1 text-sm text-red-600" data-testid="server-error-uf">{{ errorKey() | translate }}</p>
+          }
+        </div>
+
+        <div class="sm:col-span-2">
+          <label for="street" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.logradouro' | translate }}
+          </label>
+          <input
+            id="street"
+            name="street"
+            [maxlength]="fieldMax.street"
+            class="w-full rounded border border-slate-300 px-3 py-2"
+            [(ngModel)]="form.street"
+          />
+        </div>
+
+        <div>
+          <label for="number" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.numero' | translate }}
+          </label>
+          <input
+            id="number"
+            name="number"
+            [maxlength]="fieldMax.number"
+            class="w-full rounded border border-slate-300 px-3 py-2"
+            [(ngModel)]="form.number"
+          />
+        </div>
+
+        <div>
+          <label for="complement" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.complemento' | translate }}
+          </label>
+          <input
+            id="complement"
+            name="complement"
+            [maxlength]="fieldMax.complement"
+            class="w-full rounded border border-slate-300 px-3 py-2"
+            [(ngModel)]="form.complement"
+          />
+        </div>
+
+        <div>
+          <label for="neighborhood" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.bairro' | translate }}
+          </label>
+          <input
+            id="neighborhood"
+            name="neighborhood"
+            [maxlength]="fieldMax.neighborhood"
+            class="w-full rounded border border-slate-300 px-3 py-2"
+            [(ngModel)]="form.neighborhood"
+          />
+        </div>
+
+        <div>
+          <label for="city" class="mb-1 block text-sm text-slate-600">
+            {{ 'perfil.cadastro.campo.cidade' | translate }}
+          </label>
+          <input
+            id="city"
+            name="city"
+            [maxlength]="fieldMax.city"
+            class="w-full rounded border border-slate-300 px-3 py-2"
+            [(ngModel)]="form.city"
+          />
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="mt-6 w-full rounded bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+        data-testid="cadastro-submit"
+        [disabled]="!formValid || !hasChanges || saving()"
+      >
+        {{ (saving() ? 'common.processando' : 'perfil.cadastro.salvar') | translate }}
+      </button>
+    </form>
+  }
+</section>

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { legalAcceptanceGuard } from './core/legal/legal-acceptance.guard';
 import { Shell } from './core/layout/shell';
 
 export const routes: Routes = [
@@ -35,6 +36,10 @@ export const routes: Routes = [
     path: '',
     component: Shell,
     canActivate: [authGuard],
+    // SPEC-0006 BR8: terms interception. While a new mandatory legal version is unaccepted, this
+    // guard blocks every internal route and funnels the user to /aceite-legal (only Sair, the
+    // header logout, stays reachable) until "Li e aceito".
+    canActivateChild: [legalAcceptanceGuard],
     children: [
       // SPEC-0005: Home is the new default child — the daily entry point after login. Meu Plano
       // remains reachable through the shell nav (nav-meu-plano).
@@ -73,6 +78,37 @@ export const routes: Routes = [
           import('./features/notifications/notification-preferences').then(
             (m) => m.NotificationPreferences,
           ),
+      },
+      // SPEC-0006 (Phase 2): Perfil menu (BR1) and its sub-screens.
+      {
+        path: 'perfil',
+        loadComponent: () => import('./features/perfil/perfil-menu').then((m) => m.PerfilMenu),
+      },
+      {
+        path: 'perfil/foto',
+        loadComponent: () => import('./features/perfil/alterar-foto').then((m) => m.AlterarFoto),
+      },
+      {
+        path: 'perfil/cadastro',
+        loadComponent: () =>
+          import('./features/perfil/alterar-cadastro').then((m) => m.AlterarCadastro),
+      },
+      // Legal pages (BR8): reached from the Perfil menu, shown with version + publication date.
+      {
+        path: 'termos-de-uso',
+        data: { type: 'TERMS' },
+        loadComponent: () => import('./features/perfil/legal-document').then((m) => m.LegalDocumentPage),
+      },
+      {
+        path: 'comunicado-privacidade',
+        data: { type: 'PRIVACY' },
+        loadComponent: () => import('./features/perfil/legal-document').then((m) => m.LegalDocumentPage),
+      },
+      // Legal acceptance interception target (BR8): the guard redirects here while a version is
+      // pending; it self-redirects to /home once nothing is pending.
+      {
+        path: 'aceite-legal',
+        loadComponent: () => import('./features/perfil/legal-acceptance').then((m) => m.LegalAcceptance),
       },
     ],
   },
