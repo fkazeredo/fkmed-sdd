@@ -49,7 +49,8 @@ class ModularityTest {
             "domain.audit",
             "domain.content",
             "domain.card",
-            "domain.notification");
+            "domain.notification",
+            "domain.network");
   }
 
   @Test

@@ -476,6 +476,255 @@
         }
       }
     },
+    "/api/network/states" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "states",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/specialties" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "specialties",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SpecialtyOption"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/service-types" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "serviceTypes",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ServiceTypeOption"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/providers" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "providers",
+        "parameters" : [ {
+          "name" : "uf",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "municipality",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "neighborhood",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "serviceType",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "specialty",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProviderSearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/providers/{id}" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "provider",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProviderDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/providers/search" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "searchProviders",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "municipality",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProviderSearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/neighborhoods" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "neighborhoods",
+        "parameters" : [ {
+          "name" : "uf",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "municipality",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/municipalities" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "municipalities",
+        "parameters" : [ {
+          "name" : "uf",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/legal-documents/{type}" : {
       "get" : {
         "tags" : [ "legal-document-controller" ],
@@ -1064,6 +1313,143 @@
           },
           "read" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "SpecialtyOption" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ServiceTypeOption" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "hasSpecialtyStep" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ProviderCard" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "serviceType" : {
+            "type" : "string"
+          },
+          "seals" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SealBadge"
+            }
+          }
+        }
+      },
+      "ProviderSearchResponse" : {
+        "type" : "object",
+        "properties" : {
+          "referenceDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProviderCard"
+            }
+          }
+        }
+      },
+      "SealBadge" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AddressView" : {
+        "type" : "object",
+        "properties" : {
+          "cep" : {
+            "type" : "string"
+          },
+          "street" : {
+            "type" : "string"
+          },
+          "number" : {
+            "type" : "string"
+          },
+          "complement" : {
+            "type" : "string"
+          },
+          "neighborhood" : {
+            "type" : "string"
+          },
+          "municipality" : {
+            "type" : "string"
+          },
+          "uf" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ProviderDetailResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "serviceType" : {
+            "type" : "string"
+          },
+          "specialties" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "address" : {
+            "$ref" : "#/components/schemas/AddressView"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "seals" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SealBadge"
+            }
           }
         }
       },
