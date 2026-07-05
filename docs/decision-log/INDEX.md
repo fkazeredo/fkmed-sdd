@@ -20,3 +20,4 @@ old one.
 | [0003](DL-0003-recovery-and-password-change-shape.md) | 2026-07-04 | 1 / 1.2 | 0002 | Medium | Cheap | Recovery / reset / password-change event and audit shape |
 | [0004](DL-0004-beneficiary-context-authorization-placement.md) | 2026-07-04 | 1 / 1.3 | 0003 | Medium | Cheap | Beneficiary context & family-scope authorization placement and contract |
 | [0005](DL-0005-concurrent-account-update-translation.md) | 2026-07-04 | 1 / 1.3 | 0002 | Medium | Cheap | Concurrent account-update translation (optimistic lock, débito técnico A) |
+| [0006](DL-0006-digital-card-plan-category-value.md) | 2026-07-05 | 2 / — | 0007 | Medium | Cheap | Digital-card `planCategory` column and seeded value |

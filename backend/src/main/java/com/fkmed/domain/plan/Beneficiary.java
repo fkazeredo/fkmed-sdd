@@ -136,6 +136,17 @@ public class Beneficiary {
   }
 
   /**
+   * Deactivates the beneficiary in the plan (operator registry action). An inactive beneficiary has
+   * no digital card (SPEC-0007 BR10: "carteirinha indisponível") and is excluded from the
+   * accessible-beneficiaries selector (SPEC-0003 BR5), though it stays resolvable within its
+   * titular's family scope for the digital-card feature's 404-vs-409 distinction (see {@link
+   * BeneficiaryAccess#cardDetailsFor}).
+   */
+  public void deactivate() {
+    this.active = false;
+  }
+
+  /**
    * Validates a CPF: 11 numeric digits, not all repeated, with valid mod-11 check digits (SPEC-0001
    * §Validation Rules).
    */

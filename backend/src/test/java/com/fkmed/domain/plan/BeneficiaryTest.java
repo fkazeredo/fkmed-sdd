@@ -18,7 +18,8 @@ class BeneficiaryTest {
   private static final LocalDate PAST = LocalDate.of(1988, 3, 12);
 
   private static Plan plan() {
-    return Plan.create("PLANO TESTE", "326305", "ESTADUAL", true, true, List.of());
+    return Plan.create(
+        "PLANO TESTE", "326305", "ESTADUAL", "Coletivo por Adesão", true, true, List.of());
   }
 
   private static Beneficiary maria(Plan plan) {
