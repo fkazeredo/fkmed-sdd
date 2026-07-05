@@ -22,7 +22,7 @@ export class NotificationPreferences implements OnInit {
   readonly loading = signal(true);
   readonly error = signal(false);
   readonly preferences = signal<NotificationPreference[]>([]);
-  readonly savingCode = signal<string | null>(null);
+  readonly savingType = signal<string | null>(null);
   readonly errorKey = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -33,8 +33,8 @@ export class NotificationPreferences implements OnInit {
     this.loading.set(true);
     this.error.set(false);
     this.api.getPreferences().subscribe({
-      next: (response) => {
-        this.preferences.set(response);
+      next: (catalog) => {
+        this.preferences.set(catalog);
         this.loading.set(false);
       },
       error: () => {
@@ -45,23 +45,21 @@ export class NotificationPreferences implements OnInit {
   }
 
   toggle(preference: NotificationPreference): void {
-    if (preference.mandatory || this.savingCode()) {
+    if (preference.mandatory || this.savingType()) {
       return;
     }
     const nextValue = !preference.emailOptOut;
-    this.savingCode.set(preference.code);
+    this.savingType.set(preference.type);
     this.errorKey.set(null);
-    this.api.updatePreference(preference.code, nextValue).subscribe({
-      next: () => {
-        this.preferences.update((list) =>
-          list.map((current) =>
-            current.code === preference.code ? { ...current, emailOptOut: nextValue } : current,
-          ),
-        );
-        this.savingCode.set(null);
+    this.api.updatePreference(preference.type, nextValue).subscribe({
+      // The PUT returns the full updated catalog (200) — render it verbatim rather than mutating
+      // the single toggled row, so the screen always reflects the backend's authoritative state.
+      next: (catalog) => {
+        this.preferences.set(catalog);
+        this.savingType.set(null);
       },
       error: (error: HttpErrorResponse) => {
-        this.savingCode.set(null);
+        this.savingType.set(null);
         this.errorKey.set(
           error.error?.code === 'notification.preference-mandatory'
             ? 'notificacoes.preferencias.erro.mandatorio'

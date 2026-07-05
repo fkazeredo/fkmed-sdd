@@ -32,17 +32,17 @@
       </div>
     }
     <ul class="divide-y divide-slate-200 rounded-xl bg-white shadow">
-      @for (preference of preferences(); track preference.code) {
+      @for (preference of preferences(); track preference.type) {
         <li
           class="flex items-center justify-between gap-4 p-4"
-          [attr.data-testid]="'preference-' + preference.code"
+          [attr.data-testid]="'preference-' + preference.type"
         >
           <div>
             <p class="font-medium text-slate-800">{{ preference.description }}</p>
             @if (preference.mandatory) {
               <p
                 class="text-xs text-slate-400"
-                [attr.data-testid]="'preference-' + preference.code + '-mandatory-hint'"
+                [attr.data-testid]="'preference-' + preference.type + '-mandatory-hint'"
               >
                 {{ 'notificacoes.preferencias.obrigatorio' | translate }}
               </p>
@@ -55,9 +55,9 @@
             [class.text-teal-700]="!preference.emailOptOut"
             [class.border-slate-300]="preference.emailOptOut"
             [class.text-slate-500]="preference.emailOptOut"
-            [disabled]="preference.mandatory || savingCode() === preference.code"
+            [disabled]="preference.mandatory || savingType() === preference.type"
             [attr.aria-pressed]="!preference.emailOptOut"
-            [attr.data-testid]="'preference-' + preference.code + '-toggle'"
+            [attr.data-testid]="'preference-' + preference.type + '-toggle'"
             (click)="toggle(preference)"
           >
             {{

@@ -5,6 +5,7 @@ import {
   NotificationItem,
   NotificationListResponse,
   NotificationPreference,
+  NotificationPreferencesResponse,
   NotificationsApi,
 } from './notifications.api';
 
@@ -72,25 +73,31 @@ describe('NotificationsApi', () => {
     expect(done).toBe(true);
   });
 
-  it('calls GET /api/notifications/preferences and returns the catalog', () => {
-    const payload: NotificationPreference[] = [
-      { code: 'reimbursement.paid', description: 'Reembolso pago', emailOptOut: false, mandatory: false },
-      { code: 'auth.password-changed', description: 'Senha alterada', emailOptOut: false, mandatory: true },
+  it('calls GET /api/notifications/preferences and unwraps the {preferences:[...]} envelope', () => {
+    const catalog: NotificationPreference[] = [
+      { type: 'reimbursement.paid', description: 'Reembolso pago', emailOptOut: false, mandatory: false },
+      { type: 'auth.password-changed', description: 'Senha alterada', emailOptOut: false, mandatory: true },
     ];
+    const payload: NotificationPreferencesResponse = { preferences: catalog };
     let result: NotificationPreference[] | undefined;
     api.getPreferences().subscribe((response) => (result = response));
 
     http.expectOne({ url: '/api/notifications/preferences', method: 'GET' }).flush(payload);
 
-    expect(result).toEqual(payload);
+    expect(result).toEqual(catalog);
   });
 
-  it('calls PUT /api/notifications/preferences with the toggled type', () => {
-    let done = false;
-    api.updatePreference('reimbursement.paid', true).subscribe(() => (done = true));
+  it('calls PUT /api/notifications/preferences with a {preferences:[{type,emailOptOut}]} batch and returns the updated catalog', () => {
+    const updated: NotificationPreference[] = [
+      { type: 'reimbursement.paid', description: 'Reembolso pago', emailOptOut: true, mandatory: false },
+    ];
+    let result: NotificationPreference[] | undefined;
+    api.updatePreference('reimbursement.paid', true).subscribe((response) => (result = response));
+
     const req = http.expectOne({ url: '/api/notifications/preferences', method: 'PUT' });
-    expect(req.request.body).toEqual({ code: 'reimbursement.paid', emailOptOut: true });
-    req.flush(null);
-    expect(done).toBe(true);
+    expect(req.request.body).toEqual({ preferences: [{ type: 'reimbursement.paid', emailOptOut: true }] });
+    req.flush({ preferences: updated });
+
+    expect(result).toEqual(updated);
   });
 });
