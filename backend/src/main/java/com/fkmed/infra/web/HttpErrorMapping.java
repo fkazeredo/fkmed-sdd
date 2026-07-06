@@ -10,6 +10,8 @@ import com.fkmed.domain.appointment.SlotUnavailableException;
 import com.fkmed.domain.card.CardUnavailableException;
 import com.fkmed.domain.clinicaldocs.ClinicalDocumentNotFoundException;
 import com.fkmed.domain.error.DomainException;
+import com.fkmed.domain.guides.GuideNotFoundException;
+import com.fkmed.domain.guides.TokenNoneActiveException;
 import com.fkmed.domain.identity.AccountAlreadyExistsException;
 import com.fkmed.domain.identity.ConcurrentAccountUpdateException;
 import com.fkmed.domain.identity.CurrentPasswordIncorrectException;
@@ -113,7 +115,11 @@ public final class HttpErrorMapping {
           Map.entry(TeleTermNotAcceptedException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(TeleTriageInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(TeleJoinWindowClosedException.class, HttpStatus.CONFLICT),
-          Map.entry(TeleSessionNotFoundException.class, HttpStatus.NOT_FOUND));
+          Map.entry(TeleSessionNotFoundException.class, HttpStatus.NOT_FOUND),
+          // SPEC-0012 §Error Behavior: unknown/out-of-scope guide never reveals existence; no
+          // current valid token is a distinct 404.
+          Map.entry(GuideNotFoundException.class, HttpStatus.NOT_FOUND),
+          Map.entry(TokenNoneActiveException.class, HttpStatus.NOT_FOUND));
 
   private HttpErrorMapping() {}
 

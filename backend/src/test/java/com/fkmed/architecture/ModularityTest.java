@@ -53,7 +53,8 @@ class ModularityTest {
             "domain.network",
             "domain.appointment",
             "domain.clinicaldocs",
-            "domain.telemedicine");
+            "domain.telemedicine",
+            "domain.guides");
   }
 
   @Test
