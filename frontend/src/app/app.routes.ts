@@ -162,6 +162,61 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/agendamento/meus-agendamentos').then((m) => m.MeusAgendamentos),
       },
+      // SPEC-0011 (Phase 4): the Minha Saúde hub and its 3 clinical-document categories —
+      // reachable via the shell nav (nav-minha-saude). "Receituários/Atestados" covers 2 wire
+      // categories (PRESCRIPTION + SICK_NOTE, BR1) merged client-side (DocumentList).
+      {
+        path: 'minha-saude',
+        loadComponent: () => import('./features/minha-saude/minha-saude-hub').then((m) => m.MinhaSaudeHub),
+      },
+      {
+        path: 'minha-saude/exames',
+        data: { categories: ['EXAM_ORDER'], titleKey: 'minhaSaude.exames.title' },
+        loadComponent: () => import('./features/minha-saude/document-list').then((m) => m.DocumentList),
+      },
+      {
+        path: 'minha-saude/encaminhamentos',
+        data: { categories: ['REFERRAL'], titleKey: 'minhaSaude.encaminhamentos.title' },
+        loadComponent: () => import('./features/minha-saude/document-list').then((m) => m.DocumentList),
+      },
+      {
+        path: 'minha-saude/receituarios',
+        data: { categories: ['PRESCRIPTION', 'SICK_NOTE'], titleKey: 'minhaSaude.receituarios.title' },
+        loadComponent: () => import('./features/minha-saude/document-list').then((m) => m.DocumentList),
+      },
+      {
+        path: 'minha-saude/documento/:id',
+        loadComponent: () => import('./features/minha-saude/document-detail').then((m) => m.DocumentDetail),
+      },
+      // SPEC-0010 (Phase 4): the Telemedicina hub and its journeys — reachable via the shell nav
+      // (nav-telemedicina). Pronto Atendimento (triage → term → queue → room → summary, state-driven
+      // per ADR-0015, live via SSE per ADR-0016), scheduled teleconsultation and the tele-filtered
+      // Meus Agendamentos with the join window.
+      {
+        path: 'telemedicina',
+        loadComponent: () =>
+          import('./features/telemedicina/telemedicina-hub').then((m) => m.TelemedicinaHub),
+      },
+      {
+        path: 'telemedicina/triagem',
+        loadComponent: () =>
+          import('./features/telemedicina/pronto-atendimento').then((m) => m.ProntoAtendimento),
+      },
+      {
+        path: 'telemedicina/sessao',
+        loadComponent: () =>
+          import('./features/telemedicina/sessao-atendimento').then((m) => m.SessaoAtendimento),
+      },
+      {
+        path: 'telemedicina/agendar',
+        loadComponent: () =>
+          import('./features/telemedicina/agendar-teleconsulta').then((m) => m.AgendarTeleconsulta),
+      },
+      {
+        path: 'telemedicina/agendamentos',
+        loadComponent: () =>
+          import('./features/telemedicina/meus-agendamentos-tele').then((m) => m.MeusAgendamentosTele),
+      },
     ],
   },
 ];

@@ -64,6 +64,22 @@ public class AppointmentService {
     return careUnits.findServingScope(type, code).stream().map(CareUnitView::from).toList();
   }
 
+  /**
+   * The id of the seeded virtual Telemedicina unit (SPEC-0010 BR14, DL-0018): scheduled
+   * teleconsultation booking/availability resolve it server-side from the {@code telemedicine=true}
+   * scope, so the caller never sends a {@code unitId}. A booking against it is recorded as {@code
+   * TELEMEDICINA} (see {@link #modalityOf}).
+   *
+   * @throws IllegalStateException when no virtual unit is seeded — a deployment/seed defect.
+   */
+  @Transactional(readOnly = true)
+  public UUID telemedicineUnitId() {
+    return careUnits
+        .findFirstByVirtualTrue()
+        .map(CareUnit::getId)
+        .orElseThrow(() -> new IllegalStateException("no virtual Telemedicina unit is seeded"));
+  }
+
   /** The exam catalog, alphabetical by name — the exam wizard's first step (BR4). */
   @Transactional(readOnly = true)
   public List<ExamTypeView> examCatalog() {
@@ -158,6 +174,7 @@ public class AppointmentService {
             ? Appointment.consultation(
                 beneficiary.beneficiaryId(),
                 scopeCode,
+                modalityOf(command.unitId()),
                 command.unitId(),
                 slot.getId(),
                 scheduledAt,
@@ -280,10 +297,13 @@ public class AppointmentService {
   /**
    * Meus Agendamentos across all beneficiaries the caller may act for (BR13), optionally narrowed
    * to one of them: {@code upcoming} soonest-first and {@code history} most-recent-first, with
-   * {@code REALIZADO} derived for past active items (BR12).
+   * {@code REALIZADO} derived for past active items (BR12). When {@code telemedicineOnly} is set,
+   * only {@code TELEMEDICINA} commitments are returned — the SPEC-0010 BR1/BR14 "Meus Agendamentos
+   * (filtered by Telemedicina)" scope the tele feature reads with {@code telemedicine=true}.
    */
   @Transactional(readOnly = true)
-  public AppointmentListResponse list(String callerCard, UUID beneficiaryFilter) {
+  public AppointmentListResponse list(
+      String callerCard, UUID beneficiaryFilter, boolean telemedicineOnly) {
     Map<UUID, String> namesById =
         beneficiaryAccess.accessibleFor(callerCard).stream()
             .collect(
@@ -295,9 +315,13 @@ public class AppointmentService {
     }
 
     List<Appointment> found =
-        beneficiaryFilter != null
-            ? appointments.findByBeneficiaryIdOrderByScheduledAtDesc(beneficiaryFilter)
-            : appointments.findByBeneficiaryIdInOrderByScheduledAtDesc(namesById.keySet());
+        (beneficiaryFilter != null
+                ? appointments.findByBeneficiaryIdOrderByScheduledAtDesc(beneficiaryFilter)
+                : appointments.findByBeneficiaryIdInOrderByScheduledAtDesc(namesById.keySet()))
+            .stream()
+                .filter(
+                    a -> !telemedicineOnly || a.getModality() == AppointmentModality.TELEMEDICINA)
+                .toList();
 
     Instant now = clock.instant();
     Map<UUID, String> unitNames = unitNamesFor(found);
@@ -316,6 +340,37 @@ public class AppointmentService {
             .map(a -> toView(a, now, namesById, unitNames, examNames))
             .toList();
     return new AppointmentListResponse(upcoming, history);
+  }
+
+  /**
+   * The join-relevant projection of a scheduled appointment for the telemedicine module's room
+   * (SPEC-0010 BR14, DL-0018): scope-checked so it never reveals an appointment outside the
+   * caller's family, and reporting whether it is a Telemedicina booking still open. The entity
+   * never leaves the module.
+   *
+   * @throws AppointmentNotFoundException when unknown or out of the caller's scope.
+   */
+  @Transactional(readOnly = true)
+  public TeleJoinTarget teleJoinTarget(String callerCard, UUID appointmentId) {
+    Appointment appointment = requireAccessibleAppointment(callerCard, appointmentId);
+    return new TeleJoinTarget(
+        appointment.getId(),
+        appointment.getBeneficiaryId(),
+        appointment.getScheduledAt(),
+        appointment.getModality() == AppointmentModality.TELEMEDICINA,
+        appointment.getStatus().isActive(),
+        appointment.getCreatedBy());
+  }
+
+  /**
+   * The modality a booking against {@code unitId} takes: TELEMEDICINA for the virtual tele unit.
+   */
+  private AppointmentModality modalityOf(UUID unitId) {
+    return careUnits
+        .findById(unitId)
+        .filter(CareUnit::isVirtual)
+        .map(unit -> AppointmentModality.TELEMEDICINA)
+        .orElse(AppointmentModality.PRESENCIAL);
   }
 
   private String validatedScopeCode(BookAppointmentCommand command) {
@@ -447,6 +502,7 @@ public class AppointmentService {
         appointment.getId(),
         appointment.getProtocol(),
         appointment.getType(),
+        appointment.getModality(),
         appointment.getSpecialtyCode(),
         appointment.getExamCode(),
         appointment.getExamCode() == null ? null : examNames.get(appointment.getExamCode()),

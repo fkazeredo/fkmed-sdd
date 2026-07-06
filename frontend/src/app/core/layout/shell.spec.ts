@@ -57,6 +57,7 @@ describe('Shell', () => {
     expect(el.querySelector('[data-testid="nav-meu-plano"]')?.textContent).toContain('Meu Plano');
     expect(el.querySelector('[data-testid="nav-carteirinha"]')?.textContent).toContain('Carteirinha');
     expect(el.querySelector('[data-testid="nav-agendamento"]')?.textContent).toContain('Agendamento');
+    expect(el.querySelector('[data-testid="nav-minha-saude"]')?.textContent).toContain('Minha Saúde');
     expect(el.querySelector('[data-testid="nav-seguranca"]')?.textContent).toContain('Segurança');
     expect(el.textContent).toContain('Mais funcionalidades em breve');
     expect(el.textContent).toContain('Sair');

@@ -19,8 +19,10 @@ class NotificationCatalogSeedIT extends AbstractIntegrationTest {
 
   @Test
   void v10_seedsTheEventTypeCatalogWithTheExpectedChannelDefaults() {
-    // V10 seeded 6 types; V17 (SPEC-0009) added the appointment cancel/reschedule business types.
-    assertThat(count()).isEqualTo(8);
+    // V10 seeded 6 types; V17 (SPEC-0009) added the appointment cancel/reschedule business types;
+    // V20 (Phase-4 Wave 2) added the telemedicine turn/closure and clinical-document business
+    // types.
+    assertThat(count()).isEqualTo(11);
 
     assertType("account.password-changed", false, true);
     assertType("account.locked", false, true);
@@ -30,6 +32,9 @@ class NotificationCatalogSeedIT extends AbstractIntegrationTest {
     assertType("appointment.confirmed", true, false);
     assertType("appointment.cancelled", true, false);
     assertType("appointment.rescheduled", true, false);
+    assertType("tele.turn-reached", true, false);
+    assertType("tele.session-closed", true, false);
+    assertType("clinical-document.issued", true, false);
   }
 
   private void assertType(String code, boolean emailDefault, boolean mandatory) {

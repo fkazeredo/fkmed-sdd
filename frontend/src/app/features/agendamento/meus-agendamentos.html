@@ -72,7 +72,7 @@
                 <span class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700" data-testid="meus-card-tipo">
                   {{ (appointment.type === 'EXAM' ? 'agendamento.tipo.exame' : 'agendamento.tipo.consulta') | translate }}
                 </span>
-                @if (appointment.telemedicine) {
+                @if (appointment.modality === 'TELEMEDICINA') {
                   <span class="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700" data-testid="meus-card-telemedicina">
                     {{ 'agendamento.tipo.telemedicina' | translate }}
                   </span>

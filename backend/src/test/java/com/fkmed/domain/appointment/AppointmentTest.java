@@ -20,6 +20,7 @@ class AppointmentTest {
     return Appointment.consultation(
         BENEFICIARY,
         "CARDIOLOGIA",
+        AppointmentModality.PRESENCIAL,
         UNIT,
         SLOT,
         NOW.plus(Duration.ofDays(1)),

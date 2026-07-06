@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { SelectableOption, SearchableOptionList } from '../../shared/components/searchable-option-list';
 import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
@@ -19,7 +19,9 @@ const FLOW: Step[] = ['specialty', 'unit', 'slot', 'review', 'success'];
  * (BR2) blocks "Próximo" without the step's selection and shows a clear message. On confirm a
  * `409 appointment.slot-taken` returns the user to the time step with the "horário acabou de ser
  * preenchido" warning and a fresh availability load (BR6). The appointment binds to the ACTIVE
- * beneficiary read at confirmation time (BR1).
+ * beneficiary read at confirmation time (BR1). SPEC-0011 BR6/AC4: reached from a referral's
+ * "Agendar consulta" with an optional `?especialidade=<code>` query param — once the specialty
+ * list loads, a matching code is pre-selected (the user still sees/can change it on this step).
  */
 @Component({
   selector: 'app-consulta-wizard',
@@ -30,6 +32,7 @@ const FLOW: Step[] = ['specialty', 'unit', 'slot', 'review', 'success'];
 export class ConsultaWizard implements OnInit {
   private readonly api = inject(AppointmentsApi);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly context = inject(BeneficiaryContextService);
 
   protected readonly step = signal<Step>('specialty');
@@ -62,7 +65,15 @@ export class ConsultaWizard implements OnInit {
   });
 
   ngOnInit(): void {
-    this.api.getSpecialties().subscribe((list) => this.specialties.set(list));
+    this.api.getSpecialties().subscribe((list) => {
+      this.specialties.set(list);
+      // SPEC-0011 BR6/AC4: pre-select the specialty handed off by a referral's "Agendar consulta",
+      // when its code matches one of the loaded specialties (silently ignored otherwise).
+      const preselected = this.route.snapshot.queryParamMap.get('especialidade');
+      if (preselected && list.some((option) => option.code === preselected)) {
+        this.selectSpecialty(preselected);
+      }
+    });
   }
 
   selectSpecialty(code: string): void {

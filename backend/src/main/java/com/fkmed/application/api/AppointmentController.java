@@ -71,21 +71,30 @@ public class AppointmentController {
    * Days + time slots with remaining capacity for a (unit, scope), respecting horizon/antecedence
    * (BR5).
    */
-  /** The bookable days for a (unit, scope) — a bare array the wizard's slot step renders (BR5). */
+  /**
+   * The bookable days for a (unit, scope) — a bare array the wizard's slot step renders (BR5). For
+   * a scheduled teleconsultation (SPEC-0010 BR14) the caller sends {@code telemedicine=true} and no
+   * {@code unitId}; the virtual Telemedicina unit is resolved server-side (DL-0018).
+   */
   @GetMapping("/availability")
   List<AvailabilityResponse.Day> availability(
-      @RequestParam UUID unitId,
+      @RequestParam(required = false) UUID unitId,
       @RequestParam(required = false) String specialty,
-      @RequestParam(required = false) String exam) {
+      @RequestParam(required = false) String exam,
+      @RequestParam(required = false, defaultValue = "false") boolean telemedicine) {
     Scope scope = scope(specialty, exam);
-    return appointments.availability(unitId, scope.type(), scope.code()).days();
+    return appointments
+        .availability(resolveUnit(telemedicine, unitId), scope.type(), scope.code())
+        .days();
   }
 
-  /** Confirms a consultation (JSON, no attachment) — BR7. */
+  /** Confirms a consultation (JSON, no attachment) — BR7; SPEC-0010 BR14 telemedicine scope. */
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.CREATED)
   BookingConfirmation create(@Valid @RequestBody CreateAppointmentRequest request) {
-    return appointments.book(request.toCommand(callerCard(), authorAccountId()), null, null);
+    UUID unitId = resolveUnit(request.isTelemedicine(), request.unitId());
+    return appointments.book(
+        request.toCommand(callerCard(), authorAccountId(), unitId), null, null);
   }
 
   /** Confirms a booking with a medical-order attachment (multipart) — the exam flow (BR4/BR7). */
@@ -105,10 +114,16 @@ public class AppointmentController {
     return appointments.book(command, bytesOf(medicalOrder), fileNameOf(medicalOrder));
   }
 
-  /** Meus Agendamentos across all accessible beneficiaries, optionally filtered (BR13). */
+  /**
+   * Meus Agendamentos across all accessible beneficiaries, optionally filtered by beneficiary
+   * (BR13) and, when {@code telemedicine=true}, narrowed to Telemedicina commitments (SPEC-0010
+   * BR1/BR14 — the tele feature's "Meus Agendamentos").
+   */
   @GetMapping
-  AppointmentListResponse list(@RequestParam(required = false) UUID beneficiaryId) {
-    return appointments.list(callerCard(), beneficiaryId);
+  AppointmentListResponse list(
+      @RequestParam(required = false) UUID beneficiaryId,
+      @RequestParam(required = false, defaultValue = "false") boolean telemedicine) {
+    return appointments.list(callerCard(), beneficiaryId, telemedicine);
   }
 
   /** Cancels an upcoming appointment with an optional reason (BR9). */
@@ -125,6 +140,22 @@ public class AppointmentController {
   BookingConfirmation reschedule(
       @PathVariable UUID id, @Valid @RequestBody RescheduleAppointmentRequest request) {
     return appointments.reschedule(callerCard(), authorAccountId(), id, request.slot());
+  }
+
+  /**
+   * The unit a request targets: the server-resolved virtual Telemedicina unit when {@code
+   * telemedicine=true} (SPEC-0010 BR14, DL-0018), otherwise the explicit {@code unitId} — exactly
+   * one is required.
+   */
+  private UUID resolveUnit(boolean telemedicine, UUID unitId) {
+    if (telemedicine) {
+      return appointments.telemedicineUnitId();
+    }
+    if (unitId == null) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "'unitId' is required unless 'telemedicine' is true");
+    }
+    return unitId;
   }
 
   private static Scope scope(String specialty, String exam) {

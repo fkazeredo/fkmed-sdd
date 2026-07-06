@@ -169,10 +169,44 @@ horário; motivo opcional; não é possível após o horário de início) e **Re
 horário **mantendo o protocolo**). A cada confirmação, cancelamento ou remarcação você recebe um aviso
 na **central de notificações** e, conforme suas preferências, por **e-mail**.
 
+### 12. Telemedicina
+
+Em **Telemedicina** você fala com um profissional à distância, de duas formas.
+
+- **Pronto Atendimento** (24h): faça a **triagem** — informe a queixa (10 a 500 caracteres), marque os
+  **sintomas** (e a duração) e, se marcar um sintoma de **emergência**, o portal alerta e orienta a
+  procurar um **pronto-socorro 24h**, deixando você decidir se prossegue. Aceite o **termo de
+  teleatendimento** e **entre na fila**: a tela mostra a sua **posição e a estimativa de espera
+  atualizando sozinha** (sem recarregar). Você pode **Sair da fila** a qualquer momento. Quando chega a
+  sua vez, a **sala** abre mostrando o profissional (nome e CRM) e o tempo de atendimento correndo — sem
+  vídeo neste momento. Ao encerrar, você vê um **resumo** com as orientações e os **documentos emitidos**,
+  com o link **"Ver em Minha Saúde"**. Você recebe avisos na central de notificações (e por e-mail).
+- **Teleconsulta agendada**: escolha a **especialidade**, a **data e horário** da agenda de telemedicina
+  e confirme — vira um agendamento com o selo **Telemedicina** (mesmo protocolo/cancelar/remarcar das
+  consultas). O botão **"Entrar na consulta"** habilita **10 minutos antes** do horário até o fim.
+
+Só **um** atendimento por vez: se você já está na fila e abre outro Pronto Atendimento, o portal retoma o
+atendimento existente, mantendo a sua posição.
+
+### 13. Minha Saúde (seus documentos)
+
+Em **Minha Saúde** ficam os seus documentos clínicos, em 3 categorias: **Solicitação de Exames**,
+**Encaminhamentos** e **Receituários/Atestados**. Eles nascem nos seus atendimentos (por exemplo, no
+encerramento de uma telemedicina) e aparecem **na hora**. Em cada lista você filtra por **beneficiário** e
+**período** (30/90/365 dias ou um intervalo personalizado); cada card mostra o título, o profissional e
+CRM, a data e um **selo de validade** ("Válido até…" ou "Expirado" — um documento expirado continua
+disponível para baixar). O **detalhe** traz o cabeçalho e o conteúdo por tipo — exames solicitados (com
+código TUSS), medicações (posologia e orientação), encaminhamento (especialidade e motivo) ou atestado
+(período de afastamento, **CID** e observações) — e o botão **Baixar PDF**. Num **encaminhamento**, o
+botão **"Agendar consulta"** abre o assistente de agendamento já com a especialidade escolhida. Você só vê
+os documentos dos beneficiários a que tem acesso; o acesso do titular a um documento de dependente é
+registrado.
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-06 | 0.8.0 | Cuidado digital: Telemedicina (Pronto Atendimento com fila ao vivo, sala e encerramento; teleconsulta agendada) e Minha Saúde (documentos clínicos com filtros, detalhe, PDF e "agendar" a partir de encaminhamento) — fecha a Fase 4 |
 | 2026-07-05 | 0.7.0 | Encontrar atendimento: Rede Credenciada (busca por localidade/nome, detalhe do prestador) e Agendamento de consultas/exames (vaga real, protocolo, cancelar/remarcar, avisos) — fecha a Fase 3 |
 | 2026-07-05 | 0.6.0 | Minha conta e identificação: central de notificações (sino), perfil (foto, cadastro, termos versionados, sair) e carteirinha digital com PDF — fecha a Fase 2 |
 | 2026-07-05 | 0.5.0 | Home (Início): cartão do beneficiário ativo, Acesso Rápido, banners e avisos — fecha a Fase 1 |

@@ -1,0 +1,118 @@
+<section class="mx-auto max-w-3xl p-4" aria-labelledby="meus-tele-title" data-testid="meus-agendamentos-tele-page">
+  <h1 id="meus-tele-title" class="mb-4 text-2xl font-semibold text-teal-800">
+    {{ 'telemedicina.meus.title' | translate }}
+  </h1>
+
+  <div class="mb-4 flex flex-wrap items-center gap-3">
+    <div class="flex rounded-lg bg-white p-1 shadow-sm" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        class="rounded-md px-4 py-2 text-sm font-medium"
+        [class.bg-teal-700]="tab() === 'proximos'"
+        [class.text-white]="tab() === 'proximos'"
+        [class.text-teal-800]="tab() !== 'proximos'"
+        [attr.aria-selected]="tab() === 'proximos'"
+        data-testid="meus-tele-tab-proximos"
+        (click)="setTab('proximos')"
+      >
+        {{ 'telemedicina.meus.proximos' | translate }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="rounded-md px-4 py-2 text-sm font-medium"
+        [class.bg-teal-700]="tab() === 'historico'"
+        [class.text-white]="tab() === 'historico'"
+        [class.text-teal-800]="tab() !== 'historico'"
+        [attr.aria-selected]="tab() === 'historico'"
+        data-testid="meus-tele-tab-historico"
+        (click)="setTab('historico')"
+      >
+        {{ 'telemedicina.meus.historico' | translate }}
+      </button>
+    </div>
+
+    <label class="ml-auto flex items-center gap-2 text-sm text-slate-600">
+      {{ 'telemedicina.meus.filtroBeneficiario' | translate }}
+      <select
+        class="rounded-lg border border-slate-300 px-3 py-2"
+        data-testid="meus-tele-filtro-beneficiario"
+        [ngModel]="filterId() ?? ''"
+        (ngModelChange)="onFilterChange($event)"
+      >
+        <option value="">{{ 'telemedicina.meus.filtroTodos' | translate }}</option>
+        @for (beneficiary of context.accessible(); track beneficiary.beneficiaryId) {
+          <option [value]="beneficiary.beneficiaryId">{{ beneficiary.firstName }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (loading()) {
+    <p class="rounded-lg bg-white p-4 text-slate-500" data-testid="meus-tele-loading">{{ 'common.loading' | translate }}</p>
+  } @else if (errorKey()) {
+    <div class="rounded-lg bg-white p-4" data-testid="meus-tele-erro">
+      <p class="text-slate-600">{{ errorKey() | translate }}</p>
+      <button type="button" class="mt-3 rounded-lg bg-teal-700 px-4 py-2 text-white" data-testid="meus-tele-retry" (click)="load()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (visible().length === 0) {
+    <p class="rounded-lg bg-white p-4 text-slate-500" data-testid="meus-tele-vazio">
+      {{ 'telemedicina.meus.vazio' | translate }}
+    </p>
+  } @else {
+    <ul class="flex flex-col gap-3">
+      @for (appointment of visible(); track appointment.id) {
+        <li class="rounded-xl bg-white p-4 shadow-sm" [attr.data-testid]="'meus-tele-card-' + appointment.id">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <span class="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700" data-testid="meus-tele-card-badge">
+                {{ 'telemedicina.badge' | translate }}
+              </span>
+              <p class="mt-1 text-lg font-medium text-teal-800" data-testid="meus-tele-card-assunto">{{ subjectOf(appointment) }}</p>
+              <p class="text-sm text-slate-600" data-testid="meus-tele-card-beneficiario">{{ appointment.beneficiaryName }}</p>
+              <p class="text-sm text-slate-600" data-testid="meus-tele-card-quando">{{ whenOf(appointment) }}</p>
+              <p class="mt-1 text-xs text-slate-400" data-testid="meus-tele-card-protocolo">{{ appointment.protocol }}</p>
+            </div>
+            <span
+              class="rounded-full px-2 py-0.5 text-xs font-medium"
+              [class.bg-emerald-50]="appointment.status === 'AGENDADO' || appointment.status === 'REAGENDADO'"
+              [class.text-emerald-700]="appointment.status === 'AGENDADO' || appointment.status === 'REAGENDADO'"
+              [class.bg-slate-100]="appointment.status === 'CANCELADO' || appointment.status === 'REALIZADO'"
+              [class.text-slate-500]="appointment.status === 'CANCELADO' || appointment.status === 'REALIZADO'"
+              data-testid="meus-tele-card-status"
+            >
+              {{ 'agendamento.status.' + appointment.status | translate }}
+            </span>
+          </div>
+
+          @if (tab() === 'proximos') {
+            <div class="mt-3 flex flex-col gap-1">
+              <button
+                type="button"
+                class="self-start rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                [disabled]="!canJoin(appointment) || joiningId() === appointment.id"
+                [attr.data-testid]="'meus-tele-entrar-' + appointment.id"
+                (click)="join(appointment)"
+              >
+                {{ 'telemedicina.meus.entrar' | translate }}
+              </button>
+              @if (!canJoin(appointment)) {
+                <span class="text-xs text-slate-400" [attr.data-testid]="'meus-tele-janela-' + appointment.id">
+                  {{ 'telemedicina.meus.janela' | translate }}
+                </span>
+              }
+              @if (joinErrorId() === appointment.id) {
+                <span class="text-xs text-red-600" [attr.data-testid]="'meus-tele-entrar-erro-' + appointment.id">
+                  {{ 'tele.join-window-closed' | translate }}
+                </span>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

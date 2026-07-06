@@ -65,6 +65,10 @@ export interface AppointmentView {
   unitName: string;
   scheduledAt: string;
   status: AppointmentStatus;
+  /** The backend emits the modality (SPEC-0010 BR14); TELEMEDICINA drives the tele badge (BR13). */
+  modality?: 'PRESENCIAL' | 'TELEMEDICINA';
+  /** @deprecated the backend no longer emits this; the badge reads {@link modality}. Kept so the
+   *  telemedicine fixtures/booking request keep compiling. */
   telemedicine?: boolean;
 }
 

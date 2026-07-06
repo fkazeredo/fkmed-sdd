@@ -1,0 +1,109 @@
+<section class="mx-auto max-w-3xl p-4" aria-labelledby="agendar-tele-title" data-testid="agendar-teleconsulta-page">
+  <h1 id="agendar-tele-title" class="mb-1 text-2xl font-semibold text-teal-800">
+    {{ 'telemedicina.agendar.title' | translate }}
+  </h1>
+
+  @if (step() !== 'success') {
+    <p class="mb-4 text-sm text-slate-500" data-testid="agendar-etapa">
+      {{ 'telemedicina.agendar.etapa.' + step() | translate }}
+    </p>
+
+    @if (gateKey(); as gate) {
+      <p class="mb-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800" role="alert" data-testid="agendar-gate">
+        {{ gate | translate }}
+      </p>
+    }
+
+    @switch (step()) {
+      @case ('specialty') {
+        <app-searchable-option-list [items]="specialtyOptions()" (selected)="selectSpecialty($event)" />
+        @if (specialtyName(); as name) {
+          <p class="mt-3 text-sm text-teal-800" data-testid="agendar-especialidade-escolhida">
+            {{ 'telemedicina.agendar.especialidadeEscolhida' | translate }} <strong>{{ name }}</strong>
+          </p>
+        }
+      }
+      @case ('slot') {
+        @if (errorKey() === 'appointment.slot-taken') {
+          <p class="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert" data-testid="agendar-slot-taken">
+            {{ 'appointment.slot-taken' | translate }}
+          </p>
+        }
+        <app-slot-picker [days]="days()" [selectedSlot]="slot()" (slotSelected)="selectSlot($event)" />
+      }
+      @case ('review') {
+        <dl class="rounded-lg bg-white p-4 text-sm" data-testid="agendar-revisao">
+          <div class="flex justify-between border-b border-slate-100 py-2">
+            <dt class="text-slate-500">{{ 'telemedicina.revisao.beneficiario' | translate }}</dt>
+            <dd class="font-medium text-teal-800" data-testid="agendar-revisao-beneficiario">{{ beneficiaryName() }}</dd>
+          </div>
+          <div class="flex justify-between border-b border-slate-100 py-2">
+            <dt class="text-slate-500">{{ 'telemedicina.revisao.especialidade' | translate }}</dt>
+            <dd class="font-medium text-teal-800" data-testid="agendar-revisao-especialidade">{{ specialtyName() }}</dd>
+          </div>
+          <div class="flex justify-between border-b border-slate-100 py-2">
+            <dt class="text-slate-500">{{ 'telemedicina.revisao.modalidade' | translate }}</dt>
+            <dd class="font-medium text-teal-800" data-testid="agendar-revisao-modalidade">
+              {{ 'telemedicina.revisao.modalidadeTele' | translate }}
+            </dd>
+          </div>
+          <div class="flex justify-between py-2">
+            <dt class="text-slate-500">{{ 'telemedicina.revisao.dataHora' | translate }}</dt>
+            <dd class="font-medium text-teal-800" data-testid="agendar-revisao-data-hora">{{ slotLabel() }}</dd>
+          </div>
+        </dl>
+        @if (errorKey() && errorKey() !== 'appointment.slot-taken') {
+          <p class="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert" data-testid="agendar-erro">
+            {{ errorKey() | translate }}
+          </p>
+        }
+      }
+    }
+
+    <div class="mt-5 flex items-center justify-between">
+      @if (step() !== 'specialty') {
+        <button type="button" class="rounded-lg px-4 py-2 text-teal-700 hover:bg-slate-100" data-testid="agendar-voltar" (click)="back()">
+          {{ 'telemedicina.acao.voltar' | translate }}
+        </button>
+      } @else {
+        <span></span>
+      }
+
+      @if (step() === 'review') {
+        <button
+          type="button"
+          class="rounded-lg bg-teal-700 px-4 py-2 font-medium text-white hover:bg-teal-800 disabled:opacity-50"
+          [disabled]="loading()"
+          data-testid="agendar-confirmar"
+          (click)="confirm()"
+        >
+          {{ (loading() ? 'common.processando' : 'telemedicina.acao.confirmar') | translate }}
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="rounded-lg bg-teal-700 px-4 py-2 font-medium text-white hover:bg-teal-800"
+          data-testid="agendar-proximo"
+          (click)="next()"
+        >
+          {{ 'telemedicina.acao.proximo' | translate }}
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="rounded-lg bg-white p-6 text-center" data-testid="agendar-sucesso">
+      <i class="pi pi-check-circle mb-3 text-4xl text-teal-600" aria-hidden="true"></i>
+      <p class="text-lg font-medium text-teal-800">{{ 'telemedicina.sucesso.titulo' | translate }}</p>
+      <p class="mt-2 text-slate-600">{{ 'telemedicina.sucesso.protocolo' | translate }}</p>
+      <p class="mt-1 text-xl font-semibold text-teal-900" data-testid="agendar-protocolo">{{ protocol() }}</p>
+      <button
+        type="button"
+        class="mt-4 rounded-lg bg-teal-700 px-4 py-2 font-medium text-white hover:bg-teal-800"
+        data-testid="agendar-ver-agendamentos"
+        (click)="goToMeus()"
+      >
+        {{ 'telemedicina.sucesso.verAgendamentos' | translate }}
+      </button>
+    </div>
+  }
+</section>

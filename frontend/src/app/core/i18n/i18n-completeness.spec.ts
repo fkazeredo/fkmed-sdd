@@ -36,6 +36,9 @@ import { MeusAgendamentos } from '../../features/agendamento/meus-agendamentos';
 import { UnitPicker } from '../../features/agendamento/unit-picker';
 import { SlotPicker } from '../../features/agendamento/slot-picker';
 import { AppointmentView, AvailabilityDay } from '../../features/agendamento/appointments.api';
+import { MinhaSaudeHub } from '../../features/minha-saude/minha-saude-hub';
+import { DocumentList } from '../../features/minha-saude/document-list';
+import { DocumentDetail } from '../../features/minha-saude/document-detail';
 import { APP_VERSION } from '../config/app-version';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
@@ -81,6 +84,9 @@ describe('i18n completeness (pt-BR)', () => {
         MeusAgendamentos,
         UnitPicker,
         SlotPicker,
+        MinhaSaudeHub,
+        DocumentList,
+        DocumentDetail,
       ],
       providers: [
         provideRouter([]),
@@ -808,6 +814,131 @@ describe('i18n completeness (pt-BR)', () => {
     expect(
       Array.from(handler.missing),
       'SPEC-0009 Agendamento UI keys missing from the pt-BR bundle',
+    ).toHaveLength(0);
+  });
+
+  it('renders every SPEC-0011 Minha Saúde screen without a missing translation', () => {
+    const handler = TestBed.inject(MissingTranslationHandler) as ReportMissingTranslationHandler;
+    const http = TestBed.inject(HttpTestingController);
+    const context = TestBed.inject(BeneficiaryContextService);
+    context.accessible.set([
+      { beneficiaryId: 'maria-id', firstName: 'MARIA', role: 'TITULAR' },
+      { beneficiaryId: 'pedro-id', firstName: 'PEDRO', role: 'DEPENDENT' },
+    ]);
+    const byCategory = (category: string) => (request: { url: string; params: { get(key: string): string | null } }) =>
+      request.url === '/api/clinical-documents' && request.params.get('category') === category;
+
+    // Hub: the 3 category cards.
+    const hub = TestBed.createComponent(MinhaSaudeHub);
+    hub.detectChanges();
+
+    // List: "Receituários/Atestados" — the combined-category screen (PRESCRIPTION + SICK_NOTE,
+    // 2 requests merged client-side). Exercises every filter control (beneficiary, named period,
+    // custom range), a valid + an expired badge and the no-validity (sick note) card.
+    const list = TestBed.createComponent(DocumentList);
+    list.detectChanges(); // ngOnInit runs first (no route data here — categories default to [])
+    list.componentInstance['categories'] = ['PRESCRIPTION', 'SICK_NOTE'];
+    list.componentInstance.load();
+    http.expectOne(byCategory('PRESCRIPTION')).flush({
+      items: [
+        {
+          id: 'doc-presc', type: 'PRESCRIPTION', professional: 'Dra. Ana Souza', crm: 'CRM 12345 RJ',
+          issuedAt: '2026-05-01', beneficiary: 'PEDRO', validUntil: '2026-05-31', expired: true,
+        },
+      ],
+    });
+    http.expectOne(byCategory('SICK_NOTE')).flush({
+      items: [
+        {
+          id: 'doc-atestado', type: 'SICK_NOTE', professional: 'Dr. João', crm: 'CRM 54321 RJ',
+          issuedAt: '2026-07-05', beneficiary: 'PEDRO', validUntil: null, expired: false,
+        },
+      ],
+    });
+    list.detectChanges();
+
+    list.componentInstance.onBeneficiaryChange('pedro-id');
+    http.expectOne(byCategory('PRESCRIPTION')).flush({ items: [] });
+    http.expectOne(byCategory('SICK_NOTE')).flush({ items: [] });
+    list.detectChanges(); // empty state
+
+    list.componentInstance.onPeriodChange('P365D');
+    http.expectOne(byCategory('PRESCRIPTION')).flush({
+      items: [
+        {
+          id: 'doc-presc-2', type: 'PRESCRIPTION', professional: 'Dra. Ana Souza', crm: 'CRM 12345 RJ',
+          issuedAt: '2026-07-04', beneficiary: 'PEDRO', validUntil: '2026-08-03', expired: false,
+        },
+      ],
+    });
+    http.expectOne(byCategory('SICK_NOTE')).flush({ items: [] });
+    list.detectChanges(); // valid badge
+
+    list.componentInstance.onPeriodChange('CUSTOM');
+    list.detectChanges(); // renders the custom from/to inputs + "Aplicar filtro"
+    list.componentInstance['customFrom'].set('2026-01-01');
+    list.componentInstance['customTo'].set('2026-07-01');
+    list.componentInstance.applyCustomRange();
+    // forkJoin unsubscribes the other in-flight request as soon as one errors — only the first
+    // needs flushing; the second is cancelled automatically (flushing it would throw).
+    http.expectOne(byCategory('PRESCRIPTION')).flush({ code: 'x' }, { status: 500, statusText: 'Server Error' });
+    list.detectChanges(); // error + retry
+
+    // Detail: the 4 type bodies (exam order, referral incl. "Agendar consulta", prescription,
+    // sick note with the CID shown per DL-0020), the expired badge, "Baixar PDF" success/error,
+    // and the "não encontrado"/generic-error states. The shared ActivatedRoute here carries no
+    // `:id`, so the states are driven directly — same pattern as DigitalCard/Security above.
+    (URL as unknown as { createObjectURL: () => string }).createObjectURL = vi.fn().mockReturnValue('blob:mock');
+    (URL as unknown as { revokeObjectURL: () => void }).revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const detail = TestBed.createComponent(DocumentDetail);
+    detail.detectChanges(); // loading (no id — stays loading, exercises "carregando")
+    detail.componentInstance['loading'].set(false);
+    detail.componentInstance['doc'].set({
+      id: 'doc-exame', type: 'EXAM_ORDER', professional: 'Dra. Ana Souza', crm: 'CRM 12345 RJ',
+      issuedAt: '2026-07-01', beneficiary: 'PEDRO', validUntil: '2026-09-29', expired: false,
+      exams: [{ name: 'Hemograma completo', tuss: '40304361' }], clinicalIndication: 'Avaliação de rotina.',
+    });
+    detail.detectChanges();
+    detail.componentInstance.downloadPdf();
+    http.expectOne('/api/clinical-documents/doc-exame/pdf').flush(new Blob(['%PDF-1.4'], { type: 'application/pdf' }));
+    detail.detectChanges();
+
+    detail.componentInstance['doc'].set({
+      id: 'doc-encaminhamento', type: 'REFERRAL', professional: 'Dr. Carlos Lima', crm: 'CRM 98765 RJ',
+      issuedAt: '2026-06-20', beneficiary: 'MARIA', validUntil: '2026-09-18', expired: true,
+      specialtyCode: 'CARDIOLOGIA', specialtyName: 'Cardiologia', reason: 'Avaliação cardiológica de rotina.',
+    });
+    detail.detectChanges(); // "Expirado" badge + "Agendar consulta"
+
+    detail.componentInstance['doc'].set({
+      id: 'doc-receita', type: 'PRESCRIPTION', professional: 'Dra. Ana Souza', crm: 'CRM 12345 RJ',
+      issuedAt: '2026-07-04', beneficiary: 'PEDRO', validUntil: '2026-08-03', expired: false,
+      medications: [
+        { medication: 'Amoxicilina 500mg', posology: '1 cápsula a cada 8h por 7 dias', guidance: 'Tomar com alimento.' },
+      ],
+    });
+    detail.detectChanges();
+
+    detail.componentInstance['doc'].set({
+      id: 'doc-atestado', type: 'SICK_NOTE', professional: 'Dr. João', crm: 'CRM 54321 RJ',
+      issuedAt: '2026-07-01', beneficiary: 'MARIA', validUntil: null, expired: false,
+      periodStart: '2026-07-01', periodEnd: '2026-07-03', cid: 'J11', notes: 'Repouso domiciliar por 3 dias.',
+    });
+    detail.detectChanges(); // no validity row (BR4) + CID (DL-0020)
+    detail.componentInstance.downloadPdf();
+    http.expectOne('/api/clinical-documents/doc-atestado/pdf').flush(new Blob(), { status: 500, statusText: 'Server Error' });
+    detail.detectChanges(); // pdf error
+
+    detail.componentInstance['notFound'].set(true);
+    detail.detectChanges();
+    detail.componentInstance['notFound'].set(false);
+    detail.componentInstance['errorKey'].set('common.error');
+    detail.detectChanges();
+
+    expect(
+      Array.from(handler.missing),
+      'SPEC-0011 Minha Saúde UI keys missing from the pt-BR bundle',
     ).toHaveLength(0);
   });
 });

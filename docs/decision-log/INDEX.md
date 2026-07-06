@@ -31,3 +31,9 @@ old one.
 | [0014](DL-0014-geography-registry-and-coverage.md) | 2026-07-05 | 3 / network | 0008 | High | Cheap | Full IBGE geography registry + plan coverage model (owner-decided) |
 | [0015](DL-0015-medical-order-magic-byte-duplication.md) | 2026-07-05 | 3 / appointments | 0009 | Medium | Cheap | Duplicate the magic-byte upload check in domain.appointment |
 | [0016](DL-0016-protocol-generator-placement.md) | 2026-07-05 | 3 / appointments | 0003, 0009 | Medium | Cheap | Protocol generator placement and format (domain.plan) |
+| [0017](DL-0017-tele-disconnection-hold.md) | 2026-07-06 | 4 / telemedicine | 0010 | Medium | Cheap | Queue disconnection hold = 2 minutes (OQ2) |
+| [0018](DL-0018-scheduled-teleconsultation-virtual-unit.md) | 2026-07-06 | 4 / telemedicine | 0010, 0009 | Medium | Cheap | Scheduled teleconsultation as a SPEC-0009 appointment on a virtual Telemedicina unit |
+| [0019](DL-0019-clinical-document-validity-parameters.md) | 2026-07-06 | 4 / clinical-docs | 0011 | High | Cheap | Clinical-document validity stamped at issue (product parameters) |
+| [0020](DL-0020-cid-displayed-on-sick-notes.md) | 2026-07-06 | 4 / clinical-docs | 0011 | High | Cheap | CID IS displayed on sick notes (owner-decided) |
+| [0021](DL-0021-minimal-operator-sim-tele-slice.md) | 2026-07-06 | 4 / telemedicine | 0018, 0010 | High | Cheap | Only the telemedicine+documents slice of SPEC-0018 lands in Phase 4 (owner-decided) |
+| [0022](DL-0022-sse-queue-transport-design.md) | 2026-07-06 | 4 / telemedicine | 0010 | Medium | Cheap | SSE queue transport — periodic server re-emit |

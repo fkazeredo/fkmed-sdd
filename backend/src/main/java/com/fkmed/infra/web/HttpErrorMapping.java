@@ -8,6 +8,7 @@ import com.fkmed.domain.appointment.MedicalOrderInvalidException;
 import com.fkmed.domain.appointment.MedicalOrderRequiredException;
 import com.fkmed.domain.appointment.SlotUnavailableException;
 import com.fkmed.domain.card.CardUnavailableException;
+import com.fkmed.domain.clinicaldocs.ClinicalDocumentNotFoundException;
 import com.fkmed.domain.error.DomainException;
 import com.fkmed.domain.identity.AccountAlreadyExistsException;
 import com.fkmed.domain.identity.ConcurrentAccountUpdateException;
@@ -35,6 +36,11 @@ import com.fkmed.domain.plan.PhotoInvalidContentException;
 import com.fkmed.domain.plan.PhotoTooLargeException;
 import com.fkmed.domain.plan.PlanNotFoundException;
 import com.fkmed.domain.plan.UfInvalidException;
+import com.fkmed.domain.telemedicine.TeleComplaintInvalidException;
+import com.fkmed.domain.telemedicine.TeleJoinWindowClosedException;
+import com.fkmed.domain.telemedicine.TeleSessionNotFoundException;
+import com.fkmed.domain.telemedicine.TeleTermNotAcceptedException;
+import com.fkmed.domain.telemedicine.TeleTriageInvalidException;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
@@ -97,7 +103,17 @@ public final class HttpErrorMapping {
           Map.entry(MedicalOrderRequiredException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(MedicalOrderInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(AppointmentOutsideHorizonException.class, HttpStatus.UNPROCESSABLE_CONTENT),
-          Map.entry(AppointmentNotFoundException.class, HttpStatus.NOT_FOUND));
+          Map.entry(AppointmentNotFoundException.class, HttpStatus.NOT_FOUND),
+          // SPEC-0011 §Error Behavior: unknown/out-of-scope never distinguished (existence not
+          // revealed).
+          Map.entry(ClinicalDocumentNotFoundException.class, HttpStatus.NOT_FOUND),
+          // SPEC-0010 §Error Behavior: triage/term validations are 422s; the join window is a 409;
+          // the missing/unjoinable session is a 404 that never reveals existence.
+          Map.entry(TeleComplaintInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(TeleTermNotAcceptedException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(TeleTriageInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(TeleJoinWindowClosedException.class, HttpStatus.CONFLICT),
+          Map.entry(TeleSessionNotFoundException.class, HttpStatus.NOT_FOUND));
 
   private HttpErrorMapping() {}
 

@@ -205,7 +205,9 @@ describe('MeusAgendamentos (BR13/BR9/BR10)', () => {
   });
 
   it('renders the future Telemedicina badge when flagged (BR13)', () => {
-    api.getAppointments.mockReturnValue(of({ upcoming: [{ ...UPCOMING[0], telemedicine: true }], history: [] }));
+    api.getAppointments.mockReturnValue(
+      of({ upcoming: [{ ...UPCOMING[0], modality: 'TELEMEDICINA' as const }], history: [] }),
+    );
     fixture.componentInstance.load();
     fixture.detectChanges();
     expect(el().querySelector('[data-testid="meus-card-telemedicina"]')).not.toBeNull();

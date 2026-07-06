@@ -8,6 +8,47 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.8.0] — 2026-07-06
+
+Phase 4 — "Cuidado digital" (SPEC-0010 Telemedicine, SPEC-0011 Clinical Documents, + the
+telemedicine slice of SPEC-0018 Operator Simulation). **Closes Phase 4.**
+
+### Added
+
+- **Telemedicine** (SPEC-0010): a **Pronto Atendimento** virtual queue (triage → versioned term →
+  queue → room → closure summary) with position/ETA pushed **live over SSE**, a **state-driven room**
+  (professional + CRM + running duration, no media — ADR-0015), the single-active-session rule,
+  no-show expiry, and **scheduled teleconsultation** built on SPEC-0009 (virtual "Telemedicina" unit +
+  modality + a 10-minute join window). New `domain.telemedicine` module (11th) + `/api/tele/*` (V19;
+  ADR-0014/0015/0016; DL-0017/0018/0022).
+- **Minha Saúde — clinical documents** (SPEC-0011): a read-only hub with 3 categories (exam orders ·
+  referrals · prescriptions/sick notes), combined **beneficiary + period** filters, validity badges,
+  type-specific detail (incl. the **CID** on sick notes — DL-0020), faithful **PDF** download, and a
+  referral **"Agendar consulta"** handoff that opens the SPEC-0009 wizard with the specialty
+  pre-selected. New `domain.clinicaldocs` module (10th) + `/api/clinical-documents*` (V18; ADR-0013;
+  DL-0019).
+- **Operator-simulation — telemedicine slice** (SPEC-0018): a **dev-only, flag-gated, internal-role**
+  REST family `/api/sim/tele/*` + `/api/sim/documents` that drives the operator side (start attending,
+  close a session **issuing clinical documents atomically**, issue a document) — so the full Pronto
+  Atendimento journey (queue → room → closure → prescription in Minha Saúde) is demonstrable
+  end-to-end. Absent/404 in production, 403 for beneficiaries, audited, prod fail-fast (V22; ADR-0017;
+  DL-0021).
+
+### Changed
+
+- **Cross-spec wiring**: a telemedicine closure issues clinical documents (SPEC-0010 → SPEC-0011);
+  `TeleTurnReached`/`TeleSessionClosed`/`ClinicalDocumentIssued` become in-app + e-mail notifications
+  through the SPEC-0004 center (V20 seeds the three catalog types, no clinical content in the bodies).
+- The Modulith module map grows to **11 modules**; `AppointmentView` gains a `modality`
+  (`PRESENCIAL`/`TELEMEDICINA`) field for the tele badge.
+
+### Technical
+
+- First **SSE (push)** surface in the codebase (Spring `SseEmitter`, periodic re-emit; ADR-0016).
+- Scheduled teleconsultation reuses `domain.appointment` unchanged (a virtual unit + modality flag;
+  DL-0018) — no second scheduling engine.
+- Lockstep bump 0.7.0 → 0.8.0 (pom / OpenApiConfig / OpenAPI snapshot / frontend `appVersion`).
+
 ## [0.7.0] — 2026-07-05
 
 Phase 3 — "Encontrar atendimento" (SPEC-0008 Provider Network Search, SPEC-0009 Appointments).
