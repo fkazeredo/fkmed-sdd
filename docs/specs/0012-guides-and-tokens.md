@@ -1,6 +1,6 @@
 # 0012 - Guides and Tokens
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
