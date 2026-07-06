@@ -55,6 +55,7 @@ class TeleServiceTest {
   @Mock private TeleSessionRepository sessions;
   @Mock private BeneficiaryAccess beneficiaryAccess;
   @Mock private AppointmentService appointments;
+  @Mock private com.fkmed.domain.clinicaldocs.ClinicalDocuments clinicalDocuments;
   @Mock private ApplicationEventPublisher events;
   @Mock private PlatformTransactionManager transactionManager;
 
@@ -69,6 +70,7 @@ class TeleServiceTest {
             sessions,
             beneficiaryAccess,
             appointments,
+            clinicalDocuments,
             events,
             new SimpleMeterRegistry(),
             transactionManager,
@@ -320,14 +322,65 @@ class TeleServiceTest {
   }
 
   @Test
-  void viewOf_returnsTheViewWhileActive_andEmptyOnceFinal() {
+  void viewOf_returnsTheView_forActiveAndFinalStates_andEmptyForUnknown() {
     TeleSession queued = walkIn();
     when(sessions.findById(queued.getId())).thenReturn(Optional.of(queued));
     when(sessions.countByTypeAndStateAndQueueEnteredAtBefore(any(), any(), any())).thenReturn(0L);
     assertThat(service.viewOf(queued.getId())).isPresent();
 
+    // Wave 2: viewOf now yields the final view too, so the SSE can push the terminal state once
+    // before completing (BR9 closure summary / abandoned notice) rather than dropping it silently.
     queued.leave(NOW);
-    assertThat(service.viewOf(queued.getId())).isEmpty();
+    assertThat(service.viewOf(queued.getId())).map(TeleSessionView::state).contains("ABANDONADA");
+
+    UUID unknown = UUID.randomUUID();
+    when(sessions.findById(unknown)).thenReturn(Optional.empty());
+    assertThat(service.viewOf(unknown)).isEmpty();
+  }
+
+  @Test
+  void viewOf_closedSession_buildsClosureRoomSummaryWithDurationAndDocuments() {
+    TeleSession attended = walkIn();
+    attended.reachTurn("Dra. Ana", "CRM-RJ 1", NOW);
+    attended.markResponded(NOW);
+    attended.close("Dra. Ana", "CRM-RJ 1", "Repouso", NOW.plus(Duration.ofMinutes(15)));
+    when(sessions.findById(attended.getId())).thenReturn(Optional.of(attended));
+    UUID docId = UUID.randomUUID();
+    when(clinicalDocuments.issuedForSession(attended.getId()))
+        .thenReturn(
+            List.of(
+                new com.fkmed.domain.clinicaldocs.IssuedDocumentSummary(docId, "PRESCRIPTION")));
+
+    TeleSessionView view = service.viewOf(attended.getId()).orElseThrow();
+
+    assertThat(view.state()).isEqualTo("ENCERRADA");
+    assertThat(view.room().durationMinutes()).isEqualTo(15);
+    assertThat(view.room().guidance()).isEqualTo("Repouso");
+    assertThat(view.room().documents())
+        .extracting(TeleSessionView.IssuedDocument::type)
+        .containsExactly("PRESCRIPTION");
+  }
+
+  @Test
+  void reachNextTurn_reachesTheOldestQueuedSession() {
+    TeleSession queued = walkIn();
+    when(sessions.findFirstByTypeAndStateOrderByQueueEnteredAtAsc(
+            TeleSessionType.WALK_IN, TeleSessionState.EM_FILA))
+        .thenReturn(Optional.of(queued));
+    when(sessions.findById(queued.getId())).thenReturn(Optional.of(queued));
+
+    UUID id = service.reachNextTurn("Dra. Ana", "CRM-RJ 1");
+
+    assertThat(id).isEqualTo(queued.getId());
+    assertThat(queued.getState()).isEqualTo(TeleSessionState.EM_ATENDIMENTO);
+  }
+
+  @Test
+  void reachNextTurn_withEmptyQueue_throwsSessionNotFound() {
+    when(sessions.findFirstByTypeAndStateOrderByQueueEnteredAtAsc(any(), any()))
+        .thenReturn(Optional.empty());
+    assertThatExceptionOfType(TeleSessionNotFoundException.class)
+        .isThrownBy(() -> service.reachNextTurn("Dra. Ana", "CRM-RJ 1"));
   }
 
   // ---- helpers --------------------------------------------------------------------------------

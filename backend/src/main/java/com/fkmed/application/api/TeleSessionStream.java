@@ -2,6 +2,7 @@ package com.fkmed.application.api;
 
 import com.fkmed.domain.telemedicine.TeleService;
 import com.fkmed.domain.telemedicine.TeleSessionClosed;
+import com.fkmed.domain.telemedicine.TeleSessionState;
 import com.fkmed.domain.telemedicine.TeleSessionView;
 import com.fkmed.domain.telemedicine.TeleTurnReached;
 import java.io.IOException;
@@ -107,9 +108,15 @@ public class TeleSessionStream {
       return;
     }
     Optional<TeleSessionView> view = tele.viewOf(sessionId);
-    if (view.isPresent()) {
-      emit(sessionId, view.get());
-    } else {
+    if (view.isEmpty()) {
+      complete(sessionId);
+      return;
+    }
+    // Push the current state — including a just-reached final state (ENCERRADA closure summary /
+    // ABANDONADA notice, BR9) — then close the stream once the session is final so the client keeps
+    // the terminal screen without reconnecting into a 404.
+    emit(sessionId, view.get());
+    if (TeleSessionState.valueOf(view.get().state()).isFinal()) {
       complete(sessionId);
     }
   }

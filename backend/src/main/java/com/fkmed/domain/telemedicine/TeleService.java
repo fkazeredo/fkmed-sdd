@@ -2,6 +2,8 @@ package com.fkmed.domain.telemedicine;
 
 import com.fkmed.domain.appointment.AppointmentService;
 import com.fkmed.domain.appointment.TeleJoinTarget;
+import com.fkmed.domain.clinicaldocs.ClinicalDocuments;
+import com.fkmed.domain.clinicaldocs.IssuedDocumentSummary;
 import com.fkmed.domain.plan.AccessibleBeneficiary;
 import com.fkmed.domain.plan.BeneficiaryAccess;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -65,6 +67,7 @@ public class TeleService {
   private final TeleSessionRepository sessions;
   private final BeneficiaryAccess beneficiaryAccess;
   private final AppointmentService appointments;
+  private final ClinicalDocuments clinicalDocuments;
   private final ApplicationEventPublisher events;
   private final MeterRegistry metrics;
   private final PlatformTransactionManager transactionManager;
@@ -75,7 +78,7 @@ public class TeleService {
   public TeleCatalogView catalog() {
     List<TeleCatalogView.SymptomOption> options =
         symptoms.findAllByOrderByNameAsc().stream()
-            .map(s -> new TeleCatalogView.SymptomOption(s.getCode(), s.getName()))
+            .map(s -> new TeleCatalogView.SymptomOption(s.getCode(), s.getName(), s.isEmergency()))
             .toList();
     TeleTerm term = currentTerm();
     return new TeleCatalogView(
@@ -217,15 +220,36 @@ public class TeleService {
   }
 
   /**
-   * Closes the session as {@code ENCERRADA} with the professional's summary (BR9) and publishes
-   * {@link TeleSessionClosed}. The seam the operator simulation (SPEC-0018) drives; Wave 2 wires
-   * the clinical-document issuance off the event.
+   * Starts attending the next walk-in session waiting in the queue (oldest first): reaches its turn
+   * (BR8) and returns its id. The seam the operator simulation (SPEC-0018) drives for "attend the
+   * next queued session".
    *
+   * @return the id of the session now being attended.
+   * @throws TeleSessionNotFoundException when the queue is empty.
+   */
+  @Transactional
+  public UUID reachNextTurn(String professionalName, String professionalCrm) {
+    TeleSession next =
+        sessions
+            .findFirstByTypeAndStateOrderByQueueEnteredAtAsc(
+                TeleSessionType.WALK_IN, TeleSessionState.EM_FILA)
+            .orElseThrow(TeleSessionNotFoundException::new);
+    reachTurn(next.getId(), professionalName, professionalCrm);
+    return next.getId();
+  }
+
+  /**
+   * Closes the session as {@code ENCERRADA} with the professional's summary (BR9) and publishes
+   * {@link TeleSessionClosed}. The seam the operator simulation (SPEC-0018) drives; it issues the
+   * clinical documents atomically in this same transaction, bound to the returned attended
+   * beneficiary and to the session (BR10).
+   *
+   * @return the attended beneficiary's id, so the caller can bind the closure documents to it.
    * @throws TeleSessionNotFoundException when the session is unknown.
    * @throws IllegalStateException when the session is not being attended.
    */
   @Transactional
-  public void close(UUID sessionId, TeleClosureSummary summary) {
+  public UUID close(UUID sessionId, TeleClosureSummary summary) {
     TeleSession session =
         sessions.findById(sessionId).orElseThrow(TeleSessionNotFoundException::new);
     session.close(
@@ -243,6 +267,7 @@ public class TeleService {
             session.getGuidance(),
             session.getCreatedBy(),
             session.getEndedAt()));
+    return session.getBeneficiaryId();
   }
 
   /**
@@ -267,10 +292,15 @@ public class TeleService {
     return stale.size();
   }
 
-  /** The recomputed live view of a session by id, for the SSE re-emit; empty once final. */
+  /**
+   * The recomputed view of a session by id, for the SSE re-emit. Present for any existing session —
+   * including a just-reached final state, so the stream can push the closure summary (BR9: the
+   * ENCERRADA room with guidance + issued documents) once before completing; empty only when the
+   * session is unknown.
+   */
   @Transactional(readOnly = true)
   public Optional<TeleSessionView> viewOf(UUID sessionId) {
-    return sessions.findById(sessionId).filter(TeleSession::isActive).map(this::toView);
+    return sessions.findById(sessionId).map(this::toView);
   }
 
   // --- internals ---
@@ -377,9 +407,43 @@ public class TeleService {
             ? null
             : new TeleSessionView.Professional(
                 session.getProfessionalName(), session.getProfessionalCrm());
-    String room =
-        session.getState() == TeleSessionState.EM_ATENDIMENTO ? "tele-" + session.getId() : null;
-    return new TeleSessionView(session.getState().name(), position, eta, professional, room);
+    return new TeleSessionView(
+        session.getState().name(), position, eta, professional, roomOf(session));
+  }
+
+  /**
+   * The room/closure-summary payload (BR9): present while attended (start time → running duration)
+   * and at closure (duration + guidance + the documents issued for the session, {@code telemedicine
+   * -> clinicaldocs}); absent while queued or once abandoned.
+   */
+  private TeleSessionView.Room roomOf(TeleSession session) {
+    return switch (session.getState()) {
+      case EM_ATENDIMENTO -> new TeleSessionView.Room(session.getStartedAt(), null, null, null);
+      case ENCERRADA ->
+          new TeleSessionView.Room(
+              session.getStartedAt(),
+              durationMinutes(session),
+              session.getGuidance(),
+              issuedDocuments(session.getId()));
+      case EM_FILA, ABANDONADA -> null;
+    };
+  }
+
+  private static Integer durationMinutes(TeleSession session) {
+    if (session.getStartedAt() == null || session.getEndedAt() == null) {
+      return null;
+    }
+    return (int) Duration.between(session.getStartedAt(), session.getEndedAt()).toMinutes();
+  }
+
+  private List<TeleSessionView.IssuedDocument> issuedDocuments(UUID sessionId) {
+    return clinicalDocuments.issuedForSession(sessionId).stream()
+        .map(TeleService::toIssuedDocument)
+        .toList();
+  }
+
+  private static TeleSessionView.IssuedDocument toIssuedDocument(IssuedDocumentSummary summary) {
+    return new TeleSessionView.IssuedDocument(summary.id().toString(), summary.type());
   }
 
   private int queuePosition(TeleSession session) {

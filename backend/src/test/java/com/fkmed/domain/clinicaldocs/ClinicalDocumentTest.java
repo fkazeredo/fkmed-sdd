@@ -71,12 +71,14 @@ class ClinicalDocumentTest {
             "CRM 55214 RJ",
             SESSION_ORIGIN,
             "CARDIOLOGIA",
+            "Cardiologia",
             "Palpitações recorrentes");
 
     ClinicalDocument document = ClinicalDocument.issue(command, ISSUED_AT, ISSUED_DATE);
 
     assertThat(document.getValidUntil()).isEqualTo(ISSUED_DATE.plusDays(90));
     assertThat(document.getTargetSpecialtyCode()).isEqualTo("CARDIOLOGIA");
+    assertThat(document.getTargetSpecialtyName()).isEqualTo("Cardiologia");
     assertThat(document.getReferralReason()).isEqualTo("Palpitações recorrentes");
   }
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 import com.fkmed.infra.identity.AppIdentityProperties;
 import com.fkmed.infra.platform.ProdReadinessValidator;
+import com.fkmed.infra.platform.SimProperties;
 import com.fkmed.infra.security.AppSecurityProperties;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -53,7 +54,12 @@ class ProdReadinessValidatorIT extends AbstractIntegrationTest {
 
     ProdReadinessValidator validator =
         new ProdReadinessValidator(
-            productionSecurity(), productionIdentity(), environment, jdbc, passwordEncoder);
+            productionSecurity(),
+            productionIdentity(),
+            new SimProperties(false, List.of()),
+            environment,
+            jdbc,
+            passwordEncoder);
 
     assertThatIllegalStateException()
         .isThrownBy(() -> validator.run(null))

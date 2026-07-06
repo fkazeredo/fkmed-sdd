@@ -3,6 +3,7 @@ package com.fkmed.domain.clinicaldocs;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -42,6 +43,18 @@ public class ClinicalDocuments {
         new ClinicalDocumentIssued(
             document.getId(), document.getBeneficiaryId(), document.getType(), linkFor(document)));
     return document.getId();
+  }
+
+  /**
+   * The documents issued in a telemedicine session (SPEC-0010 BR9/BR10), oldest first — the
+   * telemedicine room's closure summary reads this ({@code telemedicine -> clinicaldocs}) to list
+   * the issued documents with the "Ver em Minha Saúde" link.
+   */
+  @Transactional(readOnly = true)
+  public List<IssuedDocumentSummary> issuedForSession(UUID sessionId) {
+    return documents.findByOriginSessionIdOrderByIssuedAtAsc(sessionId).stream()
+        .map(document -> new IssuedDocumentSummary(document.getId(), document.getType().name()))
+        .toList();
   }
 
   private static String linkFor(ClinicalDocument document) {

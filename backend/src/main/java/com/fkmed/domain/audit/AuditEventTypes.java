@@ -53,5 +53,12 @@ public final class AuditEventTypes {
    */
   public static final String DEPENDENT_CLINICAL_DOCUMENT_VIEWED = "clinicaldocs.dependent-viewed";
 
+  /**
+   * An operator-simulation action was executed (SPEC-0018 BR3): every {@code /api/sim/**} call is
+   * audited with the operator as author, so the simulated back-office action is traceable and
+   * indistinguishable from a real one to the consuming modules.
+   */
+  public static final String OPERATOR_SIM_ACTION = "sim.operator-action";
+
   private AuditEventTypes() {}
 }

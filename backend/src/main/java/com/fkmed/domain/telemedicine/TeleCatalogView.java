@@ -8,8 +8,11 @@ import java.util.List;
  */
 public record TeleCatalogView(List<SymptomOption> symptoms, TeleTermView term) {
 
-  /** A selectable triage symptom (registry code + label). */
-  public record SymptomOption(String code, String name) {}
+  /**
+   * A selectable triage symptom: registry code + label, plus {@code emergency} — whether picking it
+   * raises the 24h-ER alert (SPEC-0010 BR3), the flag the FE's emergency banner reads.
+   */
+  public record SymptomOption(String code, String name, boolean emergency) {}
 
   /** The current term's version and body. */
   public record TeleTermView(String version, String body) {}

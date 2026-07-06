@@ -387,7 +387,7 @@ class AppointmentServiceTest {
     when(appointments.findByBeneficiaryIdInOrderByScheduledAtDesc(Set.of(BENEFICIARY)))
         .thenReturn(List.of(upcoming, past));
 
-    AppointmentListResponse response = service.list(CARD, null);
+    AppointmentListResponse response = service.list(CARD, null, false);
 
     assertThat(response.upcoming())
         .extracting(AppointmentView::protocol)
@@ -404,11 +404,43 @@ class AppointmentServiceTest {
         .thenReturn(
             List.of(new AccessibleBeneficiary(BENEFICIARY, "Maria", BeneficiaryRole.TITULAR)));
 
-    AppointmentListResponse response = service.list(CARD, UUID.randomUUID());
+    AppointmentListResponse response = service.list(CARD, UUID.randomUUID(), false);
 
     assertThat(response.upcoming()).isEmpty();
     assertThat(response.history()).isEmpty();
     verify(appointments, never()).findByBeneficiaryIdInOrderByScheduledAtDesc(any());
+  }
+
+  @Test
+  void list_withTelemedicineOnly_keepsOnlyTelemedicineModality() {
+    when(beneficiaryAccess.accessibleFor(CARD))
+        .thenReturn(
+            List.of(new AccessibleBeneficiary(BENEFICIARY, "Maria", BeneficiaryRole.TITULAR)));
+    when(appointments.findByBeneficiaryIdInOrderByScheduledAtDesc(Set.of(BENEFICIARY)))
+        .thenReturn(List.of(teleUpcoming(), upcoming()));
+
+    AppointmentListResponse response = service.list(CARD, null, true);
+
+    assertThat(response.upcoming())
+        .extracting(AppointmentView::modality)
+        .containsExactly(AppointmentModality.TELEMEDICINA);
+  }
+
+  @Test
+  void telemedicineUnitId_resolvesTheSeededVirtualUnit() {
+    CareUnit unit = org.mockito.Mockito.mock(CareUnit.class);
+    when(unit.getId()).thenReturn(UNIT);
+    when(careUnits.findFirstByVirtualTrue()).thenReturn(Optional.of(unit));
+
+    assertThat(service.telemedicineUnitId()).isEqualTo(UNIT);
+  }
+
+  @Test
+  void telemedicineUnitId_withNoVirtualUnit_throwsIllegalState() {
+    when(careUnits.findFirstByVirtualTrue()).thenReturn(Optional.empty());
+
+    assertThatExceptionOfType(IllegalStateException.class)
+        .isThrownBy(() -> service.telemedicineUnitId());
   }
 
   @Test
@@ -477,6 +509,19 @@ class AppointmentServiceTest {
         SLOT,
         SCHEDULED_AT,
         "AG-20260708-0009",
+        AUTHOR,
+        CLOCK.instant());
+  }
+
+  private static Appointment teleUpcoming() {
+    return Appointment.consultation(
+        BENEFICIARY,
+        "CLINICA_MEDICA",
+        AppointmentModality.TELEMEDICINA,
+        UNIT,
+        SLOT,
+        SCHEDULED_AT,
+        "AG-20260708-0010",
         AUTHOR,
         CLOCK.instant());
   }

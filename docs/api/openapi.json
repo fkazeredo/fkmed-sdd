@@ -201,6 +201,99 @@
         }
       }
     },
+    "/api/sim/tele/sessions/{id}/close" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "close",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CloseTeleSessionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimTeleSessionResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sim/tele/sessions/next/start" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "startNext",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StartNextTeleRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimTeleSessionResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sim/documents" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "issueDocument",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/IssueOperatorDocumentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimIssuedDocumentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notifications/{id}/read" : {
       "post" : {
         "tags" : [ "notification-controller" ],
@@ -405,6 +498,14 @@
           "schema" : {
             "type" : "string",
             "format" : "uuid"
+          }
+        }, {
+          "name" : "telemedicine",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
           }
         } ],
         "responses" : {
@@ -1392,7 +1493,7 @@
         "parameters" : [ {
           "name" : "unitId",
           "in" : "query",
-          "required" : true,
+          "required" : false,
           "schema" : {
             "type" : "string",
             "format" : "uuid"
@@ -1410,6 +1511,14 @@
           "required" : false,
           "schema" : {
             "type" : "string"
+          }
+        }, {
+          "name" : "telemedicine",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
           }
         } ],
         "responses" : {
@@ -1543,6 +1652,17 @@
           }
         }
       },
+      "IssuedDocument" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        }
+      },
       "Professional" : {
         "type" : "object",
         "properties" : {
@@ -1551,6 +1671,28 @@
           },
           "crm" : {
             "type" : "string"
+          }
+        }
+      },
+      "Room" : {
+        "type" : "object",
+        "properties" : {
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "guidance" : {
+            "type" : "string"
+          },
+          "documents" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/IssuedDocument"
+            }
           }
         }
       },
@@ -1572,7 +1714,199 @@
             "$ref" : "#/components/schemas/Professional"
           },
           "room" : {
+            "$ref" : "#/components/schemas/Room"
+          }
+        }
+      },
+      "CloseTeleSessionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "professionalName" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "crm" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "guidance" : {
             "type" : "string"
+          },
+          "documents" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SimDocumentSpec"
+            }
+          }
+        },
+        "required" : [ "crm", "professionalName" ]
+      },
+      "ExamItem" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "tuss" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Medication" : {
+        "type" : "object",
+        "properties" : {
+          "medication" : {
+            "type" : "string"
+          },
+          "posology" : {
+            "type" : "string"
+          },
+          "guidance" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SimDocumentSpec" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "enum" : [ "EXAM_ORDER", "REFERRAL", "PRESCRIPTION", "SICK_NOTE" ]
+          },
+          "clinicalIndication" : {
+            "type" : "string"
+          },
+          "exams" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExamItem"
+            }
+          },
+          "specialtyCode" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "medications" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Medication"
+            }
+          },
+          "periodStart" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "periodEnd" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "cid" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "SimTeleSessionResult" : {
+        "type" : "object",
+        "properties" : {
+          "sessionId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "state" : {
+            "type" : "string"
+          },
+          "issuedDocumentIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        }
+      },
+      "StartNextTeleRequest" : {
+        "type" : "object",
+        "properties" : {
+          "professionalName" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "crm" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "crm", "professionalName" ]
+      },
+      "IssueOperatorDocumentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "professionalName" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "crm" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "EXAM_ORDER", "REFERRAL", "PRESCRIPTION", "SICK_NOTE" ]
+          },
+          "clinicalIndication" : {
+            "type" : "string"
+          },
+          "exams" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExamItem"
+            }
+          },
+          "specialtyCode" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "medications" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Medication"
+            }
+          },
+          "periodStart" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "periodEnd" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "cid" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "beneficiaryId", "crm", "professionalName", "type" ]
+      },
+      "SimIssuedDocumentResponse" : {
+        "type" : "object",
+        "properties" : {
+          "documentId" : {
+            "type" : "string",
+            "format" : "uuid"
           }
         }
       },
@@ -1719,12 +2053,15 @@
             "type" : "string",
             "format" : "uuid"
           },
+          "telemedicine" : {
+            "type" : "boolean"
+          },
           "slot" : {
             "type" : "string",
             "format" : "date-time"
           }
         },
-        "required" : [ "beneficiaryId", "slot", "type", "unitId" ]
+        "required" : [ "beneficiaryId", "slot", "type" ]
       },
       "RescheduleAppointmentRequest" : {
         "type" : "object",
@@ -1862,6 +2199,9 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "emergency" : {
+            "type" : "boolean"
           }
         }
       },
@@ -2376,13 +2716,16 @@
           "clinicalIndication" : {
             "type" : "string"
           },
-          "examItems" : {
+          "exams" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ExamItemView"
             }
           },
-          "targetSpecialty" : {
+          "specialtyCode" : {
+            "type" : "string"
+          },
+          "specialtyName" : {
             "type" : "string"
           },
           "reason" : {
@@ -2413,10 +2756,10 @@
       "ExamItemView" : {
         "type" : "object",
         "properties" : {
-          "examName" : {
+          "name" : {
             "type" : "string"
           },
-          "tussCode" : {
+          "tuss" : {
             "type" : "string"
           }
         }
