@@ -54,31 +54,32 @@ When the architect delegates to sub-agents (devs, QA), the orchestration rules t
 process from bottlenecking live in `.claude/agents/architect.md` (owner-facing summary in
 `docs/GUIA-TIME-CLAUDE.md`). In short:
 
-- **Parallel by default, contract-first** — two axes, treated differently. (a) **Backend ×
-  frontend:** for any end-to-end slice, running `dev-backend` and `dev-frontend` in parallel
-  is simply the default; the architect **freezes the API contract in the plan** (endpoints,
-  DTO shapes, error codes, events, state/session behavior) and **partitions the work into
-  disjoint files/modules** — that contract + those boundaries are what keep the two sides from
-  colliding — then integrates both sub-branches into the slice branch (`git merge --no-ff`;
-  targeted check per merge, the full battery once after the last integration). (b) **N
-  instances of one specialty:** spawn another `dev-backend`
-  (or `dev-frontend`) only when there is a genuinely disjoint scope that earns its keep —
-  judgment by real demand, never idle instances (Rule Zero). A genuinely small slice is done
-  inline; sequential cross-stack is the deliberate exception (emergent contract, or a trivial
-  side). A backend deviation from the frozen contract is an impediment back to the architect,
-  never a silent drift.
+- **One `developer` end to end is the default; parallelism prefers isolation.** A normal
+  slice is built by a single `developer` (backend first, frontend against the REAL contract;
+  TDD optional, tests + touched-stack gates at the END, before QA). N developers run in
+  parallel only for real, separable demand — the predilection is scopes that don't collide
+  (disjoint modules/paths, no shared contract surface); **small overlap is acceptable
+  because the architect owns the integration**: `git merge --no-ff` per sub-branch on the
+  slice branch, conflicts resolved by the architect, targeted check per merge, the full
+  battery once after the last integration. Parallel work requires frozen contract seams,
+  owned/forbidden paths and a merge order in the plan; a deviation from a frozen seam is an
+  impediment back to the architect, never a silent drift. A genuinely small slice is done
+  inline (Rule Zero).
 - **Execution modes & proportional gates** (canonical text in `.claude/agents/architect.md`
   §Execution modes) — **Slice Mode is the default**; a **whole phase** runs when the owner
   explicitly asks for one (accepted without pushback, organized internally in waves). Parallel
   work requires the plan to fix the frozen contract, owned/forbidden paths, the
   **single-writer surfaces** (OpenAPI snapshot, migration numbering, shell/routes, global
   i18n, `ModularityTest`, shared error mapping, workflows) and the merge order. Gates are
-  **proportional**: devs run targeted tests during the loop and their stack's full gate once
-  at handback; the architect runs the full battery once after the final integration; QA runs
-  once on the integrated branch; `/dod` reuses green evidence from the same commit instead of
-  re-running it. The E2E suite is **green locally before any push/PR** — CI is never its
-  first run (owner order, the Phase-4 lesson). Effort defaults to `high` everywhere;
-  `opus`/`xhigh` are escalations for genuinely hard/critical work, never a session default.
+  **proportional**: the developer tests at the END (TDD optional) and runs the touched
+  stacks' full gates once at handback; the architect runs the full battery once after the
+  final integration; QA runs once on the integrated branch in **two stages** — homologação
+  against the SPEC first (findings → the same developer; too complex → the architect), then
+  the full battery, where **any failure returns to the architect** to replan; `/dod` reuses
+  green evidence from the same commit instead of re-running it. The E2E suite is **green
+  locally before any push/PR** — CI is never its first run (owner order, the Phase-4
+  lesson). Effort defaults to `high` everywhere; `opus`/`xhigh` are escalations for
+  genuinely hard/critical work, never a session default.
 - **Worktree orchestration** — each agent works in **its own worktree**, never the main repo
   or another's. The **architect owns the lifecycle**: free the target branch and keep the
   main worktree on `develop` before spawning (a branch held elsewhere makes the agent's
@@ -86,9 +87,10 @@ process from bottlenecking live in `.claude/agents/architect.md` (owner-facing s
   prune` — on Windows `rm -rf .claude/worktrees/<id>` in Git Bash when path length blocks
   `git worktree remove`), delete merged/scratch branches, and leave no file junk on the
   owner's machine; rescue any misplaced work via `git stash -u` without losing it.
-- **Visibility** — a milestone-ping cadence (RED committed → gates green → completion) for
-  devs, QA and flow work; the architect surfaces observable state, never invented progress;
-  periodic stall checks.
+- **Visibility** — a milestone-ping cadence (implementation underway → dev tests/gates green
+  → homologação/battery → completion), every message stamped with the real date+time in the
+  owner's timezone (`TZ=America/Sao_Paulo`), for developers, QA and flow work; the architect
+  surfaces observable state, never invented progress; periodic stall checks.
 - **Impediments escalate, never route around** — any blocker not the agent's to fix (failed
   checkout, unavailable tool/service, ambiguous/conflicting spec, a gate that looks wrong,
   scope bigger than the order) is **reported to the architect and waits**; agents never fake

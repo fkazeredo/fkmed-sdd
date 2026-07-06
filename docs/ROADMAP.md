@@ -4,9 +4,10 @@
 
 Every implementation plan is **end-to-end**: each slice is vertical (migration → domain →
 API → screen) and **each phase closes with a working front+back user journey of real
-value**. No backend-only, screens-only or docs-only deliveries of product code. Small
-slice ⇒ `dev-fullstack`; larger slice ⇒ `dev-backend` then `dev-frontend` on the SAME
-branch — the PR is born only with the complete journey working. Phase closure criteria:
+value**. No backend-only, screens-only or docs-only deliveries of product code. A slice is
+built by ONE `developer` end to end; parallel developers only for well-isolated scopes
+(small overlap is acceptable — the architect integrates) — the PR is born only with the
+complete journey working. Phase closure criteria:
 journey running on the dev environment + all gates green + `docs/MANUAL.md` updated + PR
 opened to `develop`.
 
