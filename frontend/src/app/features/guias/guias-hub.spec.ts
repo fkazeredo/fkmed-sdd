@@ -168,21 +168,42 @@ describe('GuiasHub', () => {
   });
 
   it('AC4/BR9/BR11: generating a token shows the code + countdown; Copiar copies exactly the 6 digits', async () => {
-    api.generateToken.mockReturnValue(of(TOKEN_ACTIVE));
-    await setup();
-    expect(el().querySelector('[data-testid="token-vazio"]')).not.toBeNull();
+    // Regression (flaky under load, slice 5.3): the original assertion compared against a
+    // `TOKEN_ACTIVE.expiresAt` fixed at MODULE LOAD time against the component's countdown, which
+    // ticks off the REAL wall clock (`new Date()`, see token-time.ts) — any scheduling delay
+    // between module evaluation and this assertion could tick the display from "10:00" to "09:59".
+    // Freezing the clock with fake timers makes "now" (and the fixture's expiresAt, computed from
+    // the same frozen instant) exactly 600s apart, so the countdown is deterministic regardless of
+    // real elapsed time.
+    // Only `Date` is faked (not setTimeout/setInterval): the component's own countdown ticker
+    // relies on a REAL `setInterval` that zone.js tracks for Angular's stability/`whenStable()` —
+    // faking it too made `whenStable()` hang (zone.js never sees the interval fire).
+    const FIXED_NOW = new Date('2026-07-06T12:00:00.000Z');
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(FIXED_NOW);
+    try {
+      const tokenAtFixedNow: TokenResponse = {
+        code: '483920',
+        expiresAt: new Date(FIXED_NOW.getTime() + 10 * 60_000).toISOString(),
+      };
+      api.generateToken.mockReturnValue(of(tokenAtFixedNow));
+      await setup();
+      expect(el().querySelector('[data-testid="token-vazio"]')).not.toBeNull();
 
-    (el().querySelector('[data-testid="token-gerar"]') as HTMLElement).click();
-    fixture.detectChanges();
-    expect(el().querySelector('[data-testid="token-codigo"]')?.textContent).toContain('483920');
-    expect(el().querySelector('[data-testid="token-countdown"]')?.textContent).toContain('10:00');
+      (el().querySelector('[data-testid="token-gerar"]') as HTMLElement).click();
+      fixture.detectChanges();
+      expect(el().querySelector('[data-testid="token-codigo"]')?.textContent).toContain('483920');
+      expect(el().querySelector('[data-testid="token-countdown"]')?.textContent).toContain('10:00');
 
-    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
-    (el().querySelector('[data-testid="token-copiar"]') as HTMLElement).click();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('483920');
-    expect(el().querySelector('[data-testid="token-copiado"]')).not.toBeNull();
+      Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+      (el().querySelector('[data-testid="token-copiar"]') as HTMLElement).click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('483920');
+      expect(el().querySelector('[data-testid="token-copiado"]')).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('BR9: resumes an active token countdown from GET /api/tokens/current on load', async () => {

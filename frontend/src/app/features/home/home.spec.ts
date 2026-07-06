@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { AccessibleBeneficiary } from '../../core/context/accessible-beneficiaries.api';
 import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
 import { BeneficiarySummary } from '../../core/context/beneficiary-summary.api';
@@ -78,7 +79,7 @@ describe('Home', () => {
     sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [Home],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideI18n()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideI18n(), provideRouter([])],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
     context = TestBed.inject(BeneficiaryContextService);
@@ -281,19 +282,41 @@ describe('Home', () => {
       const el = fixture.nativeElement as HTMLElement;
       // PrimeNG's circular carousel clones the edge items for seamless wraparound, so DOM order
       // of `[data-testid="banner-item"]` isn't the content order — assert on the section's full
-      // text instead of "the first match" (real behavior: both banners are present and CTAs are
-      // disabled with the "em breve" hint, per the phased-delivery note).
+      // text instead of "the first match".
       const bannersSection = el.querySelector('[data-testid="home-banners"]');
       expect(bannersSection).not.toBeNull();
       expect(bannersSection?.textContent).toContain('Alerta de golpe!');
       expect(bannersSection?.textContent).toContain('Valide seu boleto');
+    });
 
+    it('SPEC-0014 closes AC6: the fraud banner (destination /atendimento#...) is enabled, no "em breve"; other undelivered destinations stay disabled', async () => {
+      const { fixture } = await setup();
+      await flushContent(fixture, { banners: [FRAUD_BANNER, BOLETO_BANNER], notices: [] });
+
+      expect(fixture.componentInstance.isBannerAvailable(FRAUD_BANNER)).toBe(true);
+      expect(fixture.componentInstance.isBannerAvailable(BOLETO_BANNER)).toBe(false);
+
+      const el = fixture.nativeElement as HTMLElement;
       const buttons = Array.from(el.querySelectorAll('[data-testid="banner-button"]')) as HTMLButtonElement[];
       expect(buttons.length).toBeGreaterThan(0);
-      for (const button of buttons) {
-        expect(button.disabled).toBe(true);
-      }
+      // At least one enabled button (the fraud banner) and at least one "em breve" hint (boleto).
+      expect(buttons.some((button) => !button.disabled)).toBe(true);
       expect(el.querySelectorAll('[data-testid="banner-em-breve"]').length).toBeGreaterThan(0);
+    });
+
+    it('SPEC-0014 AC6/AC2: clicking the fraud banner action navigates to its destination', async () => {
+      const { fixture } = await setup();
+      await flushContent(fixture, { banners: [FRAUD_BANNER, BOLETO_BANNER], notices: [] });
+
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+      fixture.componentInstance.onBannerButtonClick(FRAUD_BANNER);
+      expect(navigateSpy).toHaveBeenCalledWith('/atendimento#antifraude');
+
+      navigateSpy.mockClear();
+      fixture.componentInstance.onBannerButtonClick(BOLETO_BANNER);
+      expect(navigateSpy).not.toHaveBeenCalled();
     });
 
     it('rotates automatically every 6 seconds (BR6)', async () => {

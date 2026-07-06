@@ -1,0 +1,157 @@
+<section class="mx-auto max-w-4xl p-4" aria-labelledby="atendimento-title" data-testid="atendimento-page">
+  <h1 id="atendimento-title" class="mb-4 text-2xl font-semibold text-teal-800">
+    {{ 'atendimento.title' | translate }}
+  </h1>
+
+  <!-- Channel cards (BR1/BR2) -->
+  <section class="mb-8" aria-labelledby="atendimento-canais-title" data-testid="atendimento-canais">
+    <h2 id="atendimento-canais-title" class="mb-3 text-lg font-medium text-teal-800">
+      {{ 'atendimento.canais.title' | translate }}
+    </h2>
+
+    @if (channelsLoading()) {
+      <p class="text-slate-500" role="status">{{ 'common.loading' | translate }}</p>
+    } @else {
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        @for (channel of channels(); track channel.type) {
+          <div class="rounded-xl bg-white p-5 shadow" [attr.data-testid]="'canal-' + channel.type">
+            <h3 class="mb-1 text-base font-medium text-teal-800">{{ channel.label }}</h3>
+            @if (channel.type === 'WHATSAPP') {
+              <a
+                [href]="whatsappHref(channel.value)"
+                target="_blank"
+                rel="noopener"
+                class="mb-1 block text-sm text-teal-700 underline"
+                [attr.data-testid]="'canal-' + channel.type + '-link'"
+              >
+                {{ channel.value }}
+              </a>
+            } @else {
+              <a
+                [href]="telHref(channel.value)"
+                class="mb-1 block text-sm text-teal-700 underline"
+                [attr.data-testid]="'canal-' + channel.type + '-link'"
+              >
+                {{ channel.value }}
+              </a>
+            }
+            @if (channel.hours) {
+              <p class="text-xs text-slate-500">{{ channel.hours }}</p>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Antifraud (BR3) — the Home fraud-banner destination -->
+  <section
+    id="antifraude"
+    class="mb-8 scroll-mt-4 rounded-xl bg-red-50 p-5"
+    aria-labelledby="antifraude-titulo"
+    data-testid="atendimento-antifraude"
+  >
+    @if (antifraud(); as af) {
+      <h2 id="antifraude-titulo" class="mb-2 text-lg font-semibold text-red-800" data-testid="antifraude-titulo">
+        {{ af.title }}
+      </h2>
+      <p class="mb-3 text-sm text-red-700" data-testid="antifraude-mensagem">{{ af.message }}</p>
+      <ul class="list-disc space-y-1 pl-5 text-sm text-red-700">
+        @for (practice of af.bestPractices; track practice) {
+          @if (practice === validateInvoicePractice) {
+            <li>
+              <a routerLink="/financas/validar" class="underline" data-testid="antifraude-pratica-boleto">
+                {{ practice }}
+              </a>
+            </li>
+          } @else {
+            <li>{{ practice }}</li>
+          }
+        }
+      </ul>
+    }
+  </section>
+
+  <!-- Central de Libras (BR4) -->
+  <section class="mb-8 rounded-xl bg-white p-5 shadow" aria-labelledby="libras-title" data-testid="atendimento-libras">
+    <h2 id="libras-title" class="mb-2 text-lg font-medium text-teal-800">{{ 'atendimento.libras.title' | translate }}</h2>
+    <p class="mb-3 text-sm text-slate-600">{{ 'atendimento.libras.descricao' | translate }}</p>
+
+    @if (librasResult(); as result) {
+      <div class="rounded-lg bg-teal-50 p-4 text-sm text-teal-800" data-testid="libras-confirmacao">
+        @if (result.nextStep === 'videocall-shortly') {
+          <p data-testid="libras-mensagem">{{ 'atendimento.libras.confirmacao.dentroHorario' | translate }}</p>
+        } @else {
+          <p data-testid="libras-mensagem">{{ 'atendimento.libras.confirmacao.foraHorario' | translate }}</p>
+          @if (result.hours) {
+            <p class="mt-1 font-medium" data-testid="libras-horario">{{ result.hours }}</p>
+          }
+        }
+      </div>
+    } @else {
+      @if (librasError()) {
+        <p class="mb-2 text-sm text-red-700" role="alert">{{ 'common.error' | translate }}</p>
+      }
+      <button
+        type="button"
+        class="rounded bg-teal-700 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+        data-testid="libras-solicitar"
+        [disabled]="librasSubmitting()"
+        (click)="requestLibras()"
+      >
+        {{ (librasSubmitting() ? 'atendimento.libras.solicitando' : 'atendimento.libras.solicitar') | translate }}
+      </button>
+    }
+  </section>
+
+  <!-- FAQ (BR5/BR6) -->
+  <section aria-labelledby="faq-title" data-testid="atendimento-faq">
+    <h2 id="faq-title" class="mb-3 text-lg font-medium text-teal-800">{{ 'atendimento.faq.title' | translate }}</h2>
+
+    <label for="faq-busca" class="mb-1 block text-sm text-slate-600">{{ 'atendimento.faq.buscaLabel' | translate }}</label>
+    <input
+      id="faq-busca"
+      type="text"
+      class="mb-3 w-full rounded border border-slate-300 px-3 py-2"
+      data-testid="faq-busca"
+      [placeholder]="'atendimento.faq.buscaPlaceholder' | translate"
+      [ngModel]="faqTerm()"
+      (ngModelChange)="onFaqTermChange($event)"
+    />
+
+    <div class="mb-4 flex flex-wrap gap-2">
+      @for (cat of faqCategories; track cat.code) {
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1 text-sm"
+          [class.bg-teal-700]="faqCategory() === cat.code"
+          [class.text-white]="faqCategory() === cat.code"
+          [class.border-teal-700]="faqCategory() === cat.code"
+          [class.border-slate-300]="faqCategory() !== cat.code"
+          [class.text-slate-700]="faqCategory() !== cat.code"
+          [attr.data-testid]="'faq-categoria-' + (cat.code ?? 'TODAS')"
+          (click)="onFaqCategoryChange(cat.code)"
+        >
+          {{ cat.labelKey | translate }}
+        </button>
+      }
+    </div>
+
+    @if (!faqLoading() && faqResults().length === 0) {
+      <p class="text-sm text-slate-500" data-testid="faq-vazio">
+        {{ (faqTerm() ? 'atendimento.faq.semResultado' : 'atendimento.faq.semResultadoGenerico') | translate: { termo: faqTerm() } }}
+      </p>
+    } @else {
+      <p-accordion [value]="openFaqId()" (valueChange)="onFaqValueChange($event)">
+        @for (faq of faqResults(); track faq.id) {
+          <p-accordion-panel [value]="faq.id" [attr.data-testid]="'faq-item-' + faq.id">
+            <p-accordion-header>{{ faq.question }}</p-accordion-header>
+            <p-accordion-content>
+              <p class="text-sm text-slate-600">{{ faq.answer }}</p>
+            </p-accordion-content>
+          </p-accordion-panel>
+        }
+      </p-accordion>
+    }
+  </section>
+</section>

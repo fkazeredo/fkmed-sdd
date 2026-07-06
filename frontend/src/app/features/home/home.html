@@ -107,13 +107,16 @@
             <button
               type="button"
               class="flex items-center gap-2 rounded bg-teal-700 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
-              disabled
+              [disabled]="!isBannerAvailable(banner)"
               data-testid="banner-button"
+              (click)="onBannerButtonClick(banner)"
             >
               {{ banner.buttonLabel }}
-              <span class="rounded-full bg-white/20 px-2 py-0.5 text-xs" data-testid="banner-em-breve">
-                {{ 'home.emBreve' | translate }}
-              </span>
+              @if (!isBannerAvailable(banner)) {
+                <span class="rounded-full bg-white/20 px-2 py-0.5 text-xs" data-testid="banner-em-breve">
+                  {{ 'home.emBreve' | translate }}
+                </span>
+              }
             </button>
           </div>
         </ng-template>

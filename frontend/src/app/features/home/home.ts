@@ -8,6 +8,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccordionModule } from 'primeng/accordion';
 import { CardModule } from 'primeng/card';
@@ -17,6 +18,11 @@ import { AvatarStateService } from '../../core/context/avatar-state.service';
 import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
 import { BeneficiarySummary, BeneficiarySummaryApi } from '../../core/context/beneficiary-summary.api';
 import { HomeApi, HomeBanner, HomeNotice } from './home.api';
+
+/** SPEC-0014 (Phase 5) delivered Canais de Atendimento — the only banner destination reachable so
+ * far (SPEC-0005 BR9/AC6). Every other banner destination (e.g. the finance validator) still
+ * renders disabled/"em breve" per the phased-delivery note until its own module lands. */
+const DELIVERED_BANNER_DESTINATION_PREFIX = '/atendimento';
 
 interface QuickAccessShortcut {
   key: string;
@@ -89,6 +95,7 @@ export class Home implements OnInit, OnDestroy {
   private readonly beneficiaryApi = inject(BeneficiarySummaryApi);
   protected readonly context = inject(BeneficiaryContextService);
   private readonly avatar = inject(AvatarStateService);
+  private readonly router = inject(Router);
 
   protected readonly shortcuts = QUICK_ACCESS_SHORTCUTS;
 
@@ -191,6 +198,21 @@ export class Home implements OnInit, OnDestroy {
 
   onAvatarClick(): void {
     this.dialogMessageKey.set('home.cartao.avatarEmBreve');
+  }
+
+  /** BR9/AC6 (SPEC-0005), closed by SPEC-0014: whether this banner's destination module has
+   * landed — currently only the antifraud anchor of Canais de Atendimento. Every other banner
+   * destination stays disabled/"em breve" (phased-delivery note) until its own module lands. */
+  isBannerAvailable(banner: HomeBanner): boolean {
+    return banner.destination.startsWith(DELIVERED_BANNER_DESTINATION_PREFIX);
+  }
+
+  /** AC6: navigates to the banner's internal destination (path + optional anchor fragment, e.g.
+   * `/atendimento#antifraude`) — only called for an available banner (BR4/BR9). */
+  onBannerButtonClick(banner: HomeBanner): void {
+    if (this.isBannerAvailable(banner)) {
+      void this.router.navigateByUrl(banner.destination);
+    }
   }
 
   onShortcutClick(shortcut: QuickAccessShortcut): void {

@@ -227,6 +227,13 @@ export const routes: Routes = [
         path: 'guias/:id',
         loadComponent: () => import('./features/guias/guide-detail').then((m) => m.GuideDetail),
       },
+      // SPEC-0014 (Phase 5): Canais de Atendimento — channel cards, the antifraud section (anchor
+      // #antifraude, the Home fraud-banner destination closing SPEC-0005 AC6), Central de Libras
+      // and the FAQ — reachable via the shell nav (nav-atendimento). One page, no sub-routes.
+      {
+        path: 'atendimento',
+        loadComponent: () => import('./features/atendimento/atendimento').then((m) => m.Atendimento),
+      },
     ],
   },
 ];

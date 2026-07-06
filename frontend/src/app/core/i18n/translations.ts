@@ -592,5 +592,30 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'token.validoAte': 'Válido por mais',
     'token.vazio.mensagem': 'Gere um token de 6 dígitos para apresentar na recepção.',
     'token.orientacao': 'Apresente este código na recepção do prestador para validar seu atendimento.',
+    // SPEC-0014 — Canais de Atendimento (channels + antifraud + FAQ + Libras)
+    'nav.atendimento': 'Canais de Atendimento',
+    'atendimento.title': 'Canais de Atendimento',
+    'atendimento.canais.title': 'Canais de Atendimento',
+    'atendimento.libras.title': 'Central de Libras',
+    'atendimento.libras.descricao':
+      'Atendimento em Libras para tirar dúvidas e resolver solicitações por videochamada.',
+    'atendimento.libras.solicitar': 'Solicitar atendimento em Libras',
+    'atendimento.libras.solicitando': 'Solicitando…',
+    'atendimento.libras.confirmacao.dentroHorario':
+      'Solicitação registrada! Nossa equipe iniciará a videochamada em instantes.',
+    'atendimento.libras.confirmacao.foraHorario':
+      'Solicitação registrada! Estamos fora do horário de atendimento — retornaremos no próximo período:',
+    'atendimento.faq.title': 'Perguntas Frequentes',
+    'atendimento.faq.buscaLabel': 'Buscar',
+    'atendimento.faq.buscaPlaceholder': 'Digite sua dúvida…',
+    'atendimento.faq.categoria.todas': 'Todas',
+    'atendimento.faq.categoria.REEMBOLSO': 'Reembolso',
+    'atendimento.faq.categoria.CARTEIRINHA': 'Carteirinha',
+    'atendimento.faq.categoria.AGENDAMENTO': 'Agendamento',
+    'atendimento.faq.categoria.TELEMEDICINA': 'Telemedicina',
+    'atendimento.faq.categoria.BOLETOS': 'Boletos',
+    'atendimento.faq.categoria.REDE': 'Rede',
+    'atendimento.faq.semResultado': "Nenhum resultado para '{{termo}}'",
+    'atendimento.faq.semResultadoGenerico': 'Nenhum resultado para esta categoria.',
   },
 };
