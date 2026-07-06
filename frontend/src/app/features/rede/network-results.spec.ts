@@ -3,19 +3,18 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { provideI18n } from '../../core/i18n/provide-i18n';
-import { CONSULTORIOS_SERVICE_TYPE_CODE, NetworkApi, ProviderSearchResult } from './network.api';
+import { NetworkApi, ProviderSearchResult } from './network.api';
 import { NetworkFunnelState } from './network-funnel-state.service';
 import { NetworkResults } from './network-results';
 
+// Real backend shape: the provider card carries `locality` as a single formatted string.
 const FUNNEL_RESULT: ProviderSearchResult = {
   referenceDate: '2026-07-04',
   items: [
     {
       id: 'p1',
       name: 'Dr. João Cardiologista',
-      neighborhood: 'Centro',
-      municipality: 'Rio de Janeiro',
-      uf: 'RJ',
+      locality: 'CENTRO, RIO DE JANEIRO – RJ',
       serviceType: 'Consultórios–Clínicas–Terapias',
       seals: [{ code: 'QUALI', name: 'Selo Qualidade', description: 'Boa avaliação' }],
     },
@@ -28,9 +27,7 @@ const NAME_RESULT: ProviderSearchResult = {
     {
       id: 'p2',
       name: 'Clínica Cardio Rio',
-      neighborhood: 'Copacabana',
-      municipality: 'Rio de Janeiro',
-      uf: 'RJ',
+      locality: 'COPACABANA, RIO DE JANEIRO – RJ',
       serviceType: 'Consultórios–Clínicas–Terapias',
       seals: [],
     },
@@ -76,7 +73,7 @@ describe('NetworkResults', () => {
       funnel.setUf('RJ', 'Rio de Janeiro');
       funnel.setMunicipality('Rio de Janeiro');
       funnel.setNeighborhood('Centro');
-      funnel.setServiceType(CONSULTORIOS_SERVICE_TYPE_CODE, 'Consultórios–Clínicas–Terapias');
+      funnel.setServiceType('CONSULTORIOS', 'Consultórios–Clínicas–Terapias', true);
       funnel.setSpecialty('CARDIOLOGIA', 'Cardiologia');
     });
 
@@ -86,14 +83,14 @@ describe('NetworkResults', () => {
         uf: 'RJ',
         municipality: 'Rio de Janeiro',
         neighborhood: 'Centro',
-        serviceType: CONSULTORIOS_SERVICE_TYPE_CODE,
+        serviceType: 'CONSULTORIOS',
         specialty: 'CARDIOLOGIA',
       });
     });
 
     it('omits neighborhood when "Todos" (BR9) and specialty when not applicable', () => {
       funnel.setNeighborhood(null);
-      funnel.setServiceType('LABORATORIOS', 'Laboratórios e Exames');
+      funnel.setServiceType('LABORATORIOS', 'Laboratórios e Exames', false);
       setup({});
       expect(api.getProviders).toHaveBeenCalledWith({
         uf: 'RJ',
@@ -110,7 +107,9 @@ describe('NetworkResults', () => {
       expect(el.querySelector('[data-testid="resultados-data-referencia"]')?.textContent).toContain('2026-07-04');
       const card = el.querySelector('[data-testid="resultado-card-p1"]') as HTMLElement;
       expect(card.textContent).toContain('Dr. João Cardiologista');
-      expect(card.textContent).toContain('Centro, Rio de Janeiro – RJ');
+      expect(card.querySelector('[data-testid="resultado-localidade"]')?.textContent).toContain(
+        'CENTRO, RIO DE JANEIRO – RJ',
+      );
       expect(card.querySelector('[data-testid="resultado-selo-QUALI"]')).not.toBeNull();
       expect(card.querySelector('[data-testid="resultado-servico"]')).toBeNull();
     });
@@ -128,7 +127,7 @@ describe('NetworkResults', () => {
     });
 
     it('empty result hides "Alterar especialidade" when the service type has no specialty step', () => {
-      funnel.setServiceType('LABORATORIOS', 'Laboratórios e Exames');
+      funnel.setServiceType('LABORATORIOS', 'Laboratórios e Exames', false);
       api.getProviders.mockReturnValue(of({ referenceDate: '2026-07-04', items: [] }));
       setup({});
       expect(fixture.nativeElement.querySelector('[data-testid="resultados-alterar-especialidade"]')).toBeNull();
@@ -165,7 +164,9 @@ describe('NetworkResults', () => {
       setup({ nome: 'cardio' });
       const card = fixture.nativeElement.querySelector('[data-testid="resultado-card-p2"]') as HTMLElement;
       expect(card.textContent).toContain('Clínica Cardio Rio');
-      expect(card.textContent).toContain('Copacabana, Rio de Janeiro – RJ');
+      expect(card.querySelector('[data-testid="resultado-localidade"]')?.textContent).toContain(
+        'COPACABANA, RIO DE JANEIRO – RJ',
+      );
       expect(card.querySelector('[data-testid="resultado-servico"]')?.textContent).toContain(
         'Consultórios–Clínicas–Terapias',
       );

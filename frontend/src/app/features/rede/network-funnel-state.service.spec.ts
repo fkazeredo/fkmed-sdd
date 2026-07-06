@@ -50,17 +50,17 @@ describe('NetworkFunnelState', () => {
     expect(service.canSearchLocality()).toBe(true);
   });
 
-  it('setServiceType() clears specialty; hasSpecialtyStep is true only for CONSULTORIOS (BR5)', () => {
+  it('setServiceType() clears specialty and records the backend hasSpecialtyStep flag (BR5)', () => {
     service.setUf('RJ', 'Rio de Janeiro');
     service.setMunicipality('Rio de Janeiro');
-    service.setServiceType('CARDIOLOGIA_TYPE', 'Laboratórios e Exames');
+    service.setServiceType('CONSULTORIOS', 'Consultórios–Clínicas–Terapias', true);
     service.setSpecialty('CARDIOLOGIA', 'Cardiologia');
-
-    service.setServiceType('CONSULTORIOS', 'Consultórios–Clínicas–Terapias');
-    expect(service.selection().specialty).toBeNull();
     expect(service.hasSpecialtyStep()).toBe(true);
 
-    service.setServiceType('LABORATORIOS', 'Laboratórios e Exames');
+    // Switching to a type WITHOUT a specialty step clears the specialty and flips the flag.
+    service.setServiceType('LABORATORIOS', 'Laboratórios e Exames', false);
+    expect(service.selection().specialty).toBeNull();
+    expect(service.selection().specialtyName).toBeNull();
     expect(service.hasSpecialtyStep()).toBe(false);
   });
 
@@ -75,7 +75,7 @@ describe('NetworkFunnelState', () => {
     service.setUf('RJ', 'Rio de Janeiro');
     service.setMunicipality('Rio de Janeiro');
     service.setNeighborhood('Centro');
-    service.setServiceType('CONSULTORIOS', 'Consultórios–Clínicas–Terapias');
+    service.setServiceType('CONSULTORIOS', 'Consultórios–Clínicas–Terapias', true);
     service.setSpecialty('CARDIOLOGIA', 'Cardiologia');
 
     expect(JSON.parse(sessionStorage.getItem(NETWORK_FUNNEL_KEY) ?? '{}')).toMatchObject({
@@ -97,9 +97,11 @@ describe('NetworkFunnelState', () => {
       neighborhood: 'Centro',
       serviceType: 'CONSULTORIOS',
       serviceTypeName: 'Consultórios–Clínicas–Terapias',
+      serviceTypeHasSpecialtyStep: true,
       specialty: 'CARDIOLOGIA',
       specialtyName: 'Cardiologia',
     });
+    expect(restored.hasSpecialtyStep()).toBe(true);
   });
 
   it('setNeighborhood(null) represents "Todos" (BR9)', () => {

@@ -2,19 +2,22 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { provideI18n } from '../../core/i18n/provide-i18n';
-import { CONSULTORIOS_SERVICE_TYPE_CODE, NetworkApi } from './network.api';
+import { NetworkApi, ServiceTypeOption } from './network.api';
 import { NetworkFunnelState } from './network-funnel-state.service';
 import { NetworkServiceType } from './network-service-type';
 
-const SERVICE_TYPES = [
-  { code: CONSULTORIOS_SERVICE_TYPE_CODE, name: 'Consultórios–Clínicas–Terapias' },
-  { code: 'LABORATORIOS', name: 'Laboratórios e Exames' },
-  { code: 'HEMODIALISE', name: 'Hemodiálise' },
+// Real backend shape: a raw array of {code, name, hasSpecialtyStep} — only the type with
+// hasSpecialtyStep=true goes to the specialty step (BR5).
+const SERVICE_TYPES: ServiceTypeOption[] = [
+  { code: 'CONSULTORIOS', name: 'Consultórios–Clínicas–Terapias', hasSpecialtyStep: true },
+  { code: 'LABORATORIOS', name: 'Laboratórios e Exames', hasSpecialtyStep: false },
+  { code: 'HEMODIALISE', name: 'Hemodiálise', hasSpecialtyStep: false },
 ];
 
 /**
- * SPEC-0008 BR5 ("O que deseja buscar?": service-type list, only CONSULTORIOS has a specialty
- * step) and BR11 (the locality summary on top is tappable to edit, preserving the values).
+ * SPEC-0008 BR5 ("O que deseja buscar?": service-type list, only a type with `hasSpecialtyStep`
+ * has a specialty step) and BR11 (the locality summary on top is tappable to edit, preserving
+ * the values).
  */
 describe('NetworkServiceType', () => {
   let fixture: ComponentFixture<NetworkServiceType>;
@@ -24,7 +27,7 @@ describe('NetworkServiceType', () => {
 
   beforeEach(async () => {
     sessionStorage.clear();
-    api = { getServiceTypes: vi.fn().mockReturnValue(of({ items: SERVICE_TYPES })) };
+    api = { getServiceTypes: vi.fn().mockReturnValue(of(SERVICE_TYPES)) };
     await TestBed.configureTestingModule({
       imports: [NetworkServiceType],
       providers: [provideI18n(), { provide: NetworkApi, useValue: api }],
@@ -83,21 +86,19 @@ describe('NetworkServiceType', () => {
     }
   });
 
-  it('choosing CONSULTORIOS navigates to the specialty step (BR5)', () => {
+  it('choosing a type with hasSpecialtyStep navigates to the specialty step (BR5)', () => {
     setup();
-    (
-      fixture.nativeElement.querySelector(
-        `[data-testid="tipo-servico-item-${CONSULTORIOS_SERVICE_TYPE_CODE}"]`,
-      ) as HTMLElement
-    ).click();
-    expect(funnel.selection().serviceType).toBe(CONSULTORIOS_SERVICE_TYPE_CODE);
+    (fixture.nativeElement.querySelector('[data-testid="tipo-servico-item-CONSULTORIOS"]') as HTMLElement).click();
+    expect(funnel.selection().serviceType).toBe('CONSULTORIOS');
+    expect(funnel.hasSpecialtyStep()).toBe(true);
     expect(router.navigate).toHaveBeenCalledWith(['/rede/busca/especialidade']);
   });
 
-  it('choosing any other service type skips straight to results (BR5, AC3)', () => {
+  it('choosing a type without a specialty step skips straight to results (BR5, AC3)', () => {
     setup();
     (fixture.nativeElement.querySelector('[data-testid="tipo-servico-item-LABORATORIOS"]') as HTMLElement).click();
     expect(funnel.selection().serviceType).toBe('LABORATORIOS');
+    expect(funnel.hasSpecialtyStep()).toBe(false);
     expect(router.navigate).toHaveBeenCalledWith(['/rede/busca/resultados']);
   });
 });

@@ -73,10 +73,6 @@ export class NetworkResults implements OnInit {
     });
   }
 
-  localityLabel(item: ProviderCard): string {
-    return `${item.neighborhood}, ${item.municipality} – ${item.uf}`;
-  }
-
   pesquisarPorLocalidade(): void {
     void this.router.navigate(['/rede/busca']);
   }

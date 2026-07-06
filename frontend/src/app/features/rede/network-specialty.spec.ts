@@ -2,18 +2,19 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { provideI18n } from '../../core/i18n/provide-i18n';
-import { CONSULTORIOS_SERVICE_TYPE_CODE, NetworkApi } from './network.api';
+import { NetworkApi, RegistryOption } from './network.api';
 import { NetworkFunnelState } from './network-funnel-state.service';
 import { NetworkSpecialty } from './network-specialty';
 
-const SPECIALTIES = [
+// Real backend shape: a raw RegistryOption[].
+const SPECIALTIES: RegistryOption[] = [
   { code: 'CARDIOLOGIA', name: 'Cardiologia' },
   { code: 'DERMATOLOGIA', name: 'Dermatologia' },
   { code: 'PEDIATRIA', name: 'Pediatria' },
 ];
 
 /** SPEC-0008 BR6: specialty picker (≥ 15 seeded, alphabetical + search) — only reached when the
- * chosen service type is CONSULTORIOS–Clínicas–Terapias (BR5). */
+ * chosen service type has a specialty step (the backend `hasSpecialtyStep` flag, BR5). */
 describe('NetworkSpecialty', () => {
   let fixture: ComponentFixture<NetworkSpecialty>;
   let api: { getSpecialties: ReturnType<typeof vi.fn> };
@@ -22,7 +23,7 @@ describe('NetworkSpecialty', () => {
 
   beforeEach(async () => {
     sessionStorage.clear();
-    api = { getSpecialties: vi.fn().mockReturnValue(of({ items: SPECIALTIES })) };
+    api = { getSpecialties: vi.fn().mockReturnValue(of(SPECIALTIES)) };
     await TestBed.configureTestingModule({
       imports: [NetworkSpecialty],
       providers: [provideI18n(), { provide: NetworkApi, useValue: api }],
@@ -36,15 +37,15 @@ describe('NetworkSpecialty', () => {
     funnel.setUf('RJ', 'Rio de Janeiro');
     funnel.setMunicipality('Rio de Janeiro');
     funnel.setNeighborhood('Centro');
-    funnel.setServiceType(CONSULTORIOS_SERVICE_TYPE_CODE, 'Consultórios–Clínicas–Terapias');
+    funnel.setServiceType('CONSULTORIOS', 'Consultórios–Clínicas–Terapias', true);
     fixture = TestBed.createComponent(NetworkSpecialty);
     fixture.detectChanges();
   }
 
-  it('redirects to /rede/busca/tipo-servico when the service type is not CONSULTORIOS (defensive)', () => {
+  it('redirects to /rede/busca/tipo-servico when the service type has no specialty step (defensive)', () => {
     funnel.setUf('RJ', 'Rio de Janeiro');
     funnel.setMunicipality('Rio de Janeiro');
-    funnel.setServiceType('LABORATORIOS', 'Laboratórios e Exames');
+    funnel.setServiceType('LABORATORIOS', 'Laboratórios e Exames', false);
     fixture = TestBed.createComponent(NetworkSpecialty);
     fixture.detectChanges();
     expect(router.navigate).toHaveBeenCalledWith(['/rede/busca/tipo-servico']);
@@ -82,6 +83,6 @@ describe('NetworkSpecialty', () => {
     setup();
     (fixture.nativeElement.querySelector('[data-testid="especialidade-resumo"]') as HTMLElement).click();
     expect(router.navigate).toHaveBeenCalledWith(['/rede/busca/tipo-servico']);
-    expect(funnel.selection().serviceType).toBe(CONSULTORIOS_SERVICE_TYPE_CODE);
+    expect(funnel.selection().serviceType).toBe('CONSULTORIOS');
   });
 });
