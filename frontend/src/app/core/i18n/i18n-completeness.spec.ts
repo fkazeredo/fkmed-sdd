@@ -29,7 +29,6 @@ import { NetworkSpecialty } from '../../features/rede/network-specialty';
 import { NetworkResults } from '../../features/rede/network-results';
 import { NetworkProviderDetail } from '../../features/rede/network-provider-detail';
 import { NetworkFunnelState } from '../../features/rede/network-funnel-state.service';
-import { CONSULTORIOS_SERVICE_TYPE_CODE } from '../../features/rede/network.api';
 import { APP_VERSION } from '../config/app-version';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
@@ -491,7 +490,8 @@ describe('i18n completeness (pt-BR)', () => {
     // coverage) and the shared searchable-list's empty state.
     const search = TestBed.createComponent(NetworkSearch);
     search.detectChanges();
-    http.expectOne('/api/network/states').flush({ items: [{ code: 'RJ', name: 'Rio de Janeiro' }] });
+    // Real backend shape: raw arrays (no `{items:[…]}` envelope); states is UF codes only.
+    http.expectOne('/api/network/states').flush(['RJ']);
     search.detectChanges();
 
     (search.nativeElement.querySelector('[data-testid="funil-uf"]') as HTMLElement).click();
@@ -503,7 +503,7 @@ describe('i18n completeness (pt-BR)', () => {
     search.detectChanges();
     http
       .expectOne((request) => request.url === '/api/network/municipalities')
-      .flush({ items: ['Rio de Janeiro', 'Niterói'] });
+      .flush(['Rio de Janeiro', 'Niterói']);
     search.detectChanges();
     const municipioInput = search.nativeElement.querySelector(
       '[data-testid="funil-municipio-dialog"] [data-testid="option-search-input"]',
@@ -511,12 +511,12 @@ describe('i18n completeness (pt-BR)', () => {
     municipioInput.value = 'zzz';
     municipioInput.dispatchEvent(new Event('input'));
     search.detectChanges();
-    http.expectOne((request) => request.url === '/api/network/municipalities').flush({ items: [] });
+    http.expectOne((request) => request.url === '/api/network/municipalities').flush([]);
     search.detectChanges();
     municipioInput.value = '';
     municipioInput.dispatchEvent(new Event('input'));
     search.detectChanges();
-    http.expectOne((request) => request.url === '/api/network/municipalities').flush({ items: ['Rio de Janeiro'] });
+    http.expectOne((request) => request.url === '/api/network/municipalities').flush(['Rio de Janeiro']);
     search.detectChanges();
     (search.nativeElement.querySelector('[data-testid="option-item-Rio de Janeiro"]') as HTMLElement).click();
     search.detectChanges();
@@ -525,7 +525,7 @@ describe('i18n completeness (pt-BR)', () => {
     search.detectChanges();
     http
       .expectOne((request) => request.url === '/api/network/neighborhoods')
-      .flush({ items: ['Centro', 'Copacabana'] });
+      .flush(['Centro', 'Copacabana']);
     search.detectChanges();
     (search.nativeElement.querySelector('[data-testid="funil-bairro-todos"]') as HTMLElement).click();
     search.detectChanges();
@@ -535,27 +535,27 @@ describe('i18n completeness (pt-BR)', () => {
     search.detectChanges();
     http
       .expectOne((request) => request.url === '/api/network/municipalities')
-      .flush({ items: ['Rio de Janeiro'] });
+      .flush(['Rio de Janeiro']);
     search.detectChanges();
     (search.nativeElement.querySelector('[data-testid="option-item-Rio de Janeiro"]') as HTMLElement)?.click();
     search.detectChanges();
 
-    // NetworkServiceType: locality summary (BR11) + the registry list.
+    // NetworkServiceType: locality summary (BR11) + the registry list (raw array + hasSpecialtyStep).
     funnel.setUf('RJ', 'Rio de Janeiro');
     funnel.setMunicipality('Rio de Janeiro');
     funnel.setNeighborhood('Centro');
     const serviceType = TestBed.createComponent(NetworkServiceType);
     serviceType.detectChanges();
-    http.expectOne('/api/network/service-types').flush({
-      items: [{ code: CONSULTORIOS_SERVICE_TYPE_CODE, name: 'Consultórios–Clínicas–Terapias' }],
-    });
+    http
+      .expectOne('/api/network/service-types')
+      .flush([{ code: 'CONSULTORIOS', name: 'Consultórios–Clínicas–Terapias', hasSpecialtyStep: true }]);
     serviceType.detectChanges();
 
-    // NetworkSpecialty: reached only for CONSULTORIOS.
-    funnel.setServiceType(CONSULTORIOS_SERVICE_TYPE_CODE, 'Consultórios–Clínicas–Terapias');
+    // NetworkSpecialty: reached only for a type with a specialty step.
+    funnel.setServiceType('CONSULTORIOS', 'Consultórios–Clínicas–Terapias', true);
     const specialty = TestBed.createComponent(NetworkSpecialty);
     specialty.detectChanges();
-    http.expectOne('/api/network/specialties').flush({ items: [{ code: 'CARDIOLOGIA', name: 'Cardiologia' }] });
+    http.expectOne('/api/network/specialties').flush([{ code: 'CARDIOLOGIA', name: 'Cardiologia' }]);
     specialty.detectChanges();
 
     // NetworkResults: empty state (BR10, funnel mode) — dataReferencia renders alongside it.

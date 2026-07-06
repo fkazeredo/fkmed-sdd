@@ -68,17 +68,20 @@ test('login → Rede hub → funil RJ/Rio de Janeiro/Centro/Consultórios/Cardio
   await page.getByTestId('option-search-input').fill('cardio');
   await page.getByTestId('option-item-CARDIOLOGIA').click();
 
-  // AC2: ≥ 10 providers, all "CENTRO, RIO DE JANEIRO – RJ", under today's reference date.
+  // AC2: ≥ 10 providers, all "CENTRO, RIO DE JANEIRO – RJ" (backend sends the locality as a single
+  // pre-formatted string), under today's reference date. Case-insensitive: the seed's exact casing
+  // is the backend's to decide.
   await expect(page.getByTestId('resultados-page')).toBeVisible();
   await expect(page.getByTestId('resultados-data-referencia')).toBeVisible();
   const cards = page.locator('[data-testid^="resultado-card-"]');
   await expect(cards).not.toHaveCount(0);
   expect(await cards.count()).toBeGreaterThanOrEqual(10);
-  await expect(cards.first()).toContainText('Centro, Rio de Janeiro – RJ');
+  await expect(cards.first().getByTestId('resultado-localidade')).toContainText(/centro, rio de janeiro – rj/i);
 
   // AC4: "Pesquisar por localidade" returns to step 1 with RJ/Rio de Janeiro/Centro pre-filled.
+  // The backend sends only UF codes, so the state field shows the code "RJ".
   await page.getByTestId('resultados-pesquisar-localidade').click();
-  await expect(page.getByTestId('funil-uf')).toContainText('Rio de Janeiro');
+  await expect(page.getByTestId('funil-uf')).toContainText('RJ');
   await expect(page.getByTestId('funil-municipio')).toContainText('Rio de Janeiro');
   await expect(page.getByTestId('funil-bairro')).toContainText('Centro');
 });

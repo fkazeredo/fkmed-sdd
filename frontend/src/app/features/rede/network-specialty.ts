@@ -2,13 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } 
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { SelectableOption, SearchableOptionList } from '../../shared/components/searchable-option-list';
-import { CONSULTORIOS_SERVICE_TYPE_CODE, NetworkApi, RegistryOption } from './network.api';
+import { NetworkApi, RegistryOption } from './network.api';
 import { NetworkFunnelState } from './network-funnel-state.service';
 
 /**
- * Specialty step (SPEC-0008 BR6): only reached when the chosen service type is
- * CONSULTORIOS–Clínicas–Terapias (BR5) — every other type skips straight to Results. Reuses the
- * shared searchable/alphabetical list widget (BR2's real-time filtering rule extends here).
+ * Specialty step (SPEC-0008 BR6): only reached when the chosen service type has a specialty step
+ * (the backend's `hasSpecialtyStep` flag, BR5) — every other type skips straight to Results. Reuses
+ * the shared searchable/alphabetical list widget (BR2's real-time filtering rule extends here).
  */
 @Component({
   selector: 'app-network-specialty',
@@ -33,11 +33,11 @@ export class NetworkSpecialty implements OnInit {
   });
 
   ngOnInit(): void {
-    if (this.funnel.selection().serviceType !== CONSULTORIOS_SERVICE_TYPE_CODE) {
+    if (!this.funnel.hasSpecialtyStep()) {
       void this.router.navigate(['/rede/busca/tipo-servico']);
       return;
     }
-    this.api.getSpecialties().subscribe((response) => this.specialties.set(response.items));
+    this.api.getSpecialties().subscribe((specialties) => this.specialties.set(specialties));
   }
 
   editServiceType(): void {

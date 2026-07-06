@@ -3,22 +3,27 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 /**
- * Contracts of `/api/network/*` (SPEC-0008 §API Contracts, frozen — backend lands separately in
- * this parallel phase). Registry-coded lists (`states`, `service-types`, `specialties`) return a
- * `{code, name}` pair: `code` is the stable value used to filter (`uf=`, `serviceType=`,
- * `specialty=`), `name` is the ready-to-render pt-BR label (this app has a single locale — no
- * further i18n lookup needed, unlike the `carteirinha.coverage.*`-style enum labels). Municipality
- * and neighborhood are free-text registry data (persistence §Migration V15) — the name itself IS
- * the filter value, so those lists are plain `string[]`. Provider list/detail fields
- * (`name`/`neighborhood`/`municipality`/`uf`/`serviceType`/`specialties`) are already
- * display-ready strings from the backend, not codes needing a further lookup.
+ * Contracts of `/api/network/*` reconciled to the REAL backend (OpenAPI snapshot, integration
+ * rework). The funnel lists (`states`, `municipalities`, `neighborhoods`, `service-types`,
+ * `specialties`) return **raw arrays** — there is no `{items:[…]}` envelope; only the provider
+ * search responses carry `{referenceDate, items:[…]}`.
+ *
+ * - `states`/`municipalities`/`neighborhoods` → `string[]` (UF codes / municipality names /
+ *   neighborhood names). The string IS the value used to filter (`uf=`, `municipality=`,
+ *   `neighborhood=`) and, for this single-locale product, the label rendered as-is.
+ * - `service-types` → carries `hasSpecialtyStep` per type; the frontend uses that flag to decide
+ *   the specialty step (BR5) — no hardcoded service-type code.
+ * - Provider cards carry `locality` as a **single pre-formatted string** (e.g.
+ *   `"CENTRO, RIO DE JANEIRO – RJ"`), not separate neighborhood/municipality/uf fields.
  */
-export interface UfOption {
+export interface ServiceTypeOption {
   code: string;
   name: string;
+  /** BR5: only types with `hasSpecialtyStep=true` show the specialty step; others skip to results. */
+  hasSpecialtyStep: boolean;
 }
 
-/** `service-types` and `specialties` share this shape (BR5/BR6, registry data). */
+/** `specialties` shape (BR6, registry data). */
 export interface RegistryOption {
   code: string;
   name: string;
@@ -31,13 +36,12 @@ export interface Seal {
   description: string;
 }
 
-/** BR7/BR8 card fields — shared by the funnel results and the name-search results. */
+/** BR7/BR8 card fields — shared by the funnel results and the name-search results. `locality` is a
+ * single already-formatted string ("BAIRRO, MUNICÍPIO – UF"). */
 export interface ProviderCard {
   id: string;
   name: string;
-  neighborhood: string;
-  municipality: string;
-  uf: string;
+  locality: string;
   serviceType: string;
   seals: Seal[];
 }
@@ -78,11 +82,6 @@ export interface ProviderListFilters {
   specialty?: string;
 }
 
-/** Registry code for "Consultórios–Clínicas–Terapias" (BR5) — the only service type with a
- * specialty step; every other type skips straight to results. Matches the code literally used in
- * SPEC-0008's own example query (`serviceType=CONSULTORIOS`). */
-export const CONSULTORIOS_SERVICE_TYPE_CODE = 'CONSULTORIOS';
-
 /**
  * Domain-oriented API of the Provider Network Search feature (SPEC-0008). No raw HttpClient in
  * components (frontend-angular.md §HTTP and errors).
@@ -91,34 +90,35 @@ export const CONSULTORIOS_SERVICE_TYPE_CODE = 'CONSULTORIOS';
 export class NetworkApi {
   private readonly http = inject(HttpClient);
 
-  getStates(): Observable<{ items: UfOption[] }> {
-    return this.http.get<{ items: UfOption[] }>('/api/network/states');
+  /** BR4: only UFs within the plan's coverage (a state-wide RJ plan → `["RJ"]`). */
+  getStates(): Observable<string[]> {
+    return this.http.get<string[]>('/api/network/states');
   }
 
   /** BR2: `q` drives the server-side real-time filter as the user types. */
-  getMunicipalities(uf: string, q?: string): Observable<{ items: string[] }> {
+  getMunicipalities(uf: string, q?: string): Observable<string[]> {
     let params = new HttpParams().set('uf', uf);
     if (q) {
       params = params.set('q', q);
     }
-    return this.http.get<{ items: string[] }>('/api/network/municipalities', { params });
+    return this.http.get<string[]>('/api/network/municipalities', { params });
   }
 
-  getNeighborhoods(uf: string, municipality: string): Observable<{ items: string[] }> {
+  getNeighborhoods(uf: string, municipality: string): Observable<string[]> {
     const params = new HttpParams().set('uf', uf).set('municipality', municipality);
-    return this.http.get<{ items: string[] }>('/api/network/neighborhoods', { params });
+    return this.http.get<string[]>('/api/network/neighborhoods', { params });
   }
 
-  getServiceTypes(): Observable<{ items: RegistryOption[] }> {
-    return this.http.get<{ items: RegistryOption[] }>('/api/network/service-types');
+  getServiceTypes(): Observable<ServiceTypeOption[]> {
+    return this.http.get<ServiceTypeOption[]>('/api/network/service-types');
   }
 
-  getSpecialties(): Observable<{ items: RegistryOption[] }> {
-    return this.http.get<{ items: RegistryOption[] }>('/api/network/specialties');
+  getSpecialties(): Observable<RegistryOption[]> {
+    return this.http.get<RegistryOption[]>('/api/network/specialties');
   }
 
   /** BR7/BR9: `neighborhood` omitted means "Todos" (whole municipality); `specialty` only applies
-   * when `serviceType` is CONSULTORIOS (BR5). */
+   * when the chosen service type has a specialty step (BR5). */
   getProviders(filters: ProviderListFilters): Observable<ProviderSearchResult> {
     let params = new HttpParams()
       .set('uf', filters.uf)

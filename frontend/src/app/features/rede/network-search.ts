@@ -5,7 +5,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { DialogModule } from 'primeng/dialog';
 import { SelectableOption, SearchableOptionList } from '../../shared/components/searchable-option-list';
 import { NetworkFunnelState } from './network-funnel-state.service';
-import { NetworkApi, UfOption } from './network.api';
+import { NetworkApi } from './network.api';
 
 const NAME_MIN_LENGTH = 3;
 
@@ -28,7 +28,7 @@ export class NetworkSearch implements OnInit {
   private readonly router = inject(Router);
   protected readonly funnel = inject(NetworkFunnelState);
 
-  protected readonly states = signal<UfOption[]>([]);
+  protected readonly states = signal<string[]>([]);
   protected readonly municipalities = signal<string[]>([]);
   protected readonly neighborhoods = signal<string[]>([]);
 
@@ -51,8 +51,10 @@ export class NetworkSearch implements OnInit {
     return this.nameQuery.trim().length >= NAME_MIN_LENGTH;
   }
 
+  // `states` is a raw `string[]` of UF codes (the backend does not send a display name); for this
+  // single-locale, coverage-limited product the code IS the label shown in the funnel.
   protected readonly ufOptions = () =>
-    this.states().map((uf): SelectableOption => ({ value: uf.code, label: uf.name }));
+    this.states().map((uf): SelectableOption => ({ value: uf, label: uf }));
   protected readonly municipalityOptions = () =>
     this.municipalities().map((name): SelectableOption => ({ value: name, label: name }));
   protected readonly neighborhoodOptions = () =>
@@ -61,10 +63,10 @@ export class NetworkSearch implements OnInit {
     this.nomeMunicipioOptions().map((name): SelectableOption => ({ value: name, label: name }));
 
   ngOnInit(): void {
-    this.api.getStates().subscribe((response) => {
-      this.states.set(response.items);
-      if (response.items.length === 1) {
-        this.nomeMunicipioUf = response.items[0].code;
+    this.api.getStates().subscribe((states) => {
+      this.states.set(states);
+      if (states.length === 1) {
+        this.nomeMunicipioUf = states[0];
         this.nomeMunicipioFiltroDisponivel.set(true);
       }
     });
@@ -75,9 +77,9 @@ export class NetworkSearch implements OnInit {
   }
 
   selectUf(code: string): void {
-    const found = this.states().find((uf) => uf.code === code);
+    const found = this.states().find((uf) => uf === code);
     if (found) {
-      this.funnel.setUf(found.code, found.name);
+      this.funnel.setUf(found, found);
     }
     this.ufDialogOpen.set(false);
   }
@@ -100,7 +102,7 @@ export class NetworkSearch implements OnInit {
   }
 
   private fetchMunicipalities(uf: string, query: string | undefined): void {
-    this.api.getMunicipalities(uf, query).subscribe((response) => this.municipalities.set(response.items));
+    this.api.getMunicipalities(uf, query).subscribe((names) => this.municipalities.set(names));
   }
 
   selectMunicipio(name: string): void {
@@ -113,7 +115,7 @@ export class NetworkSearch implements OnInit {
     if (!uf || !municipality) {
       return;
     }
-    this.api.getNeighborhoods(uf, municipality).subscribe((response) => this.neighborhoods.set(response.items));
+    this.api.getNeighborhoods(uf, municipality).subscribe((names) => this.neighborhoods.set(names));
     this.bairroDialogOpen.set(true);
   }
 
@@ -141,7 +143,7 @@ export class NetworkSearch implements OnInit {
     }
     this.api
       .getMunicipalities(this.nomeMunicipioUf, undefined)
-      .subscribe((response) => this.nomeMunicipioOptions.set(response.items));
+      .subscribe((names) => this.nomeMunicipioOptions.set(names));
     this.nomeMunicipioDialogOpen.set(true);
   }
 
@@ -151,7 +153,7 @@ export class NetworkSearch implements OnInit {
     }
     this.api
       .getMunicipalities(this.nomeMunicipioUf, query || undefined)
-      .subscribe((response) => this.nomeMunicipioOptions.set(response.items));
+      .subscribe((names) => this.nomeMunicipioOptions.set(names));
   }
 
   selectNomeMunicipio(name: string): void {

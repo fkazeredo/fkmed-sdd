@@ -23,12 +23,11 @@ describe('NetworkSearch', () => {
 
   beforeEach(async () => {
     sessionStorage.clear();
+    // Real backend shape: raw arrays, no `{items:[…]}` envelope. `states` is UF codes only.
     api = {
-      getStates: vi.fn().mockReturnValue(of({ items: [{ code: 'RJ', name: 'Rio de Janeiro' }] })),
-      getMunicipalities: vi.fn().mockReturnValue(
-        of({ items: ['Rio de Janeiro', 'Rio Bonito', 'Niterói', 'Cabo Frio'] }),
-      ),
-      getNeighborhoods: vi.fn().mockReturnValue(of({ items: ['Centro', 'Copacabana', 'Tijuca'] })),
+      getStates: vi.fn().mockReturnValue(of(['RJ'])),
+      getMunicipalities: vi.fn().mockReturnValue(of(['Rio de Janeiro', 'Rio Bonito', 'Niterói', 'Cabo Frio'])),
+      getNeighborhoods: vi.fn().mockReturnValue(of(['Centro', 'Copacabana', 'Tijuca'])),
     };
     await TestBed.configureTestingModule({
       imports: [NetworkSearch],
@@ -59,7 +58,8 @@ describe('NetworkSearch', () => {
       openDialog('option-item-RJ');
 
       const el = fixture.nativeElement as HTMLElement;
-      expect(el.querySelector('[data-testid="funil-uf"]')?.textContent).toContain('Rio de Janeiro');
+      // The backend sends only UF codes, so the funnel shows the code ("RJ") as the state label.
+      expect(el.querySelector('[data-testid="funil-uf"]')?.textContent).toContain('RJ');
       expect((el.querySelector('[data-testid="funil-municipio"]') as HTMLButtonElement).disabled).toBe(false);
       expect(funnel.selection().uf).toBe('RJ');
     });

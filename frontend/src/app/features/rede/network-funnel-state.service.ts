@@ -1,5 +1,4 @@
 import { computed, Injectable, signal } from '@angular/core';
-import { CONSULTORIOS_SERVICE_TYPE_CODE } from './network.api';
 
 /** sessionStorage key for the funnel's in-progress selections — tab-scoped (mirrors
  * `core/context/beneficiary-context.service.ts`'s `ACTIVE_BENEFICIARY_KEY` rationale). */
@@ -13,6 +12,8 @@ export interface FunnelSelection {
   neighborhood: string | null;
   serviceType: string | null;
   serviceTypeName: string | null;
+  /** BR5: comes from the backend's `hasSpecialtyStep` flag on the chosen service type. */
+  serviceTypeHasSpecialtyStep: boolean;
   specialty: string | null;
   specialtyName: string | null;
 }
@@ -24,6 +25,7 @@ export const EMPTY_FUNNEL_SELECTION: FunnelSelection = {
   neighborhood: null,
   serviceType: null,
   serviceTypeName: null,
+  serviceTypeHasSpecialtyStep: false,
   specialty: null,
   specialtyName: null,
 };
@@ -45,8 +47,8 @@ export class NetworkFunnelState {
     return !!s.uf && !!s.municipality;
   });
 
-  /** BR5: only "Consultórios–Clínicas–Terapias" has the specialty step. */
-  readonly hasSpecialtyStep = computed(() => this.selection().serviceType === CONSULTORIOS_SERVICE_TYPE_CODE);
+  /** BR5: driven by the chosen service type's backend `hasSpecialtyStep` flag. */
+  readonly hasSpecialtyStep = computed(() => this.selection().serviceTypeHasSpecialtyStep);
 
   /** BR1: changing State clears Municipality and Neighborhood. */
   setUf(code: string, name: string): void {
@@ -64,12 +66,13 @@ export class NetworkFunnelState {
   }
 
   /** Changing the service type invalidates any previously chosen specialty (it only ever applied
-   * to CONSULTORIOS, BR5). */
-  setServiceType(code: string, name: string): void {
+   * to a service type WITH a specialty step, BR5) and records its `hasSpecialtyStep` flag. */
+  setServiceType(code: string, name: string, hasSpecialtyStep: boolean): void {
     this.update({
       ...this.selection(),
       serviceType: code,
       serviceTypeName: name,
+      serviceTypeHasSpecialtyStep: hasSpecialtyStep,
       specialty: null,
       specialtyName: null,
     });

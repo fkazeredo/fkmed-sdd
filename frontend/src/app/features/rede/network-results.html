@@ -63,7 +63,7 @@
               (click)="abrirDetalhe(item.id)"
             >
               <p class="text-lg font-medium text-teal-800">{{ item.name }}</p>
-              <p class="text-sm text-slate-600">{{ localityLabel(item) }}</p>
+              <p class="text-sm text-slate-600" data-testid="resultado-localidade">{{ item.locality }}</p>
               @if (showServiceType) {
                 <p class="text-sm text-slate-500" data-testid="resultado-servico">{{ item.serviceType }}</p>
               }
