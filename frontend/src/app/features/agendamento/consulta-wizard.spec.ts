@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { provideI18n } from '../../core/i18n/provide-i18n';
 import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
@@ -38,6 +38,23 @@ describe('ConsultaWizard (BR3/BR2/BR6/BR7)', () => {
     fixture.detectChanges();
   }
 
+  async function setup(queryParams: Record<string, string> = {}): Promise<void> {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [ConsultaWizard],
+      providers: [
+        provideI18n(),
+        { provide: AppointmentsApi, useValue: api },
+        { provide: BeneficiaryContextService, useValue: context },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } } },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(ConsultaWizard);
+    router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
+  }
+
   beforeEach(async () => {
     api = {
       getSpecialties: vi.fn().mockReturnValue(of(SPECIALTIES)),
@@ -45,18 +62,20 @@ describe('ConsultaWizard (BR3/BR2/BR6/BR7)', () => {
       getAvailability: vi.fn().mockReturnValue(of(DAYS)),
       bookConsultation: vi.fn().mockReturnValue(of({ protocol: 'AG-20260704-0001', status: 'AGENDADO' })),
     };
-    await TestBed.configureTestingModule({
-      imports: [ConsultaWizard],
-      providers: [
-        provideI18n(),
-        { provide: AppointmentsApi, useValue: api },
-        { provide: BeneficiaryContextService, useValue: context },
-      ],
-    }).compileComponents();
-    fixture = TestBed.createComponent(ConsultaWizard);
-    router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    fixture.detectChanges();
+    await setup();
+  });
+
+  it('SPEC-0011 BR6/AC4: pre-selects the specialty handed off by a referral\'s "Agendar consulta" (?especialidade=)', async () => {
+    await setup({ especialidade: 'DERMATOLOGIA' });
+    expect(fixture.componentInstance['specialtyCode']()).toBe('DERMATOLOGIA');
+    expect(el().querySelector('[data-testid="consulta-especialidade-escolhida"]')?.textContent).toContain(
+      'Dermatologia',
+    );
+  });
+
+  it('SPEC-0011: an unknown ?especialidade= code is silently ignored (no pre-selection, no crash)', async () => {
+    await setup({ especialidade: 'INEXISTENTE' });
+    expect(fixture.componentInstance['specialtyCode']()).toBeNull();
   });
 
   it('loads the specialties on init', () => {

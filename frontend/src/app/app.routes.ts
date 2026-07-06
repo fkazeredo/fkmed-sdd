@@ -162,6 +162,32 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/agendamento/meus-agendamentos').then((m) => m.MeusAgendamentos),
       },
+      // SPEC-0011 (Phase 4): the Minha Saúde hub and its 3 clinical-document categories —
+      // reachable via the shell nav (nav-minha-saude). "Receituários/Atestados" covers 2 wire
+      // categories (PRESCRIPTION + SICK_NOTE, BR1) merged client-side (DocumentList).
+      {
+        path: 'minha-saude',
+        loadComponent: () => import('./features/minha-saude/minha-saude-hub').then((m) => m.MinhaSaudeHub),
+      },
+      {
+        path: 'minha-saude/exames',
+        data: { categories: ['EXAM_ORDER'], titleKey: 'minhaSaude.exames.title' },
+        loadComponent: () => import('./features/minha-saude/document-list').then((m) => m.DocumentList),
+      },
+      {
+        path: 'minha-saude/encaminhamentos',
+        data: { categories: ['REFERRAL'], titleKey: 'minhaSaude.encaminhamentos.title' },
+        loadComponent: () => import('./features/minha-saude/document-list').then((m) => m.DocumentList),
+      },
+      {
+        path: 'minha-saude/receituarios',
+        data: { categories: ['PRESCRIPTION', 'SICK_NOTE'], titleKey: 'minhaSaude.receituarios.title' },
+        loadComponent: () => import('./features/minha-saude/document-list').then((m) => m.DocumentList),
+      },
+      {
+        path: 'minha-saude/documento/:id',
+        loadComponent: () => import('./features/minha-saude/document-detail').then((m) => m.DocumentDetail),
+      },
     ],
   },
 ];
