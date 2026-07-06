@@ -54,6 +54,12 @@ via `-Dopenapi.snapshot.write=true`, module diagram via `-Dmodulith.diagram.writ
 Dependabot watches Maven, npm and GitHub Actions. Failed tests, broken builds, invalid
 migrations or broken contracts block merge/deploy. Concurrency groups cancel superseded runs.
 
+`ci.yml` and `e2e.yml` run on **pull requests and protected/release branches only** — a push
+to a `feature/**`/`bugfix/**` branch does not trigger them (the PR run would duplicate it;
+dev-time validation is the local gates, and the E2E suite must be green locally before the
+push/PR — owner order, Phase-4 lesson). `workflow_dispatch` covers the rare mid-slice manual
+run.
+
 ## Local development and configuration
 
 Reproducible local env: `docker-compose.yml` (app db + observability; optional `emulators`

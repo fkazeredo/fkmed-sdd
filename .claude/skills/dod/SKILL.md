@@ -16,7 +16,7 @@ argument-hint: "[slice-name]"
 All communication is in **pt-BR**. Announce the expected duration of slow blocks (verify
 ~minutes, E2E ~minutes) BEFORE running them. **Never hide a failed command.**
 
-## 1. Gates (in order, no skipping)
+## 1. Gates (in order, no skipping — but never re-run green evidence)
 
 ```bash
 cd backend && ./mvnw verify        # Spotless, Checkstyle, JaCoCo, ArchUnit, Modulith+diagram,
@@ -24,8 +24,16 @@ cd backend && ./mvnw verify        # Spotless, Checkstyle, JaCoCo, ArchUnit, Mod
 cd frontend && npm run lint && npm test && npm run build
 ```
 
+- **Reuse green evidence (proportional gates, owner rule):** a gate that already ran **green
+  on this exact commit** (QA's battery or the architect's post-integration run) is **cited as
+  evidence, not re-run** — name the run and its result. Re-run only the gates whose inputs
+  changed since the last green run (any new commit ⇒ the affected stack's gate runs again).
+  The Phase-4 pattern of dev→integration→QA→DoD each re-running the same full battery on the
+  same tree is exactly what this rule kills.
 - **E2E** when the slice touches a user flow: `cd frontend && npm run e2e:up && npm run e2e`
-  (+ `npm run e2e:down` at the end).
+  (+ `npm run e2e:down` at the end) — **green LOCALLY before the push/PR, always** (owner
+  order, 2026-07-06): the CI must never be the first place the E2E suite runs. Phase 4
+  shipped an E2E suite that had never passed locally and paid 6 defects + 3 CI triage rounds.
 - **A red gate ⇒ fix the CODE, never the gate** (invariant 5). Do not proceed to the PR with
   any red gate.
 

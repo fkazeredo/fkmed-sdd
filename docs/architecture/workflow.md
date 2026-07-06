@@ -59,13 +59,26 @@ process from bottlenecking live in `.claude/agents/architect.md` (owner-facing s
   is simply the default; the architect **freezes the API contract in the plan** (endpoints,
   DTO shapes, error codes, events, state/session behavior) and **partitions the work into
   disjoint files/modules** — that contract + those boundaries are what keep the two sides from
-  colliding — then integrates both sub-branches into the slice branch (`git merge --no-ff`,
-  gates re-run after each). (b) **N instances of one specialty:** spawn another `dev-backend`
+  colliding — then integrates both sub-branches into the slice branch (`git merge --no-ff`;
+  targeted check per merge, the full battery once after the last integration). (b) **N
+  instances of one specialty:** spawn another `dev-backend`
   (or `dev-frontend`) only when there is a genuinely disjoint scope that earns its keep —
   judgment by real demand, never idle instances (Rule Zero). A genuinely small slice is done
   inline; sequential cross-stack is the deliberate exception (emergent contract, or a trivial
   side). A backend deviation from the frozen contract is an impediment back to the architect,
   never a silent drift.
+- **Execution modes & proportional gates** (canonical text in `.claude/agents/architect.md`
+  §Execution modes) — **Slice Mode is the default**; a **whole phase** runs when the owner
+  explicitly asks for one (accepted without pushback, organized internally in waves). Parallel
+  work requires the plan to fix the frozen contract, owned/forbidden paths, the
+  **single-writer surfaces** (OpenAPI snapshot, migration numbering, shell/routes, global
+  i18n, `ModularityTest`, shared error mapping, workflows) and the merge order. Gates are
+  **proportional**: devs run targeted tests during the loop and their stack's full gate once
+  at handback; the architect runs the full battery once after the final integration; QA runs
+  once on the integrated branch; `/dod` reuses green evidence from the same commit instead of
+  re-running it. The E2E suite is **green locally before any push/PR** — CI is never its
+  first run (owner order, the Phase-4 lesson). Effort defaults to `high` everywhere;
+  `opus`/`xhigh` are escalations for genuinely hard/critical work, never a session default.
 - **Worktree orchestration** — each agent works in **its own worktree**, never the main repo
   or another's. The **architect owns the lifecycle**: free the target branch and keep the
   main worktree on `develop` before spawning (a branch held elsewhere makes the agent's

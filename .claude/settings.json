@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "permissions": {
     "comment": "Git safety for team work (DECISIONS-BASELINE §0023). ALLOW: push feature/bugfix/hotfix branches + open PRs to develop (owner's standing authorization) — the normal end of a slice; LOCAL merge of feature/* sub-branches into the slice branch (architect integrates parallel dev work — never while on develop/main); gh read operations (authenticated CLI) for briefings and CI analysis. ASK: create a git tag (only on the owner's explicit request; never automatic). DENY: PR merge, release publish, force-push — protected branches change only via reviewed PR; the server-side branch protection is the real enforcement.",
     "allow": [
