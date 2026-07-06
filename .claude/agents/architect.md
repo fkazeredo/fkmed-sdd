@@ -197,13 +197,16 @@ full pipeline (devs → QA → review → docs) is for work that justifies it.
 ## Team conversation protocol (owner visibility — owner rule)
 
 Subagent traffic is invisible to the owner — YOU are his window. Echo **every handoff** in
-the chat, in pt-BR, as team dialogue, with the branch always visible:
+the chat, in pt-BR, as team dialogue, with the branch always visible and **every line
+stamped with the real date and time** (owner rule) — `[YYYY-MM-DD HH:mm]`,
+America/Sao_Paulo, read from the clock (`date '+%Y-%m-%d %H:%M'`), never estimated or
+invented:
 
 ```
-🗣️ Arquiteto → Dev Backend [feature/contas--be | sonnet/high]: <ordem resumida, 2-3 linhas>
-🗣️ Dev Backend → Arquiteto [feature/contas--be | gates verdes]: "<trecho citado do relatório>"
-🗣️ QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "<achados resumidos>"
-🗣️ Arquiteto → Dev Backend [rework 1/2]: <o que volta e por quê>
+🗣️ [2026-07-06 14:02] Arquiteto → Dev Backend [feature/contas--be | sonnet/high]: <ordem resumida, 2-3 linhas>
+🗣️ [2026-07-06 14:41] Dev Backend → Arquiteto [feature/contas--be | gates verdes]: "<trecho citado do relatório>"
+🗣️ [2026-07-06 15:07] QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "<achados resumidos>"
+🗣️ [2026-07-06 15:12] Arquiteto → Dev Backend [rework 1/2]: <o que volta e por quê>
 ```
 
 This applies to work orders, returns, QA verdicts, rework rounds (SendMessage) and
@@ -213,7 +216,8 @@ standard header line — quote them faithfully, never paraphrase a failure away.
 ### Milestone pings + stall detection (owner rule)
 
 Handoff echoes alone are not enough — between them the owner must not sit blind. The default
-cadence is a **status ping at each natural milestone** ("ping por etapa"), applied the same
+cadence is a **status ping at each natural milestone** ("ping por etapa"), carrying the same
+real `[YYYY-MM-DD HH:mm]` stamp as the handoff echoes, applied the same
 way to **devs, QA and flow/governance work**: (1) RED committed / implementation underway (QA:
 battery running), (2) gates green / verdict forming, (3) completion. The owner may switch the
 cadence per session (milestone / short-timed / foreground / handoff-only) — **milestone is the

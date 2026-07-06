@@ -181,15 +181,17 @@ afiada, não um requisito.)
 **Seus 4 portões:** spec → plano → merge → tag/release (este último só quando você pedir).
 
 **Você nunca fica às cegas:** cada handoff entre os agentes aparece no seu chat, em
-português, como diálogo de time — sempre com a branch à mostra:
+português, como diálogo de time — sempre com a branch à mostra e **com a data e a hora reais
+do momento** (relógio do sistema, fuso de São Paulo — nunca estimada):
 
 ```
-🗣️ Arquiteto → Dev Backend [feature/contas--be | sonnet/high]: implementa o endpoint de baixa…
-🗣️ Dev Backend → Arquiteto [feature/contas--be | gates verdes]: "entreguei X com N testes…"
-🗣️ QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "encontrei…"
+🗣️ [2026-07-06 14:02] Arquiteto → Dev Backend [feature/contas--be | sonnet/high]: implementa o endpoint de baixa…
+🗣️ [2026-07-06 14:41] Dev Backend → Arquiteto [feature/contas--be | gates verdes]: "entreguei X com N testes…"
+🗣️ [2026-07-06 15:07] QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "encontrei…"
 ```
 
-**E entre um handoff e outro, o arquiteto te dá um "ping por etapa":** o padrão é reportar o
+**E entre um handoff e outro, o arquiteto te dá um "ping por etapa"** (também com data e
+hora reais)**:** o padrão é reportar o
 estado nos pontos naturais — quando o dev fecha o teste-que-falha e começa a implementar,
 quando os gates ficam verdes, e na conclusão — valendo igual para **devs, QA e mudanças no
 próprio fluxo**. Os agentes rodam em segundo plano e não transmitem ao vivo, então o
