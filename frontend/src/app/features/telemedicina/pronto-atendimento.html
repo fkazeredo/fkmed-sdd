@@ -1,0 +1,202 @@
+<section class="mx-auto max-w-2xl p-4" aria-labelledby="pronto-title" data-testid="pronto-atendimento-page">
+  <h1 id="pronto-title" class="mb-4 text-2xl font-semibold text-teal-800">
+    {{ 'telemedicina.pronto.title' | translate }}
+  </h1>
+
+  @if (loading()) {
+    <p class="rounded-xl bg-white p-6 text-slate-500 shadow" data-testid="pronto-loading">
+      {{ 'common.loading' | translate }}
+    </p>
+  } @else if (errorKey() === 'common.error' && !catalog()) {
+    <p class="rounded-xl bg-white p-6 text-red-700 shadow" data-testid="pronto-erro-carregar">
+      {{ 'common.error' | translate }}
+    </p>
+  } @else if (step() === 'triagem') {
+    <div class="flex flex-col gap-4" data-testid="pronto-triagem">
+      <p class="text-sm text-slate-500">{{ 'telemedicina.pronto.etapaTriagem' | translate }}</p>
+
+      <!-- Attended beneficiary (BR2/BR13) -->
+      <div class="rounded-xl bg-white p-4 shadow">
+        <p class="text-xs uppercase text-slate-400">{{ 'telemedicina.triagem.beneficiario' | translate }}</p>
+        <p class="text-lg font-medium text-teal-800" data-testid="triagem-beneficiario">{{ beneficiaryName() }}</p>
+      </div>
+
+      <!-- Main complaint (BR2) -->
+      <div class="rounded-xl bg-white p-4 shadow">
+        <label for="triagem-queixa" class="block font-medium text-slate-700">
+          {{ 'telemedicina.triagem.queixa' | translate }}
+        </label>
+        <textarea
+          id="triagem-queixa"
+          rows="3"
+          class="mt-2 w-full rounded border border-slate-300 p-2"
+          [ngModel]="complaint()"
+          (ngModelChange)="complaint.set($event)"
+          data-testid="triagem-queixa"
+        ></textarea>
+        <div class="mt-1 flex justify-between text-xs">
+          <span [class.text-red-600]="!complaintValid()" data-testid="triagem-queixa-contador">
+            {{ complaintLength() }}/500
+          </span>
+          @if (complaintLength() > 0 && !complaintValid()) {
+            <span class="text-red-600" data-testid="triagem-queixa-validacao">
+              {{ 'telemedicina.triagem.queixaAjuda' | translate }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Symptoms (BR2) -->
+      <div class="rounded-xl bg-white p-4 shadow">
+        <p class="font-medium text-slate-700">{{ 'telemedicina.triagem.sintomas' | translate }}</p>
+        <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          @for (symptom of symptoms(); track symptom.code) {
+            <label
+              class="flex items-center gap-2 rounded border border-slate-200 p-2"
+              [attr.data-testid]="'triagem-sintoma-' + symptom.code"
+            >
+              <input
+                type="checkbox"
+                [checked]="isSymptomSelected(symptom.code)"
+                (change)="toggleSymptom(symptom.code)"
+              />
+              <span>{{ symptom.name }}</span>
+              @if (symptom.emergency) {
+                <span class="ml-auto rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">
+                  {{ 'telemedicina.triagem.emergenciaTag' | translate }}
+                </span>
+              }
+            </label>
+          }
+        </div>
+        <label for="triagem-outros" class="mt-3 block text-sm text-slate-600">
+          {{ 'telemedicina.triagem.outros' | translate }}
+        </label>
+        <input
+          id="triagem-outros"
+          type="text"
+          class="mt-1 w-full rounded border border-slate-300 p-2"
+          [ngModel]="otherSymptom()"
+          (ngModelChange)="otherSymptom.set($event)"
+          data-testid="triagem-outros"
+        />
+      </div>
+
+      <!-- Emergency alert (BR3) -->
+      @if (hasEmergencySelected()) {
+        <div
+          class="rounded-xl border border-red-300 bg-red-50 p-4 text-red-800"
+          role="alert"
+          data-testid="triagem-emergencia-alerta"
+        >
+          <p class="font-semibold">{{ 'telemedicina.emergencia.titulo' | translate }}</p>
+          <p class="text-sm">{{ 'telemedicina.emergencia.mensagem' | translate }}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="rounded bg-red-700 px-3 py-2 text-white"
+              (click)="goToER()"
+              data-testid="triagem-emergencia-rede"
+            >
+              {{ 'telemedicina.emergencia.verRede' | translate }}
+            </button>
+            <button
+              type="button"
+              class="rounded border border-red-400 px-3 py-2 text-red-800"
+              (click)="acknowledgeEmergency()"
+              data-testid="triagem-emergencia-proceder"
+            >
+              {{ 'telemedicina.emergencia.proceder' | translate }}
+            </button>
+          </div>
+          @if (emergencyAcknowledged()) {
+            <p class="mt-2 text-xs text-red-700" data-testid="triagem-emergencia-ok">
+              {{ 'telemedicina.emergencia.confirmado' | translate }}
+            </p>
+          }
+        </div>
+      }
+
+      <!-- Duration (BR2) -->
+      <div class="rounded-xl bg-white p-4 shadow">
+        <p class="font-medium text-slate-700">{{ 'telemedicina.triagem.duracao' | translate }}</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          @for (option of durations; track option) {
+            <button
+              type="button"
+              class="rounded-full border px-3 py-1.5 text-sm"
+              [class.bg-teal-700]="duration() === option"
+              [class.text-white]="duration() === option"
+              [class.border-teal-700]="duration() === option"
+              [class.border-slate-300]="duration() !== option"
+              (click)="selectDuration(option)"
+              [attr.data-testid]="'triagem-duracao-' + option"
+            >
+              {{ 'telemedicina.duracao.' + option | translate }}
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (gateKey()) {
+        <p class="text-sm text-red-600" data-testid="triagem-gate">{{ gateKey()! | translate }}</p>
+      }
+
+      <button
+        type="button"
+        class="self-start rounded bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+        (click)="goToTerm()"
+        data-testid="triagem-avancar"
+      >
+        {{ 'telemedicina.triagem.avancar' | translate }}
+      </button>
+    </div>
+  } @else {
+    <!-- Term (BR4) -->
+    <div class="flex flex-col gap-4" data-testid="pronto-termo">
+      <p class="text-sm text-slate-500">{{ 'telemedicina.pronto.etapaTermo' | translate }}</p>
+      <div class="rounded-xl bg-white p-4 shadow">
+        <p class="text-xs uppercase text-slate-400">
+          {{ 'telemedicina.termo.versao' | translate }} {{ term()?.version }}
+        </p>
+        <div class="mt-2 max-h-64 overflow-y-auto whitespace-pre-line text-sm text-slate-700" data-testid="termo-corpo">
+          {{ term()?.body }}
+        </div>
+      </div>
+
+      <label class="flex items-center gap-2 rounded-xl bg-white p-4 shadow">
+        <input
+          type="checkbox"
+          [ngModel]="termAccepted()"
+          (ngModelChange)="termAccepted.set($event)"
+          data-testid="termo-aceite"
+        />
+        <span class="font-medium text-slate-700">{{ 'telemedicina.termo.aceito' | translate }}</span>
+      </label>
+
+      @if (errorKey()) {
+        <p class="text-sm text-red-600" data-testid="termo-erro">{{ errorKey()! | translate }}</p>
+      }
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="rounded border border-slate-300 px-4 py-2"
+          (click)="backToTriage()"
+          data-testid="termo-voltar"
+        >
+          {{ 'telemedicina.acao.voltar' | translate }}
+        </button>
+        <button
+          type="button"
+          class="rounded bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+          [disabled]="!termAccepted() || submitting()"
+          (click)="enterQueue()"
+          data-testid="termo-entrar-fila"
+        >
+          {{ 'telemedicina.termo.entrarFila' | translate }}
+        </button>
+      </div>
+    </div>
+  }
+</section>

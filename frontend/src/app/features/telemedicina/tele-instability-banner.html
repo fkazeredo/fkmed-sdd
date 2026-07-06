@@ -1,0 +1,14 @@
+@if (notice(); as active) {
+  <div
+    class="mb-4 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900"
+    role="status"
+    data-testid="tele-instabilidade-banner"
+  >
+    <i class="pi pi-exclamation-triangle mt-0.5 text-lg" aria-hidden="true"></i>
+    <div>
+      <p class="font-semibold">{{ active.title }}</p>
+      <p class="text-sm">{{ active.body }}</p>
+      <p class="mt-1 text-xs text-amber-700">{{ 'telemedicina.instabilidade.naoBloqueante' | translate }}</p>
+    </div>
+  </div>
+}
