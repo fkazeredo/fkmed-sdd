@@ -1,0 +1,110 @@
+<section class="mx-auto max-w-3xl p-4" aria-labelledby="consulta-wizard-title" data-testid="consulta-wizard-page">
+  <h1 id="consulta-wizard-title" class="mb-1 text-2xl font-semibold text-teal-800">
+    {{ 'agendamento.consulta.title' | translate }}
+  </h1>
+
+  @if (step() !== 'success') {
+    <p class="mb-4 text-sm text-slate-500" data-testid="consulta-etapa">
+      {{ 'agendamento.consulta.etapa.' + step() | translate }}
+    </p>
+
+    @if (gateKey(); as gate) {
+      <p class="mb-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800" role="alert" data-testid="consulta-gate">
+        {{ gate | translate }}
+      </p>
+    }
+
+    @switch (step()) {
+      @case ('specialty') {
+        <app-searchable-option-list [items]="specialtyOptions()" (selected)="selectSpecialty($event)" />
+        @if (specialtyName(); as name) {
+          <p class="mt-3 text-sm text-teal-800" data-testid="consulta-especialidade-escolhida">
+            {{ 'agendamento.consulta.especialidadeEscolhida' | translate }} <strong>{{ name }}</strong>
+          </p>
+        }
+      }
+      @case ('unit') {
+        <app-unit-picker [units]="units()" [selectedId]="unitId()" (unitSelected)="selectUnit($event)" />
+      }
+      @case ('slot') {
+        @if (errorKey() === 'appointment.slot-taken') {
+          <p class="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert" data-testid="consulta-slot-taken">
+            {{ 'appointment.slot-taken' | translate }}
+          </p>
+        }
+        <app-slot-picker [days]="days()" [selectedSlot]="slot()" (slotSelected)="selectSlot($event)" />
+      }
+      @case ('review') {
+        <dl class="rounded-lg bg-white p-4 text-sm" data-testid="consulta-revisao">
+          <div class="flex justify-between border-b border-slate-100 py-2">
+            <dt class="text-slate-500">{{ 'agendamento.revisao.beneficiario' | translate }}</dt>
+            <dd class="font-medium text-teal-800" data-testid="revisao-beneficiario">{{ beneficiaryName() }}</dd>
+          </div>
+          <div class="flex justify-between border-b border-slate-100 py-2">
+            <dt class="text-slate-500">{{ 'agendamento.revisao.especialidade' | translate }}</dt>
+            <dd class="font-medium text-teal-800" data-testid="revisao-especialidade">{{ specialtyName() }}</dd>
+          </div>
+          <div class="flex justify-between border-b border-slate-100 py-2">
+            <dt class="text-slate-500">{{ 'agendamento.revisao.unidade' | translate }}</dt>
+            <dd class="font-medium text-teal-800" data-testid="revisao-unidade">{{ unitName() }}</dd>
+          </div>
+          <div class="flex justify-between py-2">
+            <dt class="text-slate-500">{{ 'agendamento.revisao.dataHora' | translate }}</dt>
+            <dd class="font-medium text-teal-800" data-testid="revisao-data-hora">{{ slotLabel() }}</dd>
+          </div>
+        </dl>
+        @if (errorKey() && errorKey() !== 'appointment.slot-taken') {
+          <p class="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert" data-testid="consulta-erro">
+            {{ errorKey() | translate }}
+          </p>
+        }
+      }
+    }
+
+    <div class="mt-5 flex items-center justify-between">
+      @if (step() !== 'specialty') {
+        <button type="button" class="rounded-lg px-4 py-2 text-teal-700 hover:bg-slate-100" data-testid="consulta-voltar" (click)="back()">
+          {{ 'agendamento.acao.voltar' | translate }}
+        </button>
+      } @else {
+        <span></span>
+      }
+
+      @if (step() === 'review') {
+        <button
+          type="button"
+          class="rounded-lg bg-teal-700 px-4 py-2 font-medium text-white hover:bg-teal-800 disabled:opacity-50"
+          [disabled]="loading()"
+          data-testid="consulta-confirmar"
+          (click)="confirm()"
+        >
+          {{ (loading() ? 'common.processando' : 'agendamento.acao.confirmar') | translate }}
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="rounded-lg bg-teal-700 px-4 py-2 font-medium text-white hover:bg-teal-800"
+          data-testid="consulta-proximo"
+          (click)="next()"
+        >
+          {{ 'agendamento.acao.proximo' | translate }}
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="rounded-lg bg-white p-6 text-center" data-testid="consulta-sucesso">
+      <i class="pi pi-check-circle mb-3 text-4xl text-teal-600" aria-hidden="true"></i>
+      <p class="text-lg font-medium text-teal-800">{{ 'agendamento.sucesso.titulo' | translate }}</p>
+      <p class="mt-2 text-slate-600">{{ 'agendamento.sucesso.protocolo' | translate }}</p>
+      <p class="mt-1 text-xl font-semibold text-teal-900" data-testid="consulta-protocolo">{{ protocol() }}</p>
+      <button
+        type="button"
+        class="mt-4 rounded-lg bg-teal-700 px-4 py-2 font-medium text-white hover:bg-teal-800"
+        data-testid="consulta-ver-agendamentos"
+        (click)="goToMeus()"
+      >
+        {{ 'agendamento.sucesso.verAgendamentos' | translate }}
+      </button>
+    </div>
+  }
+</section>

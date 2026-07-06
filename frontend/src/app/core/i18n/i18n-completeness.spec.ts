@@ -29,6 +29,13 @@ import { NetworkSpecialty } from '../../features/rede/network-specialty';
 import { NetworkResults } from '../../features/rede/network-results';
 import { NetworkProviderDetail } from '../../features/rede/network-provider-detail';
 import { NetworkFunnelState } from '../../features/rede/network-funnel-state.service';
+import { AgendamentoHub } from '../../features/agendamento/agendamento-hub';
+import { ConsultaWizard } from '../../features/agendamento/consulta-wizard';
+import { ExameWizard } from '../../features/agendamento/exame-wizard';
+import { MeusAgendamentos } from '../../features/agendamento/meus-agendamentos';
+import { UnitPicker } from '../../features/agendamento/unit-picker';
+import { SlotPicker } from '../../features/agendamento/slot-picker';
+import { Appointment, AvailabilityDay } from '../../features/agendamento/appointments.api';
 import { APP_VERSION } from '../config/app-version';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
@@ -68,6 +75,12 @@ describe('i18n completeness (pt-BR)', () => {
         NetworkSpecialty,
         NetworkResults,
         NetworkProviderDetail,
+        AgendamentoHub,
+        ConsultaWizard,
+        ExameWizard,
+        MeusAgendamentos,
+        UnitPicker,
+        SlotPicker,
       ],
       providers: [
         provideRouter([]),
@@ -612,6 +625,180 @@ describe('i18n completeness (pt-BR)', () => {
     expect(
       Array.from(handler.missing),
       'SPEC-0008 Rede UI keys missing from the pt-BR bundle',
+    ).toHaveLength(0);
+  });
+
+  it('renders every SPEC-0009 Agendamento screen without a missing translation', async () => {
+    const handler = TestBed.inject(MissingTranslationHandler) as ReportMissingTranslationHandler;
+    const http = TestBed.inject(HttpTestingController);
+    const context = TestBed.inject(BeneficiaryContextService);
+    context.accessible.set([
+      { beneficiaryId: 'maria-id', firstName: 'MARIA', role: 'TITULAR' },
+      { beneficiaryId: 'pedro-id', firstName: 'PEDRO', role: 'DEPENDENT' },
+    ]);
+    context.active.set({ beneficiaryId: 'maria-id', firstName: 'MARIA', role: 'TITULAR' });
+
+    const DAYS: AvailabilityDay[] = [
+      {
+        date: '2026-07-10',
+        slots: [
+          { slot: '2026-07-10T09:00', remaining: 2, available: true },
+          { slot: '2026-07-10T09:30', remaining: 0, available: false },
+        ],
+      },
+    ];
+    const UNITS = [{ id: 'u1', name: 'Unidade Centro', address: 'Rua A, 10 — Centro' }];
+    const el = (fixture: { nativeElement: HTMLElement }, testid: string): HTMLElement =>
+      fixture.nativeElement.querySelector(`[data-testid="${testid}"]`) as HTMLElement;
+
+    // Hub: 3 enabled cards + Telemedicina "em breve".
+    const hub = TestBed.createComponent(AgendamentoHub);
+    hub.detectChanges();
+
+    // Empty/day states of the shared pickers (unidade.vazio, horario.vazio, escolhaDia/escolhaHora).
+    const emptyUnits = TestBed.createComponent(UnitPicker);
+    emptyUnits.componentRef.setInput('units', []);
+    emptyUnits.detectChanges();
+    const dayPicker = TestBed.createComponent(SlotPicker);
+    dayPicker.componentRef.setInput('days', DAYS);
+    dayPicker.detectChanges();
+    (dayPicker.nativeElement.querySelector('[data-testid="slot-day-2026-07-10"]') as HTMLElement).click();
+    dayPicker.detectChanges();
+    const emptyDays = TestBed.createComponent(SlotPicker);
+    emptyDays.componentRef.setInput('days', []);
+    emptyDays.detectChanges();
+
+    // Consultation wizard: gate → every step → review error variants → success.
+    const consulta = TestBed.createComponent(ConsultaWizard);
+    consulta.detectChanges();
+    http.expectOne('/api/network/specialties').flush([{ code: 'CARDIOLOGIA', name: 'Cardiologia' }]);
+    consulta.detectChanges();
+    el(consulta, 'consulta-proximo').click(); // gate.especialidade
+    consulta.detectChanges();
+    consulta.componentInstance.selectSpecialty('CARDIOLOGIA');
+    consulta.detectChanges();
+    el(consulta, 'consulta-proximo').click(); // -> unit
+    http.expectOne((r) => r.url === '/api/appointments/units').flush(UNITS);
+    consulta.detectChanges();
+    consulta.componentInstance.selectUnit('u1');
+    consulta.detectChanges();
+    el(consulta, 'consulta-proximo').click(); // -> slot
+    http.expectOne((r) => r.url === '/api/appointments/availability').flush(DAYS);
+    consulta.detectChanges();
+    consulta.componentInstance['errorKey'].set('appointment.slot-taken'); // slot-taken banner
+    consulta.detectChanges();
+    (consulta.nativeElement.querySelector('[data-testid="slot-day-2026-07-10"]') as HTMLElement).click();
+    consulta.detectChanges();
+    consulta.componentInstance.selectSlot('2026-07-10T09:00');
+    consulta.detectChanges();
+    el(consulta, 'consulta-proximo').click(); // -> review
+    consulta.detectChanges();
+    consulta.componentInstance['errorKey'].set('appointment.time-conflict');
+    consulta.detectChanges();
+    consulta.componentInstance['errorKey'].set('appointment.outside-horizon');
+    consulta.detectChanges();
+    consulta.componentInstance['errorKey'].set(null);
+    consulta.detectChanges();
+    el(consulta, 'consulta-confirmar').click();
+    http.expectOne({ url: '/api/appointments', method: 'POST' }).flush({ protocol: 'AG-20260704-0001', status: 'AGENDADO' });
+    consulta.detectChanges();
+
+    // Exam wizard: gate.exame/anexo, attachment name + remover + error keys, then success.
+    const exame = TestBed.createComponent(ExameWizard);
+    exame.detectChanges();
+    http.expectOne('/api/appointments/exams').flush([{ code: 'HEMOGRAMA', name: 'Hemograma' }]);
+    exame.detectChanges();
+    el(exame, 'exame-proximo').click(); // gate.exame
+    exame.detectChanges();
+    exame.componentInstance.selectExam('HEMOGRAMA');
+    exame.detectChanges();
+    el(exame, 'exame-proximo').click(); // -> attachment
+    exame.detectChanges();
+    el(exame, 'exame-proximo').click(); // gate.anexo
+    exame.detectChanges();
+    await exame.componentInstance.acceptFile(
+      new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], 'pedido.pdf', { type: 'application/pdf' }),
+    );
+    exame.detectChanges();
+    exame.componentInstance['attachmentError'].set('appointment.attachment-invalid');
+    exame.detectChanges();
+    exame.componentInstance['attachmentError'].set('appointment.attachment-required');
+    exame.detectChanges();
+    exame.componentInstance['attachmentError'].set(null);
+    exame.detectChanges();
+    el(exame, 'exame-proximo').click(); // -> unit
+    http.expectOne((r) => r.url === '/api/appointments/units').flush(UNITS);
+    exame.detectChanges();
+    exame.componentInstance.selectUnit('u1');
+    exame.detectChanges();
+    el(exame, 'exame-proximo').click(); // -> slot
+    http.expectOne((r) => r.url === '/api/appointments/availability').flush(DAYS);
+    exame.detectChanges();
+    exame.componentInstance.selectSlot('2026-07-10T09:00');
+    exame.detectChanges();
+    el(exame, 'exame-proximo').click(); // -> review
+    exame.detectChanges();
+    el(exame, 'exame-confirmar').click();
+    http.expectOne({ url: '/api/appointments', method: 'POST' }).flush({ protocol: 'AG-20260704-0002', status: 'AGENDADO' });
+    exame.detectChanges();
+
+    // Meus Agendamentos: loading → both tabs (all status labels + tipo + telemedicina badge) →
+    // cancel dialog (with too-late error) → reschedule dialog (with slot-taken) → empty + error states.
+    const APPTS: Appointment[] = [
+      {
+        id: 'a1', type: 'CONSULTATION', specialty: 'Cardiologia', exam: null, beneficiary: 'MARIA',
+        unit: 'Unidade Centro', scheduledAt: '2026-07-10T09:00', status: 'AGENDADO', protocol: 'AG-1',
+        telemedicine: true, unitId: 'u1', specialtyCode: 'CARDIOLOGIA',
+      },
+      {
+        id: 'a2', type: 'EXAM', specialty: null, exam: 'Hemograma', beneficiary: 'PEDRO',
+        unit: 'Unidade Tijuca', scheduledAt: '2026-07-12T10:00', status: 'REAGENDADO', protocol: 'AG-2',
+        unitId: 'u2', examCode: 'HEMOGRAMA',
+      },
+      {
+        id: 'a3', type: 'CONSULTATION', specialty: 'Dermatologia', exam: null, beneficiary: 'MARIA',
+        unit: 'Unidade Centro', scheduledAt: '2026-06-20T10:00', status: 'CANCELADO', protocol: 'AG-3',
+      },
+      {
+        id: 'a4', type: 'CONSULTATION', specialty: 'Ortopedia', exam: null, beneficiary: 'PEDRO',
+        unit: 'Unidade Centro', scheduledAt: '2026-06-25T14:00', status: 'REALIZADO', protocol: 'AG-4',
+      },
+    ];
+    const meus = TestBed.createComponent(MeusAgendamentos);
+    meus.detectChanges(); // loading (common.loading)
+    http.expectOne((r) => r.url === '/api/appointments').flush(APPTS);
+    meus.detectChanges();
+    el(meus, 'meus-tab-historico').click();
+    meus.detectChanges();
+    el(meus, 'meus-tab-proximos').click();
+    meus.detectChanges();
+    meus.componentInstance.askCancel(APPTS[0]);
+    meus.detectChanges();
+    meus.componentInstance['cancelError'].set('appointment.cancel-too-late');
+    meus.detectChanges();
+    meus.componentInstance.closeCancel();
+    meus.detectChanges();
+    meus.componentInstance.askReschedule(APPTS[1]);
+    http.expectOne((r) => r.url === '/api/appointments/availability').flush(DAYS);
+    meus.detectChanges();
+    meus.componentInstance['rescheduleError'].set('appointment.slot-taken');
+    meus.detectChanges();
+    meus.componentInstance.closeReschedule();
+    meus.detectChanges();
+    // Empty state.
+    meus.componentInstance.load();
+    http.expectOne((r) => r.url === '/api/appointments').flush([]);
+    meus.detectChanges();
+    // Error state (common.error + retry).
+    meus.componentInstance.load();
+    http
+      .expectOne((r) => r.url === '/api/appointments')
+      .flush({ code: 'x' }, { status: 500, statusText: 'Server Error' });
+    meus.detectChanges();
+
+    expect(
+      Array.from(handler.missing),
+      'SPEC-0009 Agendamento UI keys missing from the pt-BR bundle',
     ).toHaveLength(0);
   });
 });

@@ -1,0 +1,50 @@
+<div data-testid="slot-picker">
+  @if (days().length === 0) {
+    <p class="rounded-lg bg-white p-4 text-slate-500" data-testid="slot-picker-vazio">
+      {{ 'agendamento.horario.vazio' | translate }}
+    </p>
+  } @else {
+    <p class="mb-2 text-sm font-medium text-slate-600">{{ 'agendamento.horario.escolhaDia' | translate }}</p>
+    <div class="mb-4 flex flex-wrap gap-2" role="group" [attr.aria-label]="'agendamento.horario.escolhaDia' | translate">
+      @for (day of days(); track day.date) {
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+          [class.border-teal-600]="day.date === selectedDate()"
+          [class.bg-teal-50]="day.date === selectedDate()"
+          [class.border-slate-200]="day.date !== selectedDate()"
+          [attr.aria-pressed]="day.date === selectedDate()"
+          [attr.data-testid]="'slot-day-' + day.date"
+          (click)="pickDay(day.date)"
+        >
+          {{ dayLabel(day.date) }}
+        </button>
+      }
+    </div>
+
+    @if (currentDay(); as day) {
+      <p class="mb-2 text-sm font-medium text-slate-600">{{ 'agendamento.horario.escolhaHora' | translate }}</p>
+      <div class="flex flex-wrap gap-2" role="group" [attr.aria-label]="'agendamento.horario.escolhaHora' | translate">
+        @for (slot of day.slots; track slot.slot) {
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-2 text-sm"
+            [disabled]="!open(slot)"
+            [class.border-teal-600]="slot.slot === selectedSlot()"
+            [class.bg-teal-50]="slot.slot === selectedSlot()"
+            [class.border-slate-200]="slot.slot !== selectedSlot()"
+            [class.hover:bg-slate-50]="open(slot)"
+            [class.cursor-not-allowed]="!open(slot)"
+            [class.opacity-40]="!open(slot)"
+            [class.line-through]="!open(slot)"
+            [attr.aria-pressed]="slot.slot === selectedSlot()"
+            [attr.data-testid]="'slot-time-' + slot.slot"
+            (click)="pickSlot(slot)"
+          >
+            {{ slotTime(slot.slot) }}
+          </button>
+        }
+      </div>
+    }
+  }
+</div>

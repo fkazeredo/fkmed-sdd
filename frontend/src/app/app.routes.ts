@@ -139,6 +139,29 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/rede/network-provider-detail').then((m) => m.NetworkProviderDetail),
       },
+      // SPEC-0009 (Phase 3): the Agendamento hub and its scheduling journeys — reachable via the
+      // shell nav (nav-agendamento). Consultation/exam wizards, Meus Agendamentos; Telemedicina
+      // booking stays "em breve" (SPEC-0010).
+      {
+        path: 'agendamento',
+        loadComponent: () =>
+          import('./features/agendamento/agendamento-hub').then((m) => m.AgendamentoHub),
+      },
+      {
+        path: 'agendamento/consulta',
+        loadComponent: () =>
+          import('./features/agendamento/consulta-wizard').then((m) => m.ConsultaWizard),
+      },
+      {
+        path: 'agendamento/exame',
+        loadComponent: () =>
+          import('./features/agendamento/exame-wizard').then((m) => m.ExameWizard),
+      },
+      {
+        path: 'agendamento/meus',
+        loadComponent: () =>
+          import('./features/agendamento/meus-agendamentos').then((m) => m.MeusAgendamentos),
+      },
     ],
   },
 ];
