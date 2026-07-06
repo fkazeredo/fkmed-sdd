@@ -7,7 +7,7 @@ description: >
   first: anything bigger is split between dev-backend and dev-frontend. Runs in an isolated
   worktree.
 isolation: worktree
-effort: xhigh
+effort: high
 ---
 
 # Fullstack dev
@@ -53,13 +53,19 @@ parity across the product's locales; fail-before/pass-after regression for every
 ## Recommended work order
 
 Backend first (contract + tests), then frontend **against the real contract** (never an
-imagined one). If the slice touches a user journey, finish with an E2E smoke test
-(`npm run e2e` on the isolated stack).
+imagined one). If the slice touches a user journey, finish with the E2E suite **run green
+locally** on the isolated stack (`npm run e2e:up && npm run e2e && npm run e2e:down`) — you
+have both stacks, so there is no excuse to leave the first E2E run to CI (owner rule, the
+Phase-4 lesson). During the loop, run targeted tests only; each stack's full gate runs once,
+before the handback.
 
 ## Before returning
 
+- `cd backend && ./mvnw spotless:apply` before every commit (owner rule — no pre-commit hook
+  in the worktree will catch it for you).
 - `cd backend && ./mvnw verify` **and** `cd frontend && npm run lint && npm test && npm run
-  build` — both green. Red ⇒ fix the code, never the gate.
+  build` — both green. Red ⇒ fix the code, never the gate. **Wait for gates to finish —
+  never hand back over a still-running check.**
 - Conventional Commits on the slice branch; **never** push to develop/main, merge or tag.
 
 ## Return report (pt-BR, quotable)

@@ -6,7 +6,7 @@ description: >
   returns the branch with green gates. Use to build the frontend part of a slice that already
   has a spec and a plan. Runs in an isolated worktree.
 isolation: worktree
-effort: xhigh
+effort: high
 ---
 
 # Frontend dev
@@ -84,17 +84,27 @@ evidence of convention.
 
 ## Your stack's tests (you write and automate them)
 
-- Vitest unit tests for the components/services touched.
+- Vitest unit tests for the components/services touched. During the loop run only the
+  **targeted** specs you are driving — the full `lint`/`test`/`build` runs once, before the
+  handback (proportional gates, owner rule).
 - **i18n**: every new text goes into the bundles with parity across the product's locales
   (the translations gate breaks the build if missing); labels cited in docs/manual must
   actually exist.
-- Slice touches a user journey ⇒ update/add the corresponding Playwright E2E test.
+- Slice touches a user journey ⇒ update/add the corresponding Playwright E2E test — and **run
+  it green locally** against the isolated stack when your scope has both sides available. In
+  a parallel wave against a frozen contract (no real backend yet), authoring without running
+  is acceptable **only if the handback says so explicitly** ("E2E autorado, não executado") —
+  the architect then owes the green local run at integration. An E2E suite that reaches the
+  PR without ever passing locally is the Phase-4 defect pattern (6 defects, 3 CI triage
+  rounds); it must not repeat.
 - Bug fix ⇒ regression that fails before and passes after (invariant 8).
 
 ## Before returning
 
 - `cd frontend && npm run lint && npm test && npm run build` **green**. Red ⇒ fix the code,
   never the gate (invariant 5).
+- **Wait for the gate to finish — never hand back with a check still running** (owner rule —
+  Phase-4 handbacks reported "done" over a still-running gate and came back incomplete).
 - Local **Conventional Commits** on the slice branch.
 - **Never**: push to develop/main, merge, tag (the architect closes via `/dod`).
 

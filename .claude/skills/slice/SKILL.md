@@ -39,6 +39,14 @@ going to do, report AFTER what you did (CLAUDE.md §Comunicação).
    verification method (test name, command, API call). These ACs are re-verified one by one
    at `/dod`, with evidence and the detailed why. Use **plan mode** to present it and get
    the owner's approval.
+
+   **Execution mode (architect.md §Execution modes):** Slice Mode is the default. When the
+   owner explicitly asks for a **whole phase**, accept it — don't argue for smaller PRs —
+   and organize the same plan internally in waves. When work will run in **parallel**, the
+   plan additionally fixes: the frozen contract, each dev's owned/forbidden paths, the
+   **single-writer surfaces** (OpenAPI snapshot, migrations numbering, shell/routes, global
+   i18n, `ModularityTest`, shared error mapping, workflows — only the architect or one
+   assigned dev touches them), and the **merge order** of the sub-branches.
 6. **Persist the approved plan** to `docs/reports/plans/YYYY-MM-DD-<slice-slug>-plan.md`
    (NOT versioned — the folder is gitignored; see `docs/reports/README.md`). When the
    architect will run devs in parallel, the plan also names the sub-branches
