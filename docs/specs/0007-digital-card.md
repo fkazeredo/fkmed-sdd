@@ -1,6 +1,6 @@
 # 0007 - Digital Card
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -116,8 +116,8 @@ Audit entry on dependent-card view (BR7); counter of PDF downloads. CNS never lo
 
 ## Open Questions
 
-- **OQ1** — PDF layout (portrait page vs card-sized) · pure presentation, cheap to change ·
-  proposed default: card format laid on A4 with front visual + data block.
+- **OQ1** *(resolved — DL-0009)* — PDF layout: **card format laid on A4** with the front
+  visual + data block (pure presentation, cheap to change).
 
 ## Out of Scope
 

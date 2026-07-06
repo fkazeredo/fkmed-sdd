@@ -1,0 +1,134 @@
+<section class="mx-auto max-w-4xl p-4" aria-labelledby="carteirinha-title" data-testid="carteirinha-page">
+  <h1 id="carteirinha-title" class="mb-4 text-2xl font-semibold text-teal-800">
+    {{ 'carteirinha.title' | translate }}
+  </h1>
+
+  @if (loading() && !card()) {
+    <p class="text-slate-500" role="status">{{ 'common.loading' | translate }}</p>
+  } @else if (unavailable()) {
+    <div class="mb-6 rounded-lg bg-amber-50 p-4 text-amber-800" role="alert" data-testid="carteirinha-indisponivel">
+      {{ 'carteirinha.indisponivel.mensagem' | translate }}
+    </div>
+  } @else if (errorKey(); as key) {
+    <div class="mb-6 rounded-lg bg-red-50 p-4 text-red-700" role="alert" data-testid="carteirinha-erro">
+      <p class="mb-2">{{ key | translate }}</p>
+      <button type="button" class="rounded bg-red-700 px-3 py-1 text-white" (click)="retry()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (card(); as c) {
+    <!-- Visual card (BR1/BR2/BR9) -->
+    <article
+      class="mb-6 rounded-2xl bg-gradient-to-br from-teal-700 to-teal-900 p-6 text-white shadow-lg"
+      data-testid="visual-card"
+    >
+      <div class="flex items-center justify-between">
+        <span class="text-lg font-semibold">{{ 'app.title' | translate }}</span>
+        <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-medium" data-testid="card-coverage-seal">
+          {{ coverageLabel(c.coverage) }}
+        </span>
+      </div>
+      <p class="mt-6 text-xs font-medium tracking-wide text-teal-100">
+        {{ 'carteirinha.cartao.planoLabel' | translate }}
+      </p>
+      <p class="text-xl font-semibold" data-testid="card-full-name">{{ c.fullName }}</p>
+      <p class="text-sm text-teal-100" data-testid="card-plan-name">{{ c.planCategory }} · {{ c.planName }}</p>
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <i class="pi pi-id-card" aria-hidden="true"></i>
+        <span class="text-lg tracking-widest" data-testid="card-number">{{ c.cardNumber }}</span>
+        <button
+          type="button"
+          class="rounded bg-white/20 px-2 py-1 text-xs font-medium"
+          data-testid="btn-copiar-numero"
+          (click)="copyNumber()"
+        >
+          {{ 'carteirinha.acoes.copiarNumero' | translate }}
+        </button>
+        @if (copied()) {
+          <span class="text-xs font-medium text-teal-100" role="status" data-testid="copy-confirmation">
+            {{ 'carteirinha.acoes.numeroCopiado' | translate }}
+          </span>
+        }
+      </div>
+    </article>
+
+    <!-- Data sheet (BR1/BR8/BR9) -->
+    <article class="mb-6 rounded-xl bg-white p-5 shadow" data-testid="ficha-dados">
+      <h2 class="mb-3 text-lg font-medium text-teal-800">{{ 'carteirinha.ficha.title' | translate }}</h2>
+      <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <dt class="text-sm text-slate-500">{{ 'carteirinha.ficha.cns' | translate }}</dt>
+          <dd data-testid="sheet-cns">{{ c.cns }}</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-slate-500">{{ 'carteirinha.ficha.ansRegistration' | translate }}</dt>
+          <dd data-testid="sheet-ans">{{ c.ansRegistration }}</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-slate-500">{{ 'carteirinha.ficha.coverage' | translate }}</dt>
+          <dd data-testid="sheet-coverage">{{ coverageLabel(c.coverage) }}</dd>
+        </div>
+        <div class="sm:col-span-2">
+          <dt class="text-sm text-slate-500">{{ 'carteirinha.ficha.additives' | translate }}</dt>
+          <dd>
+            <ul>
+              @for (additive of c.additives; track additive) {
+                <li data-testid="sheet-additive">{{ additive }}</li>
+              }
+            </ul>
+          </dd>
+        </div>
+      </dl>
+    </article>
+
+    <!-- Actions (BR3) -->
+    <div class="mb-6">
+      <button
+        type="button"
+        class="flex items-center gap-2 rounded bg-teal-700 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+        data-testid="btn-salvar-carteirinha"
+        [disabled]="downloading()"
+        (click)="savePdf()"
+      >
+        <i class="pi pi-download" aria-hidden="true"></i>
+        {{ (downloading() ? 'carteirinha.acoes.salvando' : 'carteirinha.acoes.salvar') | translate }}
+      </button>
+      @if (pdfErrorKey(); as key) {
+        <p class="mt-2 text-sm text-red-600" data-testid="pdf-erro">{{ key | translate }}</p>
+      }
+    </div>
+  }
+
+  <!-- Minhas Carteirinhas (BR5) -->
+  @if (context.accessible().length > 0) {
+    <section aria-labelledby="minhas-carteirinhas-title" data-testid="minhas-carteirinhas">
+      <h2 id="minhas-carteirinhas-title" class="mb-3 text-lg font-medium text-teal-800">
+        {{ 'carteirinha.minhasCarteirinhas.title' | translate }}
+      </h2>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        @for (beneficiary of context.accessible(); track beneficiary.beneficiaryId) {
+          <button
+            type="button"
+            class="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3 text-left"
+            [class.border-teal-600]="beneficiary.beneficiaryId === context.active()?.beneficiaryId"
+            [attr.data-testid]="'minha-carteirinha-' + beneficiary.beneficiaryId"
+            (click)="selectBeneficiary(beneficiary.beneficiaryId)"
+          >
+            <span>
+              <span class="block font-medium text-slate-800">{{ beneficiary.firstName }}</span>
+              <span class="block text-xs text-slate-500">{{ roleLabel(beneficiary.role) }}</span>
+            </span>
+            @if (beneficiary.beneficiaryId === context.active()?.beneficiaryId) {
+              <span
+                class="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700"
+                data-testid="carteirinha-selo-ativa"
+              >
+                {{ 'carteirinha.minhasCarteirinhas.ativa' | translate }}
+              </span>
+            }
+          </button>
+        }
+      </div>
+    </section>
+  }
+</section>

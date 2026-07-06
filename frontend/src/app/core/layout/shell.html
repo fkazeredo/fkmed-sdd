@@ -3,6 +3,7 @@
     <span class="text-xl font-semibold" data-testid="brand">{{ 'app.title' | translate }}</span>
     <div class="flex items-center gap-3">
       <app-beneficiary-selector />
+      <app-notification-bell />
       <span class="text-sm" [attr.aria-label]="'shell.loggedUser' | translate"
             data-testid="username">{{ auth.username() }}</span>
       <p-button
@@ -39,12 +40,72 @@
         </li>
         <li>
           <a
+            routerLink="/carteirinha"
+            routerLinkActive="font-semibold text-teal-800"
+            class="block rounded px-3 py-2 hover:bg-slate-100"
+            data-testid="nav-carteirinha"
+          >
+            {{ 'nav.carteirinha' | translate }}
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/rede"
+            routerLinkActive="font-semibold text-teal-800"
+            class="block rounded px-3 py-2 hover:bg-slate-100"
+            data-testid="nav-rede"
+          >
+            {{ 'nav.rede' | translate }}
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/agendamento"
+            routerLinkActive="font-semibold text-teal-800"
+            class="block rounded px-3 py-2 hover:bg-slate-100"
+            data-testid="nav-agendamento"
+          >
+            {{ 'nav.agendamento' | translate }}
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/minha-saude"
+            routerLinkActive="font-semibold text-teal-800"
+            class="block rounded px-3 py-2 hover:bg-slate-100"
+            data-testid="nav-minha-saude"
+          >
+            {{ 'nav.minhaSaude' | translate }}
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/telemedicina"
+            routerLinkActive="font-semibold text-teal-800"
+            class="block rounded px-3 py-2 hover:bg-slate-100"
+            data-testid="nav-telemedicina"
+          >
+            {{ 'nav.telemedicina' | translate }}
+          </a>
+        </li>
+        <li>
+          <a
             routerLink="/seguranca"
             routerLinkActive="font-semibold text-teal-800"
             class="block rounded px-3 py-2 hover:bg-slate-100"
             data-testid="nav-seguranca"
           >
             {{ 'nav.seguranca' | translate }}
+          </a>
+        </li>
+        <li>
+          <a
+            routerLink="/perfil"
+            routerLinkActive="font-semibold text-teal-800"
+            class="block rounded px-3 py-2 hover:bg-slate-100"
+            data-testid="nav-perfil"
+          >
+            {{ 'nav.perfil' | translate }}
           </a>
         </li>
       </ul>

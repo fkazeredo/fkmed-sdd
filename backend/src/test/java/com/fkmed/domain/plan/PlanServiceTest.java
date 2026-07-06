@@ -33,6 +33,7 @@ class PlanServiceTest {
             "PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP",
             "326305",
             "ESTADUAL",
+            "Coletivo por Adesão",
             true,
             true,
             List.of("Urg/emerg Nacional Hr — Assistência"));

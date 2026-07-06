@@ -1,6 +1,6 @@
 # 0010 - Telemedicine
 
-**Status:** Draft
+**Status:** Approved (Phase 4)
 
 ## Goal
 
@@ -154,14 +154,20 @@ sensitive).
   scenario) as active beneficiary, then the session is created for PEDRO with MARIA as
   author.
 
-## Open Questions
+## Resolved Decisions (Phase 4 — owner)
 
-- **OQ1** — Does the POC room need real audio/video, or a state-driven room screen
-  (professional, timer, states) without media? · large cost/architecture impact (WebRTC
-  vs none) · proposed default: **state-driven room without real media**; video is a
-  post-POC evolution behind an ADR.
-- **OQ2** — Queue re-entry after connection drop · affects fairness/UX · proposed default:
-  session stays `EM_FILA` holding its position for up to **2 minutes** of disconnection.
+- **OQ1 → state-driven room, no real media** (owner). The room is a state screen
+  (professional + CRM, start time, running duration, states, "Encerrar minha participação")
+  with **no audio/video**; real media is a post-POC evolution behind an ADR (ADR-0015).
+- **OQ2 → 2-minute disconnection hold** (DL-0017). A session stays `EM_FILA` holding its
+  position for up to 2 minutes of disconnection before it may expire.
+- **Queue transport → SSE (push)** (owner, BR6). Position/ETA/state are pushed over
+  Server-Sent Events (`text/event-stream`); the server re-emits the recomputed state
+  periodically — no client polling, no broker (ADR-0016, DL-0022).
+- **Professional side → minimal SPEC-0018 tele slice** (owner). The operator transitions
+  (start attending, close with documents) are delivered in Phase 4 as a narrow, flag-gated
+  slice of SPEC-0018 (start-attending, close-with-documents, issue-document) — the rest of
+  SPEC-0018 lands in Phase 5 and absorbs it (ADR-0017, DL-0021).
 
 ## Out of Scope
 

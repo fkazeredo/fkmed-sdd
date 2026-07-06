@@ -1,6 +1,6 @@
 # 0008 - Provider Network Search
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -89,13 +89,20 @@ Not applicable.
 
 ## Persistence Changes
 
-Migration (number at implementation): registries `service_type`, `specialty`, `seal`;
-`provider` (name ≤ 140, service_type_code, address fields — CEP, street, number,
-complement, neighborhood, municipality, UF —, phone, active); `provider_specialty`;
-`provider_seal`. Seed: UF RJ with ≥ 6 municipalities (Rio de Janeiro, Cabo Frio, Niterói,
-Três Rios, Rio Bonito, Rio das Ostras), Rio neighborhoods including Centro, Copacabana and
-Tijuca, ≥ 15 specialties, ≥ 40 active providers with ≥ 10 Cardiologia in Rio de
-Janeiro/Centro, seals varied, plus a few inactive providers for BR13 tests.
+Migration V15 (Phase 3). **Geography registry `municipality`** (IBGE code PK, name, `uf` FK →
+`uf_registry`) seeded with the **full official IBGE list** — the 27 UFs already live in
+`uf_registry` (V11) + **~5,570 municipalities** (owner decision, DL-0014; source: IBGE
+localidades API). Plan **coverage**: add `plan.coverage_uf` (nullable) — `coverage='ESTADUAL'`
+→ the covered UF code; `'NACIONAL'` → `null` = all (DL-0014); the seeded plan is ESTADUAL/RJ.
+Registries `service_type`, `specialty`, `seal`; `provider` (name ≤ 140, service_type_code,
+`municipality` FK + free-text `neighborhood` + address fields — CEP, street, number,
+complement —, phone, active); `provider_specialty`; `provider_seal`. **Provider seed** (RJ):
+≥ 6 municipalities with active providers (Rio de Janeiro, Cabo Frio, Niterói, Três Rios, Rio
+Bonito, Rio das Ostras), Rio neighborhoods including Centro, Copacabana and Tijuca, ≥ 15
+specialties, ≥ 40 active providers with ≥ 10 Cardiologia in Rio de Janeiro/Centro, seals
+varied, plus a few inactive providers for BR13 tests. The funnel lists (states/municipalities/
+neighborhoods offered) are **derived from active providers within coverage** (BR3/BR4) over
+this registry.
 
 ## Validation Rules
 
@@ -147,9 +154,8 @@ gap signal); no personal data involved.
 
 ## Open Questions
 
-- **OQ1** — Official meaning of the reference app's "P"/"R" seals is unconfirmed · only
-  affects badge copy · proposed default: treat as "provider qualification seals" with
-  registry-parameterizable descriptions until product defines.
+- **OQ1** *(resolved — DL-0012)* — Seals are treated as **provider qualification badges** with
+  registry-parameterizable descriptions until the product defines their official meaning.
 
 ## Out of Scope
 

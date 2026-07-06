@@ -5,4 +5,7 @@
 export const environment = {
   production: true,
   oidcIssuer: window.location.origin,
+  // SPEC-0006 BR10: product version from build config (kept in lockstep with backend/pom.xml
+  // <version> by /release, DECISIONS-BASELINE §0015).
+  appVersion: '0.8.0',
 };

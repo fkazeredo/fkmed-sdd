@@ -8,6 +8,122 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.8.0] — 2026-07-06
+
+Phase 4 — "Cuidado digital" (SPEC-0010 Telemedicine, SPEC-0011 Clinical Documents, + the
+telemedicine slice of SPEC-0018 Operator Simulation). **Closes Phase 4.**
+
+### Added
+
+- **Telemedicine** (SPEC-0010): a **Pronto Atendimento** virtual queue (triage → versioned term →
+  queue → room → closure summary) with position/ETA pushed **live over SSE**, a **state-driven room**
+  (professional + CRM + running duration, no media — ADR-0015), the single-active-session rule,
+  no-show expiry, and **scheduled teleconsultation** built on SPEC-0009 (virtual "Telemedicina" unit +
+  modality + a 10-minute join window). New `domain.telemedicine` module (11th) + `/api/tele/*` (V19;
+  ADR-0014/0015/0016; DL-0017/0018/0022).
+- **Minha Saúde — clinical documents** (SPEC-0011): a read-only hub with 3 categories (exam orders ·
+  referrals · prescriptions/sick notes), combined **beneficiary + period** filters, validity badges,
+  type-specific detail (incl. the **CID** on sick notes — DL-0020), faithful **PDF** download, and a
+  referral **"Agendar consulta"** handoff that opens the SPEC-0009 wizard with the specialty
+  pre-selected. New `domain.clinicaldocs` module (10th) + `/api/clinical-documents*` (V18; ADR-0013;
+  DL-0019).
+- **Operator-simulation — telemedicine slice** (SPEC-0018): a **dev-only, flag-gated, internal-role**
+  REST family `/api/sim/tele/*` + `/api/sim/documents` that drives the operator side (start attending,
+  close a session **issuing clinical documents atomically**, issue a document) — so the full Pronto
+  Atendimento journey (queue → room → closure → prescription in Minha Saúde) is demonstrable
+  end-to-end. Absent/404 in production, 403 for beneficiaries, audited, prod fail-fast (V22; ADR-0017;
+  DL-0021).
+
+### Changed
+
+- **Cross-spec wiring**: a telemedicine closure issues clinical documents (SPEC-0010 → SPEC-0011);
+  `TeleTurnReached`/`TeleSessionClosed`/`ClinicalDocumentIssued` become in-app + e-mail notifications
+  through the SPEC-0004 center (V20 seeds the three catalog types, no clinical content in the bodies).
+- The Modulith module map grows to **11 modules**; `AppointmentView` gains a `modality`
+  (`PRESENCIAL`/`TELEMEDICINA`) field for the tele badge.
+
+### Technical
+
+- First **SSE (push)** surface in the codebase (Spring `SseEmitter`, periodic re-emit; ADR-0016).
+- Scheduled teleconsultation reuses `domain.appointment` unchanged (a virtual unit + modality flag;
+  DL-0018) — no second scheduling engine.
+- Lockstep bump 0.7.0 → 0.8.0 (pom / OpenApiConfig / OpenAPI snapshot / frontend `appVersion`).
+
+## [0.7.0] — 2026-07-05
+
+Phase 3 — "Encontrar atendimento" (SPEC-0008 Provider Network Search, SPEC-0009 Appointments).
+**Closes Phase 3.**
+
+### Added
+
+- **Provider network search** (SPEC-0008): a read-only network hub with a guided **funnel**
+  (state → municipality → neighborhood → service type → specialty) and a **name search** (≥ 3
+  chars), every list derived from the **active** provider base **within the plan's coverage**,
+  plus a provider **detail** sheet (address, phone, specialties, qualification **seals**) with
+  route/copy actions. New `domain.network` module + `/api/network/*`; a full **IBGE geography
+  registry** (27 UFs + ~5,570 municipalities) and a `plan.coverage`/`plan.coverage_uf` coverage
+  model (V15; ADR-0011; DL-0012/0014).
+- **Appointments** (SPEC-0009): book, cancel and reschedule **consultations and exams** in the
+  operator's own units against **real slot capacity under concurrency** (last-seat race resolved
+  fail-fast — exactly one wins), a unique **protocol** (`AG-…`), a **medical-order upload** for
+  exams (JPG/PNG/PDF ≤ 5 MB, magic-byte validated) and **Meus Agendamentos** (upcoming/history,
+  per-beneficiary filter). New `domain.appointment` module + `/api/appointments/*` (V16;
+  ADR-0012; DL-0013/0015/0016). Minimum booking antecedence **2 h**; 30-day horizon.
+- **Cross-spec wiring**: `AppointmentConfirmed`/`Cancelled`/`Rescheduled` become in-app plus
+  e-mail notifications through the SPEC-0004 center, delivered **AFTER_COMMIT** (V17 seeds the
+  `appointment.cancelled`/`.rescheduled` catalog types).
+
+### Changed
+
+- The provider **specialty registry** is shared with appointments (a one-directional
+  `appointment → network` dependency; no cycle).
+- The Modulith module map grows to **9 modules** (adds `domain.network`, `domain.appointment`);
+  `modules.puml` regenerated with the `notification → appointment` edge.
+
+### Technical
+
+- Slot capacity guarded by an optimistic `@Version` lock (fail-fast, no retry — ADR-0012),
+  proven by a real 2-thread Testcontainers concurrency IT (exactly one of two racers wins).
+- Shared **protocol generator** in `domain.plan` (atomic DB sequence, `AG-AAAAMMDD-####`; DL-0016).
+- Lockstep bump 0.6.0 → 0.7.0 (pom / OpenApiConfig / OpenAPI snapshot / frontend `appVersion`).
+
+## [0.6.0] — 2026-07-05
+
+Phase 2 — "Minha conta e identificação" (SPEC-0004 Notifications, SPEC-0006 Profile & Account,
+SPEC-0007 Digital Card). **Closes Phase 2.**
+
+### Added
+
+- **Notification center** (SPEC-0004): a header **bell** with a live unread counter, a paginated
+  notification center (read/unread, deep links, mark-one/mark-all-read) and per-event-type **e-mail
+  preferences** (mandatory security types locked). Domain events become in-app notifications and,
+  per type, e-mails delivered **AFTER_COMMIT** so a mail outage never rolls back business work. New
+  `domain.notification` module + `/api/notifications*` (V10; ADR-0008; DL-0006/0007/0008).
+- **Profile & Account** (SPEC-0006): the profile menu (photo, contacts, security shortcuts, legal
+  documents, sign out) with the build **product version**; **avatar photo** upload (JPG/PNG ≤ 5 MB,
+  content-validated by magic bytes) per beneficiary, propagated app-wide without re-login; **partial
+  contact/address editing** (audited); **versioned** Terms of Use / Privacy Notice with a mandatory
+  re-acceptance **interception**; sign out. `/api/beneficiaries/{id}/{profile,contacts,photo}` and
+  `/api/legal-documents/*` (V11/V12; DL-0011).
+- **Digital Card** (SPEC-0007): the visual card + data sheet for the active beneficiary, "Minhas
+  Carteirinhas", copy card number, and a **PDF** download (OpenPDF, card-on-A4). CNS shown in full
+  only here; viewing a dependent's card is audited. New `domain.card` module + `/api/cards/{id}` and
+  `/pdf` (V9; ADR-0007/0010; DL-0009/0010).
+- **Cross-spec wiring**: a contact-e-mail change raises the mandatory `account.contact-changed`
+  notification — in-app plus a security-notice e-mail to **both the old and the new** address.
+
+### Changed
+
+- **`AuditRetentionJob` moved from `infra` to the `application` layer** — a scheduled job is a
+  delivery mechanism (like a REST endpoint or a queue consumer), so it belongs with the delivery
+  adapters and calls the `domain.audit` facade (owner decision).
+
+### Security
+
+- **De-sensitized the JWT** (ADR-0009): the beneficiary card number is no longer stored in the
+  issued token — it is resolved server-side — resolving a CodeQL "clear-text storage of sensitive
+  information" alert. A regression test asserts issued tokens carry no card number.
+
 ## [0.5.0] — 2026-07-05
 
 Home (SPEC-0005) — Phase 1, slice 1.4. **Closes Phase 1.**

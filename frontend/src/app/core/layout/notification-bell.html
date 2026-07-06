@@ -1,0 +1,17 @@
+<a
+  routerLink="/notificacoes"
+  class="relative flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-teal-700"
+  data-testid="notification-bell"
+  [attr.aria-label]="ariaLabel()"
+>
+  <i class="pi pi-bell text-xl" aria-hidden="true"></i>
+  @if (state.unread() > 0) {
+    <span
+      class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-xs font-semibold text-white"
+      data-testid="notification-bell-count"
+      aria-hidden="true"
+    >
+      {{ badgeLabel() }}
+    </span>
+  }
+</a>

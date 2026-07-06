@@ -15,7 +15,7 @@
   <artifactId>fkmed-backend</artifactId>
   <!-- SemVer source of truth (DECISIONS-BASELINE §0015). Kept in lockstep with
        com.fkmed.infra.openapi.OpenApiConfig and the committed OpenAPI snapshot. -->
-  <version>0.5.0</version>
+  <version>0.8.0</version>
   <name>fkmed-backend</name>
   <description>FKMed — health plan beneficiary portal (backend)</description>
 
@@ -23,6 +23,7 @@
     <java.version>21</java.version>
     <spring-modulith.version>2.1.0</spring-modulith.version>
     <springdoc.version>3.0.3</springdoc.version>
+    <openpdf.version>2.0.3</openpdf.version>
     <archunit.version>1.4.2</archunit.version>
     <!-- Gate plugin versions (docs/BOOTSTRAP.md §2) -->
     <spotless.version>3.7.0</spotless.version>
@@ -116,6 +117,13 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    <!-- SPEC-0007 (Digital Card): PDF rendering for the card download (BR3). Pure library call,
+         no external system — no port/adapter seam warranted (Rule Zero, ADR-0007). -->
+    <dependency>
+      <groupId>com.github.librepdf</groupId>
+      <artifactId>openpdf</artifactId>
+      <version>${openpdf.version}</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>

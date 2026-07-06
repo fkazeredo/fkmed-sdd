@@ -11,9 +11,11 @@ import Aura from '@primeuix/themes/aura';
 import { provideOAuthClient } from 'angular-oauth2-oidc';
 import { providePrimeNG } from 'primeng/config';
 
+import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { AuthService } from './core/auth/auth.service';
 import { sessionExpiryInterceptor } from './core/auth/session-expiry.interceptor';
+import { APP_VERSION } from './core/config/app-version';
 import { provideI18n } from './core/i18n/provide-i18n';
 
 export const appConfig: ApplicationConfig = {
@@ -29,6 +31,7 @@ export const appConfig: ApplicationConfig = {
       resourceServer: { allowedUrls: ['/api'], sendAccessToken: true },
     }),
     provideI18n(),
+    { provide: APP_VERSION, useValue: environment.appVersion },
     provideAppInitializer(() => inject(AuthService).init()),
   ],
 };

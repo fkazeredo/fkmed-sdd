@@ -35,6 +35,25 @@ public class Plan {
   @Column(nullable = false)
   private String coverage;
 
+  /**
+   * The UF covered by an ESTADUAL plan; {@code null} for a NACIONAL plan, meaning every UF (SPEC-
+   * 0008 BR4, DL-0014). Read cross-module by {@code domain.network} directly against this column (a
+   * shared-data projection read, never through this entity/its repository — see {@code
+   * domain.network.PlanCoverageLookup}); not yet set by {@link #create}, since plans are only
+   * migration-seeded in this phase (V15 seeds the existing plan as ESTADUAL/RJ).
+   */
+  @Column(name = "coverage_uf", length = 2)
+  private String coverageUf;
+
+  /**
+   * The plan's contracting/segmentation classification shown next to the plan name on the digital
+   * card face (SPEC-0007 BR1) — distinct from {@link #coverage}, which is the ANS geographic-reach
+   * seal (BR2). Kept a plain column (baseline §0019: no registry table yet for a single POC value —
+   * DL-0010), not an enum (free-text operator label, not a state machine or a value fixed by law).
+   */
+  @Column(nullable = false)
+  private String category;
+
   @Column(nullable = false)
   private boolean copay;
 
@@ -50,6 +69,7 @@ public class Plan {
       String name,
       String ansRegistration,
       String coverage,
+      String category,
       boolean copay,
       boolean reimbursement,
       List<String> additives) {
@@ -57,6 +77,7 @@ public class Plan {
     this.name = name;
     this.ansRegistration = ansRegistration;
     this.coverage = coverage;
+    this.category = category;
     this.copay = copay;
     this.reimbursement = reimbursement;
     this.additives = List.copyOf(additives);
@@ -65,12 +86,14 @@ public class Plan {
   /**
    * Creates a plan validating the ANS invariants.
    *
-   * @throws IllegalArgumentException when name is blank or the ANS registration is not 6 digits.
+   * @throws IllegalArgumentException when name is blank, the ANS registration is not 6 digits,
+   *     coverage is blank or category is blank.
    */
   public static Plan create(
       String name,
       String ansRegistration,
       String coverage,
+      String category,
       boolean copay,
       boolean reimbursement,
       List<String> additives) {
@@ -83,7 +106,17 @@ public class Plan {
     if (coverage == null || coverage.isBlank()) {
       throw new IllegalArgumentException("plan coverage is required");
     }
+    if (category == null || category.isBlank()) {
+      throw new IllegalArgumentException("plan category is required");
+    }
     return new Plan(
-        UUID.randomUUID(), name, ansRegistration, coverage, copay, reimbursement, additives);
+        UUID.randomUUID(),
+        name,
+        ansRegistration,
+        coverage,
+        category,
+        copay,
+        reimbursement,
+        additives);
   }
 }

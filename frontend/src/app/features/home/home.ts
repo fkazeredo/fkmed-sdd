@@ -13,6 +13,7 @@ import { AccordionModule } from 'primeng/accordion';
 import { CardModule } from 'primeng/card';
 import { CarouselModule } from 'primeng/carousel';
 import { DialogModule } from 'primeng/dialog';
+import { AvatarStateService } from '../../core/context/avatar-state.service';
 import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
 import { BeneficiarySummary, BeneficiarySummaryApi } from '../../core/context/beneficiary-summary.api';
 import { HomeApi, HomeBanner, HomeNotice } from './home.api';
@@ -87,6 +88,7 @@ export class Home implements OnInit, OnDestroy {
   private readonly homeApi = inject(HomeApi);
   private readonly beneficiaryApi = inject(BeneficiarySummaryApi);
   protected readonly context = inject(BeneficiaryContextService);
+  private readonly avatar = inject(AvatarStateService);
 
   protected readonly shortcuts = QUICK_ACCESS_SHORTCUTS;
 
@@ -94,6 +96,10 @@ export class Home implements OnInit, OnDestroy {
   readonly cardLoading = signal(true);
   readonly cardError = signal(false);
   readonly summary = signal<BeneficiarySummary | null>(null);
+
+  // SPEC-0006 BR3: the avatar reflects the shared avatar state (a Bearer-authenticated blob), so a
+  // photo changed in the Perfil area shows here without a new login; null → the initial placeholder.
+  readonly avatarUrl = computed(() => this.avatar.avatarUrl(this.context.active()?.beneficiaryId));
 
   // Content (BR6/BR7/BR8).
   private readonly banners = signal<HomeBanner[]>([]);
@@ -141,6 +147,10 @@ export class Home implements OnInit, OnDestroy {
       next: (response) => {
         this.summary.set(response);
         this.cardLoading.set(false);
+        // SPEC-0006 BR3: blob-fetch the avatar only when the backend reports one (avoids a 404).
+        if (response.avatarUrl) {
+          this.avatar.load(beneficiaryId);
+        }
       },
       error: () => {
         this.cardError.set(true);

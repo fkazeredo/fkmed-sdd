@@ -2,7 +2,7 @@
 
 > Artefato vivo em **pt-BR** (idioma do produto). Atualizado via `/manual` ao fechar toda
 > fatia com mudança visível ao usuário — a fatia só está "pronta" quando este manual
-> reflete a mudança. Versão do produto: **0.5.0** (pré-release; tag pendente do owner).
+> reflete a mudança. Versão do produto: **0.6.0** (pré-release; tag pendente do owner).
 
 ## Sobre o portal
 
@@ -92,10 +92,123 @@ operar no contexto do beneficiário escolhido (por exemplo, o cartão do benefic
 acesso é sempre validado pelo servidor: dados de alguém fora do seu núcleo familiar não são
 acessíveis.
 
+### 7. Notificações
+
+No topo do portal, o **sino** mostra quantas notificações você tem **não lidas**. Clique nele para
+abrir a **Central de Notificações**: as mais recentes primeiro, com estado lido/não lido e um link
+direto para o assunto de cada uma. Você pode **marcar como lida** uma a uma ou **marcar todas como
+lidas** — o contador do sino atualiza na hora. Em **Preferências de notificação** você escolhe, por
+tipo de evento, se também quer receber um **e-mail**; a notificação no aplicativo é sempre enviada.
+Tipos de segurança/conta (por exemplo, troca de senha ou alteração dos dados de contato) são
+**obrigatórios** e não podem ter o e-mail desativado. Nenhuma notificação traz dados sensíveis
+completos (CPF, CNS ou dados bancários).
+
+### 8. Perfil e conta
+
+No menu de **Perfil** você cuida da sua conta:
+
+- **Alterar Foto** — envie uma foto (JPG ou PNG, até **5 MB**) com **recorte quadrado**; ela vale
+  para o beneficiário e passa a aparecer em todo o portal (Home, perfil) **sem novo login**.
+  **Remover foto** volta ao avatar padrão. O titular pode alterar a foto de um dependente pelo
+  seletor de beneficiário ativo.
+- **Alterar Cadastro** — seus **dados de contrato** (nome, CPF, data de nascimento, número da
+  carteirinha) são somente leitura ("Para alterar, procure os canais de atendimento"). Você edita
+  seus **dados de contato e endereço** — **e-mail de contato** e **celular** são obrigatórios. O
+  salvamento é **parcial** (só o que mudou) e confirmado. Ao trocar o e-mail de contato, um **aviso
+  de segurança** é enviado ao endereço **antigo e ao novo**.
+- **Comunicado de privacidade** e **Termos de uso** — leia os documentos com **versão e data**.
+  Quando uma nova versão é publicada, o portal **intercepta a navegação** e pede o **"Li e aceito"**
+  antes de continuar (apenas **Sair** fica disponível).
+- **Segurança**, **Central de Libras** e **Perguntas Frequentes** — atalhos (alguns "em breve").
+- **Sair** — encerra a sessão (com confirmação). A **versão do produto** aparece ao lado do Sair.
+
+### 9. Carteirinha digital
+
+A **Carteirinha** mostra o cartão do beneficiário ativo — identidade visual, nome, plano, número e
+selo de abrangência — e a **ficha de dados** (CNS, Registro ANS, abrangência e adicionais). Use
+**Copiar número** para copiar os 9 dígitos e **Salvar Carteirinha** para baixar um **PDF** (formato
+cartão em folha A4) e levar à recepção. **Minhas Carteirinhas** lista a carteirinha de cada
+beneficiário a que você tem acesso; selecionar uma abre o cartão desse beneficiário. O **CNS**
+aparece por extenso **apenas** nesta tela e no PDF; em qualquer outro lugar do portal ele é
+mascarado. Um beneficiário **inativo** mostra o aviso "carteirinha indisponível".
+
+### 10. Rede Credenciada (encontrar prestadores)
+
+Em **Rede Credenciada** você encontra os prestadores da rede — dentro da **cobertura do seu plano**
+e apenas os que estão **ativos**. O hub abre em **Busca de rede** (os cartões **Agendamento**,
+**Telemedicina** e **Minha Saúde** levam às demais jornadas). Há duas formas de buscar:
+
+- **Buscar por localidade** (funil): escolha **Estado → Município → Bairro** (o bairro é opcional —
+  "Todos"), depois **O que deseja buscar?** (o tipo de serviço) e, quando o tipo pedir, a
+  **especialidade**. As opções vão sendo montadas a partir dos prestadores realmente disponíveis, então
+  você só vê localidades e especialidades que existem na rede.
+- **Buscar por nome**: digite ao menos **3 caracteres** do nome do prestador (dá para **filtrar por
+  município**).
+
+A lista **Prestadores encontrados** mostra a data de **referência** e permite **alterar localidade** ou
+**especialidade**. Ao abrir um prestador, o **Detalhe** traz **Especialidades**, **Endereço**,
+**Telefone** e **Selos** de qualificação, com **Traçar rota** (abre o mapa) e **Copiar endereço**. Um
+prestador que saiu da rede mostra "**Prestador indisponível**".
+
+### 11. Agendamento (consultas e exames)
+
+Em **Agendamento** você marca, cancela e remarca **consultas** e **exames** nas unidades próprias da
+operadora. O hub tem **Agendar Consulta**, **Agendar Exame**, **Meus Agendamentos** e **Telemedicina**.
+
+- **Agendar Consulta** (4 etapas): **Especialidade → Unidade → Data e horário → Revisão** e
+  **Confirmar agendamento**. Ao confirmar, aparece o seu **protocolo**.
+- **Agendar Exame** (5 etapas): **Exame → Pedido médico → Unidade → Data e horário → Revisão**. O
+  **pedido médico** é obrigatório — anexe um **JPG, PNG ou PDF de até 5 MB**.
+- Os horários respeitam a **antecedência mínima de 2 horas** e a janela dos **próximos 30 dias**. Como
+  a vaga é real, se alguém confirmar o último lugar antes de você o portal avisa "**O horário acabou de
+  ser preenchido. Escolha outro.**".
+
+**Meus Agendamentos** separa **Próximos** e **Histórico** (com filtro por **beneficiário**) e mostra o
+**status** de cada um — *Agendado, Reagendado, Cancelado, Realizado*. Você pode **Cancelar** (libera o
+horário; motivo opcional; não é possível após o horário de início) e **Reagendar** (escolhe nova data e
+horário **mantendo o protocolo**). A cada confirmação, cancelamento ou remarcação você recebe um aviso
+na **central de notificações** e, conforme suas preferências, por **e-mail**.
+
+### 12. Telemedicina
+
+Em **Telemedicina** você fala com um profissional à distância, de duas formas.
+
+- **Pronto Atendimento** (24h): faça a **triagem** — informe a queixa (10 a 500 caracteres), marque os
+  **sintomas** (e a duração) e, se marcar um sintoma de **emergência**, o portal alerta e orienta a
+  procurar um **pronto-socorro 24h**, deixando você decidir se prossegue. Aceite o **termo de
+  teleatendimento** e **entre na fila**: a tela mostra a sua **posição e a estimativa de espera
+  atualizando sozinha** (sem recarregar). Você pode **Sair da fila** a qualquer momento. Quando chega a
+  sua vez, a **sala** abre mostrando o profissional (nome e CRM) e o tempo de atendimento correndo — sem
+  vídeo neste momento. Ao encerrar, você vê um **resumo** com as orientações e os **documentos emitidos**,
+  com o link **"Ver em Minha Saúde"**. Você recebe avisos na central de notificações (e por e-mail).
+- **Teleconsulta agendada**: escolha a **especialidade**, a **data e horário** da agenda de telemedicina
+  e confirme — vira um agendamento com o selo **Telemedicina** (mesmo protocolo/cancelar/remarcar das
+  consultas). O botão **"Entrar na consulta"** habilita **10 minutos antes** do horário até o fim.
+
+Só **um** atendimento por vez: se você já está na fila e abre outro Pronto Atendimento, o portal retoma o
+atendimento existente, mantendo a sua posição.
+
+### 13. Minha Saúde (seus documentos)
+
+Em **Minha Saúde** ficam os seus documentos clínicos, em 3 categorias: **Solicitação de Exames**,
+**Encaminhamentos** e **Receituários/Atestados**. Eles nascem nos seus atendimentos (por exemplo, no
+encerramento de uma telemedicina) e aparecem **na hora**. Em cada lista você filtra por **beneficiário** e
+**período** (30/90/365 dias ou um intervalo personalizado); cada card mostra o título, o profissional e
+CRM, a data e um **selo de validade** ("Válido até…" ou "Expirado" — um documento expirado continua
+disponível para baixar). O **detalhe** traz o cabeçalho e o conteúdo por tipo — exames solicitados (com
+código TUSS), medicações (posologia e orientação), encaminhamento (especialidade e motivo) ou atestado
+(período de afastamento, **CID** e observações) — e o botão **Baixar PDF**. Num **encaminhamento**, o
+botão **"Agendar consulta"** abre o assistente de agendamento já com a especialidade escolhida. Você só vê
+os documentos dos beneficiários a que tem acesso; o acesso do titular a um documento de dependente é
+registrado.
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-06 | 0.8.0 | Cuidado digital: Telemedicina (Pronto Atendimento com fila ao vivo, sala e encerramento; teleconsulta agendada) e Minha Saúde (documentos clínicos com filtros, detalhe, PDF e "agendar" a partir de encaminhamento) — fecha a Fase 4 |
+| 2026-07-05 | 0.7.0 | Encontrar atendimento: Rede Credenciada (busca por localidade/nome, detalhe do prestador) e Agendamento de consultas/exames (vaga real, protocolo, cancelar/remarcar, avisos) — fecha a Fase 3 |
+| 2026-07-05 | 0.6.0 | Minha conta e identificação: central de notificações (sino), perfil (foto, cadastro, termos versionados, sair) e carteirinha digital com PDF — fecha a Fase 2 |
 | 2026-07-05 | 0.5.0 | Home (Início): cartão do beneficiário ativo, Acesso Rápido, banners e avisos — fecha a Fase 1 |
 | 2026-07-04 | 0.4.0 | Beneficiário ativo: seletor no topo do portal com escopo familiar (titular vê dependentes) |
 | 2026-07-04 | 0.3.0 | Segurança da conta: bloqueio, recuperação e troca de senha, sessão e tela Segurança |

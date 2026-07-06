@@ -1,0 +1,14 @@
+-- SPEC-0007 (Digital Card): the visual card + data sheet read the existing beneficiary/plan
+-- registry. Card number (BR9: 9 digits), CNS (BR9: 15 digits), ANS registration, coverage and
+-- additives were already seeded correctly for AC1 by V1 — nothing to add there.
+--
+-- The one missing registry column is the plan's contracting-category label shown next to the
+-- plan name on the card face (BR1) — distinct from `coverage`, which is BR2's seal (the ANS
+-- geographic-reach value, e.g. ESTADUAL/NACIONAL). Modeled as a plain column, same precedent as
+-- `coverage` itself (V1: "the registry table arrives with the spec that manages it", baseline
+-- §0019) — no registry table is justified yet for a single POC value.
+--
+-- Seed value/column choice: DL-0006. "Coletivo por Adesão" is read directly off the word
+-- "ADESÃO" already present in the canonical plan name seeded by V1
+-- ("PLANO MÉDICO — ADESÃO PRATA RJ QP COPART TP"), not an unrelated invention.
+alter table plan add column category varchar(60) not null default 'Coletivo por Adesão';

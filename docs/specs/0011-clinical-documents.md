@@ -1,6 +1,6 @@
 # 0011 - Clinical Documents (Minha Saúde)
 
-**Status:** Draft
+**Status:** Approved (Phase 4)
 
 ## Goal
 
@@ -42,7 +42,8 @@ document type has a default validity that is a product parameter.
   - *Referral*: target specialty and reason; button **"Agendar consulta"** opening the
     SPEC-0009 wizard with the specialty pre-selected.
   - *Prescription*: medications with posology and guidance.
-  - *Sick note*: leave period and notes.
+  - *Sick note*: leave period, the **CID (diagnosis code)** and notes (owner decision — the CID
+    IS displayed on sick notes, DL-0020).
 - **BR7** — "Baixar PDF" MUST generate a PDF faithful to the detail content, including
   issuer, CRM, dates and validity.
 - **BR8** — A document belongs to exactly **one** beneficiary and is **immutable** after
@@ -79,7 +80,7 @@ Migration (number at implementation): `clinical_document` (id, type
 `EXAM_ORDER|REFERRAL|PRESCRIPTION|SICK_NOTE`, beneficiary_id, professional_name, crm,
 issued_at, valid_until nullable, origin session/operator ref, immutable payload);
 `exam_order_item` (exam name, TUSS); `prescription_item` (medication, posology, guidance);
-referral fields (target specialty code, reason); sick-note fields (period, notes).
+referral fields (target specialty code, reason); sick-note fields (period, **cid**, notes).
 Validity defaults as configuration parameters.
 
 ## Validation Rules
@@ -122,10 +123,12 @@ content in logs.
   CRM, date, validity and the exam list with TUSS codes.
 - **AC6** (BR2) — Given period "últimos 30 dias", then older documents do not appear.
 
-## Open Questions
+## Resolved Decisions (Phase 4 — owner)
 
-- **OQ1** — Display of CID (diagnosis code) on sick notes · medical-privacy decision ·
-  proposed default: **not displayed** (confirm with legal/product).
+- **OQ1 → CID IS displayed on sick notes** (owner, overriding the spec's proposed
+  "not displayed" default; DL-0020). The sick-note detail and its PDF show the CID
+  (diagnosis code). *Product accepts the medical-privacy trade-off; revisit with legal
+  if the product position changes.*
 
 ## Out of Scope
 
