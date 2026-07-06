@@ -123,10 +123,14 @@ class AppointmentApiIT extends AbstractIntegrationTest {
                 .param("specialty", "CARDIOLOGIA")
                 .with(authAs(MARIA_EMAIL)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.days.length()").value(1))
-        .andExpect(jsonPath("$.days[0].date").value(d1.toString()))
-        .andExpect(jsonPath("$.days[0].slots.length()").value(2))
-        .andExpect(jsonPath("$.days[0].slots[0].remaining").value(2));
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].date").value(d1.toString()))
+        .andExpect(jsonPath("$[0].slots.length()").value(2))
+        .andExpect(jsonPath("$[0].slots[0].remaining").value(2))
+        .andExpect(jsonPath("$[0].slots[0].available").value(true))
+        .andExpect(
+            jsonPath("$[0].slots[0].slot")
+                .value(org.hamcrest.Matchers.startsWith(d1.toString() + "T")));
   }
 
   @Test

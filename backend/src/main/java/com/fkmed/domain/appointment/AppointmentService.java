@@ -108,7 +108,13 @@ public class AppointmentService {
                         entry.getKey(),
                         entry.getValue().stream()
                             .sorted(Comparator.comparing(ScheduleSlot::getSlotTime))
-                            .map(s -> new AvailabilityResponse.Slot(s.getSlotTime(), s.remaining()))
+                            .map(
+                                s ->
+                                    new AvailabilityResponse.Slot(
+                                        LocalDateTime.of(s.getSlotDate(), s.getSlotTime())
+                                            .toString(),
+                                        s.remaining(),
+                                        s.remaining() > 0))
                             .toList()))
             .toList();
     return new AvailabilityResponse(unitId, type, code, days);

@@ -151,22 +151,19 @@ values
         '(21) 3333-2000'
     );
 
--- Both units serve a representative set of specialties (domain.network registry) and exams.
+-- Both units serve every consultation specialty in the domain.network registry and every exam in
+-- the exam_type registry, so any option the booking wizard offers resolves to a bookable own unit.
+-- The consultation wizard reuses the shared registry (`/api/network/specialties`); a specialty with
+-- no serving own unit would otherwise dead-end at the empty unit step (the unit picker shows
+-- "no units" and the journey cannot advance).
 insert into unit_agenda (id, unit_id, scope_type, scope_code)
-select gen_random_uuid(), u.id, s.scope_type, s.scope_code
+select gen_random_uuid(), u.id, 'CONSULTATION', sp.code
 from care_unit u
-cross join (values
-    ('CONSULTATION', 'CARDIOLOGIA'),
-    ('CONSULTATION', 'DERMATOLOGIA'),
-    ('CONSULTATION', 'PEDIATRIA'),
-    ('CONSULTATION', 'CLINICA_MEDICA'),
-    ('CONSULTATION', 'GINECOLOGIA_OBSTETRICIA'),
-    ('CONSULTATION', 'ORTOPEDIA_TRAUMATOLOGIA'),
-    ('EXAM', 'HEMOGRAMA'),
-    ('EXAM', 'RAIO_X'),
-    ('EXAM', 'ULTRASSONOGRAFIA'),
-    ('EXAM', 'TOMOGRAFIA')
-) as s (scope_type, scope_code);
+cross join specialty sp
+union all
+select gen_random_uuid(), u.id, 'EXAM', et.code
+from care_unit u
+cross join exam_type et;
 
 -- Seed the agenda for the next 30 days, Mon-Sat, 08:00-17:00 in 30-minute slots (last start
 -- 16:30). Dates are relative to the migration's current_date, so a fresh Testcontainers database

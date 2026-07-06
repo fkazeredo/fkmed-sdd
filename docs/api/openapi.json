@@ -1191,7 +1191,10 @@
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AvailabilityResponse"
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Day"
+                  }
                 }
               }
             }
@@ -2092,28 +2095,6 @@
           }
         }
       },
-      "AvailabilityResponse" : {
-        "type" : "object",
-        "properties" : {
-          "unitId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "scopeType" : {
-            "type" : "string",
-            "enum" : [ "CONSULTATION", "EXAM" ]
-          },
-          "scopeCode" : {
-            "type" : "string"
-          },
-          "days" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Day"
-            }
-          }
-        }
-      },
       "Day" : {
         "type" : "object",
         "properties" : {
@@ -2132,12 +2113,15 @@
       "Slot" : {
         "type" : "object",
         "properties" : {
-          "time" : {
+          "slot" : {
             "type" : "string"
           },
           "remaining" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "available" : {
+            "type" : "boolean"
           }
         }
       }

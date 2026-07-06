@@ -71,13 +71,14 @@ public class AppointmentController {
    * Days + time slots with remaining capacity for a (unit, scope), respecting horizon/antecedence
    * (BR5).
    */
+  /** The bookable days for a (unit, scope) — a bare array the wizard's slot step renders (BR5). */
   @GetMapping("/availability")
-  AvailabilityResponse availability(
+  List<AvailabilityResponse.Day> availability(
       @RequestParam UUID unitId,
       @RequestParam(required = false) String specialty,
       @RequestParam(required = false) String exam) {
     Scope scope = scope(specialty, exam);
-    return appointments.availability(unitId, scope.type(), scope.code());
+    return appointments.availability(unitId, scope.type(), scope.code()).days();
   }
 
   /** Confirms a consultation (JSON, no attachment) — BR7. */

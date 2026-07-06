@@ -24,6 +24,12 @@ async function login(page: Page): Promise<void> {
   await expect(page.getByTestId('home-page')).toBeVisible();
 }
 
+// Each booking must take a DISTINCT slot: `workers: 1` shares one database across the whole run
+// (see playwright.config), so booking the same beneficiary at the same datetime twice would trip
+// the BR8 time-conflict guard (409). This index walks successive open slots instead of always
+// taking the first, keeping the tests independent of each other's leftovers.
+let nextSlotIndex = 0;
+
 async function bookConsultation(page: Page): Promise<string> {
   await page.getByTestId('nav-agendamento').click();
   await expect(page.getByTestId('agendamento-hub-page')).toBeVisible();
@@ -39,10 +45,11 @@ async function bookConsultation(page: Page): Promise<string> {
   await page.locator('[data-testid^="unit-option-"]').first().click();
   await page.getByTestId('consulta-proximo').click();
 
-  // Step 3 — date/time; pick the first day then the first OPEN slot (full ones are disabled, BR5).
+  // Step 3 — date/time; pick the first day then a DISTINCT open slot per booking (full ones are
+  // disabled, BR5) so successive bookings never collide on the same datetime.
   await expect(page.getByTestId('slot-picker')).toBeVisible();
   await page.locator('[data-testid^="slot-day-"]').first().click();
-  await page.locator('[data-testid^="slot-time-"]:not([disabled])').first().click();
+  await page.locator('[data-testid^="slot-time-"]:not([disabled])').nth(nextSlotIndex++).click();
   await page.getByTestId('consulta-proximo').click();
 
   // Step 4 — review → confirm → protocol (BR7).
@@ -61,7 +68,8 @@ test('AC1: full consultation booking yields a protocol and shows in Próximos as
   await page.getByTestId('consulta-ver-agendamentos').click();
   await expect(page.getByTestId('meus-agendamentos-page')).toBeVisible();
   // Próximos is the default tab; the fresh booking is there as Agendado with its protocol.
-  const card = page.locator('[data-testid^="meus-card-"]', { hasText: protocol });
+  // Scope to the card <li>: inner nodes (meus-card-protocolo/-status/…) share the `meus-card-` prefix.
+  const card = page.locator('li[data-testid^="meus-card-"]', { hasText: protocol });
   await expect(card).toBeVisible();
   await expect(card.getByTestId('meus-card-status')).toContainText('Agendado');
 });
@@ -89,15 +97,22 @@ test('AC4/BR9: cancel moves the appointment to Histórico as CANCELADO, then reb
   await page.getByTestId('consulta-ver-agendamentos').click();
   await expect(page.getByTestId('meus-agendamentos-page')).toBeVisible();
 
-  // Cancel the just-booked commitment (until start, BR9).
-  await page.locator('[data-testid^="meus-cancelar-"]').first().click();
-  await expect(page.getByTestId('meus-cancelar-dialog')).toBeVisible();
+  // Cancel THIS test's own commitment (by its protocol, not `.first()` — the run's shared database
+  // may hold other upcoming cards). Scope to that card <li>: the dialog (meus-cancelar-dialog/
+  // -motivo/-confirmar) shares the `meus-cancelar-` prefix.
+  await page
+    .locator('li[data-testid^="meus-card-"]', { hasText: protocol })
+    .locator('[data-testid^="meus-cancelar-"]')
+    .click();
+  // The p-dialog host (meus-cancelar-dialog) carries no visible box — its content renders in the
+  // overlay (same as perfil.spec). Assert the confirm action instead, which is what appears.
+  await expect(page.getByTestId('meus-cancelar-confirmar')).toBeVisible();
   await page.getByTestId('meus-cancelar-motivo').fill('Imprevisto');
   await page.getByTestId('meus-cancelar-confirmar').click();
 
   // It leaves Próximos and appears in Histórico as Cancelado (BR9/BR12).
   await page.getByTestId('meus-tab-historico').click();
-  const cancelled = page.locator('[data-testid^="meus-card-"]', { hasText: protocol });
+  const cancelled = page.locator('li[data-testid^="meus-card-"]', { hasText: protocol });
   await expect(cancelled).toBeVisible();
   await expect(cancelled.getByTestId('meus-card-status')).toContainText('Cancelado');
 
@@ -106,6 +121,6 @@ test('AC4/BR9: cancel moves the appointment to Histórico as CANCELADO, then reb
   expect(newProtocol).not.toBe(protocol);
   await page.getByTestId('consulta-ver-agendamentos').click();
   await expect(
-    page.locator('[data-testid^="meus-card-"]', { hasText: newProtocol }),
+    page.locator('li[data-testid^="meus-card-"]', { hasText: newProtocol }),
   ).toBeVisible();
 });

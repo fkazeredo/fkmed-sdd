@@ -17,6 +17,12 @@ import { NetworkFunnelState } from './network-funnel-state.service';
   selector: 'app-network-results',
   imports: [TranslatePipe],
   templateUrl: './network-results.html',
+  // The host must be a block box: as the default inline host it does not establish a proper
+  // containing block for the centered `mx-auto` section, so at the top of a tall results page the
+  // host itself becomes the hit-test target over the "Pesquisar por localidade" button (Playwright:
+  // "<app-network-results> intercepts pointer events"). display:block makes the host wrap its
+  // content exactly, so the button receives its own clicks.
+  styles: ':host { display: block; }',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NetworkResults implements OnInit {

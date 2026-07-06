@@ -1,7 +1,6 @@
 package com.fkmed.domain.appointment;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,12 +16,12 @@ public record AvailabilityResponse(
   /** One calendar day with its bookable time slots. */
   public record Day(LocalDate date, List<Slot> slots) {}
 
-  /** One time slot with the seats still free. */
-  public record Slot(LocalTime time, int remaining) {
-
-    /** Whether the slot can still be chosen (has a free seat). */
-    public boolean available() {
-      return remaining > 0;
-    }
-  }
+  /**
+   * One time slot: {@code slot} is the ISO local datetime the client sends back to book (e.g.
+   * {@code 2026-07-08T09:00}, matching the {@code POST /appointments} {@code slot} field), {@code
+   * remaining} the seats still free and {@code available} whether it can still be chosen — a full
+   * slot comes back with {@code remaining == 0}/{@code available == false} so the client renders it
+   * unselectable rather than hiding it (BR5).
+   */
+  public record Slot(String slot, int remaining, boolean available) {}
 }
