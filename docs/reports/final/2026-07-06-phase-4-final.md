@@ -94,4 +94,45 @@ o BE ao FE na reconciliação (minimiza churn de FE); landing check dos worktree
 
 ## Desfecho do CI (pós-abertura do PR)
 
-_A preencher após o push e a corrida do CI (checks verdes, triagem do E2E se necessário)._
+O PR #17 exigiu **3 rodadas de triagem** até o verde:
+
+- **Rodada 1** (3 vermelhos): isolamento do `OperatorSimTeleIT` (apagava o seed V18 em bloco →
+  quebrava o `ClinicalDocumentSeedIT` por ordem de teste); build FE (`TS2353` no campo
+  `AppointmentView.telemedicine`); E2E (selector do card `<a>` + **SSE bufferizado pelo nginx** →
+  `X-Accel-Buffering: no`).
+- **Rodada 2** (BE verify + PIT + E2E): BE verify e PIT eram a **mesma cascata de Spotless** (reflow
+  de comentário no `OperatorSimTeleIT`, commitado sem `spotless:apply`); o E2E revelou 3 defeitos
+  reais só reproduzíveis num stack fresco do worktree (ver Débito técnico).
+- **Rodada 3** (fixes validados localmente): backfill do `target_specialty_name` no V21; token do
+  operador-sim lido do `sessionStorage` (não Home); fluxo de saída da fila do AC2; card com validade
+  no minha-saúde. **tele 2/2 e minha-saúde 3/3 verdes localmente** antes do push.
+
+## Débito técnico (registro por ordem do owner)
+
+> Ordem do owner (2026-07-06): *"esses problemas de CI viraram débito técnico — anote"*. Registrado
+> aqui de forma durável.
+
+**Débito de processo (a causa-raiz comum).** A suíte **E2E do Playwright foi entregue/integrada sem
+nunca ter rodado verde num stack real** — os "gates verdes" dos devs cobriram unit/build, não uma
+corrida E2E completa. Consequência: **6 defeitos** só apareceram no CI (e vários só na reprodução
+local com stack do worktree), custando 3 rodadas de triagem. O risco estava **explicitamente
+sinalizado** neste relatório (Riscos: *"não pré-validei o E2E localmente"*) e se materializou.
+_Mitigação para as próximas fases:_ **rodar a suíte E2E localmente até o verde antes de devolver a
+fatia** (incluir no gate de dev/QA), e **`spotless:apply` obrigatório no pré-commit** do worktree.
+
+**Defeitos encontrados (todos corrigidos nesta fase) e o débito residual:**
+
+| # | Defeito | Camada | Correção | Débito residual |
+|---|---|---|---|---|
+| 1 | SSE bufferizado pelo nginx (sala presa em "Conectando…") | infra/BE | `X-Accel-Buffering: no` na resposta SSE | — (fix production-correct) |
+| 2 | `OperatorSimTeleIT` apagava o seed V18 em bloco | teste BE | delete escopado às linhas do IT | — |
+| 3 | Spotless commitado sem aplicar → cascata BE verify + PIT | processo | `spotless:apply` | pré-commit não barrou no worktree |
+| 4 | `target_specialty_name` criado no V21 (reconciliação) e **seed V18 deixado nulo** → detalhe do encaminhamento vazio | schema/seed | backfill no V21 | **a coluna pertence logicamente ao CREATE TABLE do V18**; consolidar (migrations ainda não liberadas) ficou adiado p/ não re-editar o V18 |
+| 5 | `operatorToken` esperava Home, mas operador-sim cai no interceptor `/aceite-legal` (não é beneficiário onboarded) | teste E2E | esperar o token no `sessionStorage` | credencial de sim não tem caminho de token dedicado (aceitável — dev-only) |
+| 6 | Teste do AC2 esperava tela ABANDONADA; o componente navega direto ao hub (a tela serve o AC3 no-show) | teste E2E | alinhar o teste ao comportamento (Rule Zero) | — |
+
+**Itens de acompanhamento (abrir como issues na próxima fase):**
+- Consolidar `target_specialty_name` no V18 (mover a coluna do V21 para o CREATE TABLE + semear o
+  nome direto), enquanto as migrations da Fase 4 ainda não foram liberadas em ambiente algum.
+- Gate de dev/QA: E2E completo local verde + `spotless:apply` no pré-commit, para não repetir o
+  padrão de defeitos-que-só-aparecem-no-CI.
