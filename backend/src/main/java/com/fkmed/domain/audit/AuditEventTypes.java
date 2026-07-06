@@ -60,5 +60,11 @@ public final class AuditEventTypes {
    */
   public static final String OPERATOR_SIM_ACTION = "sim.operator-action";
 
+  /**
+   * A titular generated an attendance token for a dependent (SPEC-0012 BR12, SPEC-0003 BR4). Never
+   * recorded when the beneficiary generates their own token.
+   */
+  public static final String DEPENDENT_TOKEN_GENERATED = "guides.dependent-token-generated";
+
   private AuditEventTypes() {}
 }

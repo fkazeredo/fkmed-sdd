@@ -6,10 +6,12 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -69,5 +71,63 @@ public class OperatorSimulationController {
             operator,
             HttpRequestMetadata.current());
     return new SimIssuedDocumentResponse(documentId);
+  }
+
+  /** Opens a new guide as {@code EM_ANALISE} (SPEC-0018 BR5, SPEC-0012). */
+  @PostMapping("/guides")
+  @ResponseStatus(HttpStatus.CREATED)
+  SimGuideResult createGuide(@Valid @RequestBody SimCreateGuideRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.createGuide(
+        request.beneficiaryId(),
+        request.type(),
+        request.requestingProvider(),
+        request.items(),
+        operator,
+        HttpRequestMetadata.current());
+  }
+
+  /** Authorizes every item of a guide (SPEC-0018 BR5). */
+  @PostMapping("/guides/{id}/authorize")
+  SimGuideResult authorizeGuide(
+      @PathVariable UUID id, @Valid @RequestBody SimAuthorizeGuideRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.authorizeGuide(
+        id, request.password(), request.validUntil(), operator, HttpRequestMetadata.current());
+  }
+
+  /** Applies a per-item authorization decision to a guide (SPEC-0018 BR5, SPEC-0012 BR6). */
+  @PostMapping("/guides/{id}/partially-authorize")
+  SimGuideResult partiallyAuthorizeGuide(
+      @PathVariable UUID id, @Valid @RequestBody SimPartiallyAuthorizeGuideRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.partiallyAuthorizeGuide(
+        id,
+        request.password(),
+        request.validUntil(),
+        request.asMap(),
+        operator,
+        HttpRequestMetadata.current());
+  }
+
+  /** Denies every item of a guide (SPEC-0018 BR5). */
+  @PostMapping("/guides/{id}/deny")
+  SimGuideResult denyGuide(@PathVariable UUID id, @Valid @RequestBody SimDenyGuideRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.denyGuide(id, request.reason(), operator, HttpRequestMetadata.current());
+  }
+
+  /** Cancels a guide (SPEC-0018 BR5). */
+  @PostMapping("/guides/{id}/cancel")
+  SimGuideResult cancelGuide(@PathVariable UUID id) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.cancelGuide(id, operator, HttpRequestMetadata.current());
+  }
+
+  /** Marks a guide executed (SPEC-0018 BR5). */
+  @PostMapping("/guides/{id}/mark-executed")
+  SimGuideResult markGuideExecuted(@PathVariable UUID id) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.markGuideExecuted(id, operator, HttpRequestMetadata.current());
   }
 }

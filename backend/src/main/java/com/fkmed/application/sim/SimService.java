@@ -9,16 +9,24 @@ import com.fkmed.domain.clinicaldocs.DocumentOrigin;
 import com.fkmed.domain.clinicaldocs.ExamItemInput;
 import com.fkmed.domain.clinicaldocs.IssueClinicalDocumentCommand;
 import com.fkmed.domain.clinicaldocs.PrescriptionItemInput;
+import com.fkmed.domain.guides.Guide;
+import com.fkmed.domain.guides.GuideItemInput;
+import com.fkmed.domain.guides.GuideItemStatus;
+import com.fkmed.domain.guides.GuideNotFoundException;
+import com.fkmed.domain.guides.GuideService;
+import com.fkmed.domain.guides.GuideType;
 import com.fkmed.domain.network.NetworkSpecialties;
 import com.fkmed.domain.network.SpecialtyOption;
 import com.fkmed.domain.telemedicine.TeleClosureSummary;
 import com.fkmed.domain.telemedicine.TeleService;
 import com.fkmed.domain.telemedicine.TeleSessionNotFoundException;
 import com.fkmed.domain.telemedicine.TeleSessionView;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +50,7 @@ public class SimService {
 
   private final TeleService tele;
   private final ClinicalDocuments clinicalDocuments;
+  private final GuideService guides;
   private final NetworkSpecialties specialties;
   private final AuditRecorder auditRecorder;
 
@@ -126,6 +135,138 @@ public class SimService {
     audit(operatorAccountId, beneficiaryId, auditContext, "document.issue", documentId);
     log.info("sim: operator issued document {} for a beneficiary", documentId);
     return documentId;
+  }
+
+  /** Opens a new guide as {@code EM_ANALISE} (SPEC-0018 BR5, SPEC-0012). */
+  @Transactional
+  public SimGuideResult createGuide(
+      UUID beneficiaryId,
+      GuideType type,
+      String requestingProvider,
+      List<SimCreateGuideRequest.Item> items,
+      UUID operatorAccountId,
+      AuditContext auditContext) {
+    Guide guide =
+        guides.createGuide(
+            type,
+            beneficiaryId,
+            requestingProvider,
+            items.stream()
+                .map(
+                    item ->
+                        new GuideItemInput(item.tussCode(), item.description(), item.quantity()))
+                .toList());
+    audit(operatorAccountId, beneficiaryId, auditContext, "guide.create", guide.getId());
+    return resultOf(guide);
+  }
+
+  /**
+   * Authorizes every item of a guide (SPEC-0018 BR5).
+   *
+   * @throws SimTargetNotFoundException when the guide is unknown.
+   * @throws SimInvalidTransitionException when the guide is not {@code EM_ANALISE} (BR4).
+   */
+  @Transactional
+  public SimGuideResult authorizeGuide(
+      UUID guideId,
+      String password,
+      LocalDate validUntil,
+      UUID operatorAccountId,
+      AuditContext auditContext) {
+    Guide guide = guardGuideTransition(() -> guides.authorize(guideId, password, validUntil));
+    audit(operatorAccountId, guide.getBeneficiaryId(), auditContext, "guide.authorize", guideId);
+    return resultOf(guide);
+  }
+
+  /**
+   * Applies a per-item authorization decision (SPEC-0018 BR5); the overall status derives from the
+   * items (SPEC-0012 BR6).
+   *
+   * @throws SimTargetNotFoundException when the guide is unknown.
+   * @throws SimInvalidTransitionException when the guide is not {@code EM_ANALISE} (BR4).
+   */
+  @Transactional
+  public SimGuideResult partiallyAuthorizeGuide(
+      UUID guideId,
+      String password,
+      LocalDate validUntil,
+      Map<String, GuideItemStatus> itemStatuses,
+      UUID operatorAccountId,
+      AuditContext auditContext) {
+    Guide guide =
+        guardGuideTransition(
+            () -> guides.partiallyAuthorize(guideId, password, validUntil, itemStatuses));
+    audit(
+        operatorAccountId,
+        guide.getBeneficiaryId(),
+        auditContext,
+        "guide.partially-authorize",
+        guideId);
+    return resultOf(guide);
+  }
+
+  /**
+   * Denies every item of a guide (SPEC-0018 BR5).
+   *
+   * @throws SimTargetNotFoundException when the guide is unknown.
+   * @throws SimInvalidTransitionException when the guide is not {@code EM_ANALISE} (BR4).
+   */
+  @Transactional
+  public SimGuideResult denyGuide(
+      UUID guideId, String reason, UUID operatorAccountId, AuditContext auditContext) {
+    Guide guide = guardGuideTransition(() -> guides.deny(guideId, reason));
+    audit(operatorAccountId, guide.getBeneficiaryId(), auditContext, "guide.deny", guideId);
+    return resultOf(guide);
+  }
+
+  /**
+   * Cancels a guide (SPEC-0018 BR5).
+   *
+   * @throws SimTargetNotFoundException when the guide is unknown.
+   * @throws SimInvalidTransitionException when cancellation is not allowed from the current status
+   *     (BR4).
+   */
+  @Transactional
+  public SimGuideResult cancelGuide(
+      UUID guideId, UUID operatorAccountId, AuditContext auditContext) {
+    Guide guide = guardGuideTransition(() -> guides.cancel(guideId));
+    audit(operatorAccountId, guide.getBeneficiaryId(), auditContext, "guide.cancel", guideId);
+    return resultOf(guide);
+  }
+
+  /**
+   * Marks a guide executed (SPEC-0018 BR5).
+   *
+   * @throws SimTargetNotFoundException when the guide is unknown.
+   * @throws SimInvalidTransitionException when the guide is not authorized (fully or partially,
+   *     BR4).
+   */
+  @Transactional
+  public SimGuideResult markGuideExecuted(
+      UUID guideId, UUID operatorAccountId, AuditContext auditContext) {
+    Guide guide = guardGuideTransition(() -> guides.markExecuted(guideId));
+    audit(
+        operatorAccountId, guide.getBeneficiaryId(), auditContext, "guide.mark-executed", guideId);
+    return resultOf(guide);
+  }
+
+  /**
+   * Translates the owning module's not-found/invalid-transition signals to the sim's stable
+   * contract (BR4): {@link GuideNotFoundException} to {@code 404}, an {@link IllegalStateException}
+   * (the guide state machine's guard) to {@code 409}.
+   */
+  private Guide guardGuideTransition(Supplier<Guide> transition) {
+    try {
+      return transition.get();
+    } catch (GuideNotFoundException notFound) {
+      throw new SimTargetNotFoundException();
+    } catch (IllegalStateException invalid) {
+      throw new SimInvalidTransitionException();
+    }
+  }
+
+  private static SimGuideResult resultOf(Guide guide) {
+    return new SimGuideResult(guide.getId(), guide.getNumber(), guide.getStatus());
   }
 
   private String stateOf(UUID sessionId) {
