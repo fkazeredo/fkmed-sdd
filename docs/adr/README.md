@@ -24,3 +24,4 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 | [0015](0015-telemedicine-room-state-driven.md) | Telemedicine room is state-driven (no real audio/video) in the POC (SPEC-0010 OQ1) | Proposed |
 | [0016](0016-sse-queue-transport.md) | Server-Sent Events (SSE) for the telemedicine queue's near-real-time state (SPEC-0010 BR6) | Proposed |
 | [0017](0017-operator-simulation-tele-slice.md) | Operator-simulation seam — the telemedicine+documents slice of SPEC-0018 (Phase 4) | Proposed |
+| [0018](0018-guides-module.md) | Module map revision — `domain.guides` (authorization guides + attendance token, SPEC-0012) | Proposed |

@@ -9,11 +9,11 @@ import com.fkmed.domain.clinicaldocs.DocumentOrigin;
 import com.fkmed.domain.clinicaldocs.ExamItemInput;
 import com.fkmed.domain.clinicaldocs.IssueClinicalDocumentCommand;
 import com.fkmed.domain.clinicaldocs.PrescriptionItemInput;
-import com.fkmed.domain.guides.Guide;
 import com.fkmed.domain.guides.GuideItemInput;
 import com.fkmed.domain.guides.GuideItemStatus;
 import com.fkmed.domain.guides.GuideNotFoundException;
 import com.fkmed.domain.guides.GuideService;
+import com.fkmed.domain.guides.GuideTransitionResult;
 import com.fkmed.domain.guides.GuideType;
 import com.fkmed.domain.network.NetworkSpecialties;
 import com.fkmed.domain.network.SpecialtyOption;
@@ -143,10 +143,10 @@ public class SimService {
       UUID beneficiaryId,
       GuideType type,
       String requestingProvider,
-      List<SimCreateGuideRequest.Item> items,
+      List<SimCreateGuideRequest.GuideItemRequest> items,
       UUID operatorAccountId,
       AuditContext auditContext) {
-    Guide guide =
+    GuideTransitionResult guide =
         guides.createGuide(
             type,
             beneficiaryId,
@@ -156,7 +156,7 @@ public class SimService {
                     item ->
                         new GuideItemInput(item.tussCode(), item.description(), item.quantity()))
                 .toList());
-    audit(operatorAccountId, beneficiaryId, auditContext, "guide.create", guide.getId());
+    audit(operatorAccountId, beneficiaryId, auditContext, "guide.create", guide.id());
     return resultOf(guide);
   }
 
@@ -173,8 +173,9 @@ public class SimService {
       LocalDate validUntil,
       UUID operatorAccountId,
       AuditContext auditContext) {
-    Guide guide = guardGuideTransition(() -> guides.authorize(guideId, password, validUntil));
-    audit(operatorAccountId, guide.getBeneficiaryId(), auditContext, "guide.authorize", guideId);
+    GuideTransitionResult guide =
+        guardGuideTransition(() -> guides.authorize(guideId, password, validUntil));
+    audit(operatorAccountId, guide.beneficiaryId(), auditContext, "guide.authorize", guideId);
     return resultOf(guide);
   }
 
@@ -193,12 +194,12 @@ public class SimService {
       Map<String, GuideItemStatus> itemStatuses,
       UUID operatorAccountId,
       AuditContext auditContext) {
-    Guide guide =
+    GuideTransitionResult guide =
         guardGuideTransition(
             () -> guides.partiallyAuthorize(guideId, password, validUntil, itemStatuses));
     audit(
         operatorAccountId,
-        guide.getBeneficiaryId(),
+        guide.beneficiaryId(),
         auditContext,
         "guide.partially-authorize",
         guideId);
@@ -214,8 +215,8 @@ public class SimService {
   @Transactional
   public SimGuideResult denyGuide(
       UUID guideId, String reason, UUID operatorAccountId, AuditContext auditContext) {
-    Guide guide = guardGuideTransition(() -> guides.deny(guideId, reason));
-    audit(operatorAccountId, guide.getBeneficiaryId(), auditContext, "guide.deny", guideId);
+    GuideTransitionResult guide = guardGuideTransition(() -> guides.deny(guideId, reason));
+    audit(operatorAccountId, guide.beneficiaryId(), auditContext, "guide.deny", guideId);
     return resultOf(guide);
   }
 
@@ -229,8 +230,8 @@ public class SimService {
   @Transactional
   public SimGuideResult cancelGuide(
       UUID guideId, UUID operatorAccountId, AuditContext auditContext) {
-    Guide guide = guardGuideTransition(() -> guides.cancel(guideId));
-    audit(operatorAccountId, guide.getBeneficiaryId(), auditContext, "guide.cancel", guideId);
+    GuideTransitionResult guide = guardGuideTransition(() -> guides.cancel(guideId));
+    audit(operatorAccountId, guide.beneficiaryId(), auditContext, "guide.cancel", guideId);
     return resultOf(guide);
   }
 
@@ -244,9 +245,8 @@ public class SimService {
   @Transactional
   public SimGuideResult markGuideExecuted(
       UUID guideId, UUID operatorAccountId, AuditContext auditContext) {
-    Guide guide = guardGuideTransition(() -> guides.markExecuted(guideId));
-    audit(
-        operatorAccountId, guide.getBeneficiaryId(), auditContext, "guide.mark-executed", guideId);
+    GuideTransitionResult guide = guardGuideTransition(() -> guides.markExecuted(guideId));
+    audit(operatorAccountId, guide.beneficiaryId(), auditContext, "guide.mark-executed", guideId);
     return resultOf(guide);
   }
 
@@ -255,7 +255,7 @@ public class SimService {
    * contract (BR4): {@link GuideNotFoundException} to {@code 404}, an {@link IllegalStateException}
    * (the guide state machine's guard) to {@code 409}.
    */
-  private Guide guardGuideTransition(Supplier<Guide> transition) {
+  private GuideTransitionResult guardGuideTransition(Supplier<GuideTransitionResult> transition) {
     try {
       return transition.get();
     } catch (GuideNotFoundException notFound) {
@@ -265,8 +265,8 @@ public class SimService {
     }
   }
 
-  private static SimGuideResult resultOf(Guide guide) {
-    return new SimGuideResult(guide.getId(), guide.getNumber(), guide.getStatus());
+  private static SimGuideResult resultOf(GuideTransitionResult guide) {
+    return new SimGuideResult(guide.id(), guide.number(), guide.status());
   }
 
   private String stateOf(UUID sessionId) {

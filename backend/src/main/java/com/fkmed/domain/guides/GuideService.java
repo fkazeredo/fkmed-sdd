@@ -82,14 +82,14 @@ public class GuideService {
 
   /** Opens a new guide as {@link GuideStatus#EM_ANALISE} (SPEC-0018 BR5). No event published. */
   @Transactional
-  public Guide createGuide(
+  public GuideTransitionResult createGuide(
       GuideType type, UUID beneficiaryId, String requestingProvider, List<GuideItemInput> items) {
     String number = protocolGenerator.next(NUMBER_PREFIX);
     Guide guide =
         Guide.open(number, type, beneficiaryId, requestingProvider, LocalDate.now(clock), items);
     guides.save(guide);
     log.info("guide {} opened for a beneficiary", number);
-    return guide;
+    return toTransitionResult(guide);
   }
 
   /**
@@ -99,12 +99,12 @@ public class GuideService {
    *     GuideStatus#EM_ANALISE} (translated to {@code 409} by the sim seam).
    */
   @Transactional
-  public Guide authorize(UUID guideId, String password, LocalDate validUntil) {
+  public GuideTransitionResult authorize(UUID guideId, String password, LocalDate validUntil) {
     Guide guide = requireGuide(guideId);
     guide.authorize(password, validUntil);
     guides.save(guide);
     publishTransition(guide);
-    return guide;
+    return toTransitionResult(guide);
   }
 
   /**
@@ -115,7 +115,7 @@ public class GuideService {
    *     GuideStatus#EM_ANALISE}.
    */
   @Transactional
-  public Guide partiallyAuthorize(
+  public GuideTransitionResult partiallyAuthorize(
       UUID guideId,
       String password,
       LocalDate validUntil,
@@ -124,7 +124,7 @@ public class GuideService {
     guide.partiallyAuthorize(password, validUntil, itemStatuses);
     guides.save(guide);
     publishTransition(guide);
-    return guide;
+    return toTransitionResult(guide);
   }
 
   /**
@@ -134,12 +134,12 @@ public class GuideService {
    *     GuideStatus#EM_ANALISE}.
    */
   @Transactional
-  public Guide deny(UUID guideId, String reason) {
+  public GuideTransitionResult deny(UUID guideId, String reason) {
     Guide guide = requireGuide(guideId);
     guide.deny(reason);
     guides.save(guide);
     publishTransition(guide);
-    return guide;
+    return toTransitionResult(guide);
   }
 
   /**
@@ -149,12 +149,12 @@ public class GuideService {
    *     not allowed from the current status.
    */
   @Transactional
-  public Guide cancel(UUID guideId) {
+  public GuideTransitionResult cancel(UUID guideId) {
     Guide guide = requireGuide(guideId);
     guide.cancel();
     guides.save(guide);
     publishTransition(guide);
-    return guide;
+    return toTransitionResult(guide);
   }
 
   /**
@@ -164,12 +164,12 @@ public class GuideService {
    *     not authorized (fully or partially).
    */
   @Transactional
-  public Guide markExecuted(UUID guideId) {
+  public GuideTransitionResult markExecuted(UUID guideId) {
     Guide guide = requireGuide(guideId);
     guide.markExecuted();
     guides.save(guide);
     publishTransition(guide);
-    return guide;
+    return toTransitionResult(guide);
   }
 
   private Guide requireGuide(UUID guideId) {
@@ -185,6 +185,11 @@ public class GuideService {
             guide.getNumber(),
             guide.getStatus(),
             guide.getDenialReason()));
+  }
+
+  private static GuideTransitionResult toTransitionResult(Guide guide) {
+    return new GuideTransitionResult(
+        guide.getId(), guide.getBeneficiaryId(), guide.getNumber(), guide.getStatus());
   }
 
   private static GuideListItem toListItem(Guide guide) {

@@ -3,7 +3,7 @@
   "info" : {
     "title" : "FKMed",
     "description" : "FKMed — health plan beneficiary portal API",
-    "version" : "0.8.0"
+    "version" : "0.9.0"
   },
   "servers" : [ {
     "url" : "http://localhost",
@@ -2195,7 +2195,7 @@
         },
         "required" : [ "crm", "professionalName" ]
       },
-      "Item" : {
+      "GuideItemRequest" : {
         "type" : "object",
         "properties" : {
           "tussCode" : {
@@ -2231,7 +2231,7 @@
           "items" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Item"
+              "$ref" : "#/components/schemas/GuideItemRequest"
             },
             "minItems" : 1
           }
@@ -3207,6 +3207,39 @@
             "items" : {
               "$ref" : "#/components/schemas/Item"
             }
+          }
+        }
+      },
+      "Item" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "EXAM_ORDER", "REFERRAL", "PRESCRIPTION", "SICK_NOTE" ]
+          },
+          "professional" : {
+            "type" : "string"
+          },
+          "crm" : {
+            "type" : "string"
+          },
+          "issuedAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "beneficiary" : {
+            "type" : "string"
+          },
+          "validUntil" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "expired" : {
+            "type" : "boolean"
           }
         }
       },
