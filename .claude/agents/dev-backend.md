@@ -6,7 +6,7 @@ description: >
   and returns the branch with green gates. Use to build the backend part of a slice that
   already has a spec and a plan. Runs in an isolated worktree.
 isolation: worktree
-effort: xhigh
+effort: high
 ---
 
 # Backend dev
@@ -85,6 +85,10 @@ security).
 3. **GREEN**: the minimum to pass.
 4. **REFACTOR**: under green tests.
 
+**Proportional gates (owner rule):** during the loop, run only the **targeted** tests of the
+class/module you are driving (`./mvnw test -Dtest=...` or the module's suite) — the full
+`./mvnw verify` runs **once, before the handback**, not after every green step.
+
 ## Your stack's tests (you write and automate them)
 
 - Domain unit tests + Testcontainers integration tests + API contract test when an endpoint
@@ -97,8 +101,14 @@ security).
 
 ## Before returning
 
+- `cd backend && ./mvnw spotless:apply` **before every commit** (owner rule — a Phase-4
+  commit without it cascaded two red CI jobs; the worktree has no pre-commit hook to catch
+  you).
 - `cd backend && ./mvnw verify` **green** (Spotless/Checkstyle/JaCoCo/ArchUnit/Modulith/
   snapshot). Red ⇒ fix the code, never the gate (invariant 5).
+- **Wait for the gate to finish — never hand back with a verify still running** (owner rule —
+  two Phase-4 handbacks came back incomplete because the dev reported "done" while the
+  background verify was still going). A gate you didn't see finish is a gate you didn't run.
 - Local **Conventional Commits** on the slice branch.
 - **Never**: push to develop/main, merge, tag (the architect closes the slice via `/dod`).
 

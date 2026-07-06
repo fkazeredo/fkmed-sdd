@@ -1,10 +1,14 @@
 # Playwright E2E against the ISOLATED compose stack (never the dev database).
 name: E2E
 
+# Runs on PRs and protected/release branches only — feature pushes validate locally first
+# (owner order: the E2E suite must be green locally before the push/PR; CI is never its
+# first run). Manual runs via workflow_dispatch.
 on:
   push:
-    branches: [main, develop, 'feature/**', 'bugfix/**', 'release/**', 'hotfix/**']
+    branches: [main, develop, 'release/**', 'hotfix/**']
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: e2e-${{ github.ref }}

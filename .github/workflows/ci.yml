@@ -2,10 +2,15 @@
 # Postgres, frontend lint+test+build+audit. Job names become required status checks.
 name: CI
 
+# Full battery runs on PRs and protected/release branches only. feature/bugfix pushes do NOT
+# trigger it (the same commit would run again on the PR — pure duplication): dev-time
+# validation is the local gates; the PR is where CI judges the slice. Manual runs via
+# workflow_dispatch when a mid-slice CI opinion is genuinely needed.
 on:
   push:
-    branches: [main, develop, 'feature/**', 'bugfix/**', 'release/**', 'hotfix/**']
+    branches: [main, develop, 'release/**', 'hotfix/**']
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}

@@ -95,11 +95,11 @@ Cinco arquivos em `.claude/agents/`:
 
 | Agente | Papel no time | Modelo / esforço |
 |---|---|---|
-| `architect` | **Seu único interlocutor.** Escreve specs e ADRs com você, planeja, distribui o trabalho, documenta, revisa (com olhos frescos), reporta, media o vai-e-volta. Nunca infere — pergunta. | **Opus no esforço máximo** (xhigh fixo; ultracode na sessão — §5 passo 0) |
-| `dev-backend` | Constrói a parte Java/banco/APIs de uma fatia, com os testes dela (em cópia isolada do repositório) | Sonnet ou Opus — **o arquiteto decide** pela complexidade; esforço sempre xhigh |
+| `architect` | **Seu único interlocutor.** Escreve specs e ADRs com você, planeja, distribui o trabalho, documenta, revisa (com olhos frescos), reporta, media o vai-e-volta. Nunca infere — pergunta. | **Opus em esforço `high`** (o ponto de equilíbrio; `xhigh` só em escalada deliberada — decisão cara de reverter, segurança, dinheiro, planejamento de fase complexa) |
+| `dev-backend` | Constrói a parte Java/banco/APIs de uma fatia, com os testes dela (em cópia isolada do repositório) | Sonnet ou Opus — **o arquiteto decide** pela complexidade; esforço `high` |
 | `dev-frontend` | Constrói a parte Angular/telas, com os testes dela (idem) | idem |
 | `dev-fullstack` | **Somente tarefas pequenas** que cruzam as duas partes (um CRUD simples, um ajuste ponta a ponta) — o padrão é especialista primeiro | idem |
-| `qa` | Bateria pesada de testes depois do dev + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. | **Opus no esforço máximo** (xhigh fixo) |
+| `qa` | Bateria pesada de testes **uma vez por fatia, na branch integrada** + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. | **Sonnet em esforço `high`**; o arquiteto sobe para Opus em fatia crítica (segurança/dinheiro/LGPD/documento clínico) |
 
 **A regra de delegação (sua):** **especialista primeiro** — backend com `dev-backend`,
 frontend com `dev-frontend`; o `dev-fullstack` só entra em tarefa pequena. São **dois eixos
@@ -118,6 +118,17 @@ de paralelismo**, tratados de forma diferente:
 Sequencial vira exceção deliberada (contrato ainda instável, ou um lado trivial); fatia
 pequena de verdade ele faz sozinho. Você sempre sabe em qual branch cada um está, porque cada
 handoff anuncia a branch (ver §5).
+
+**Fatia é o padrão; fase inteira é sua prerrogativa.** Se você pedir explicitamente uma fase
+completa, o arquiteto **aceita** — não insiste em PRs menores nem pede confirmação de novo —
+e organiza a fase internamente em ondas (contrato congelado → trabalho paralelo → integração
+→ jornada/E2E → candidato a release), com **arquivos de "escritor único"** (rotas, i18n
+global, snapshot da API, numeração de migrations…) que só o integrador toca, para os devs
+paralelos não colidirem. **E os gates são proporcionais:** cada dev roda o gate completo da
+sua parte uma vez ao devolver; a bateria inteira roda uma vez na integração final e uma no
+QA; o fechamento reaproveita evidência verde do mesmo commit em vez de rodar tudo de novo. O
+E2E roda **verde localmente antes de qualquer PR** — o CI nunca é a primeira execução dele
+(lição da Fase 4).
 
 **Cada agente trabalha na própria cópia isolada (worktree), e quem orquestra isso é o
 arquiteto.** Cada dev/QA recebe uma pasta de trabalho separada, para nunca pisar no trabalho
@@ -142,17 +153,17 @@ para transparência.)
 
 ## 5. O fluxo de uma fatia, ponta a ponta
 
-**Passo 0 — abra a sessão como arquiteto** (no terminal, na pasta do projeto) e ative o
-esforço máximo:
+**Passo 0 — abra a sessão como arquiteto** (no terminal, na pasta do projeto):
 
 ```
 claude --agent architect
-/effort ultracode
 ```
 
-(*Ultracode* põe o modelo no esforço máximo e liga os *workflows dinâmicos* — orquestração
-de vários agentes em escala. É configuração **de sessão**: ative a cada sessão nova; o
-arquiteto te lembra se esquecer. E se esquecer do `--agent architect`, sem problema:
+(O esforço padrão do projeto agora é `high` — o ponto de equilíbrio custo × inteligência.
+*Ultracode* e `xhigh` **deixaram de ser o padrão**: a Fase 4 mostrou que esforço máximo em
+tudo multiplica horas e tokens sem comprar qualidade onde não precisa. Se VOCÊ quiser força
+máxima numa tarefa pontualmente difícil, ative na hora com `/effort xhigh` — o arquiteto não
+vai mais sugerir isso por conta própria. E se esquecer do `--agent architect`, sem problema:
 `claude` normal também funciona — o arquiteto é uma "persona" que deixa a coordenação mais
 afiada, não um requisito.)
 
@@ -173,7 +184,7 @@ afiada, não um requisito.)
 português, como diálogo de time — sempre com a branch à mostra:
 
 ```
-🗣️ Arquiteto → Dev Backend [feature/contas--be | opus/xhigh]: implementa o endpoint de baixa…
+🗣️ Arquiteto → Dev Backend [feature/contas--be | sonnet/high]: implementa o endpoint de baixa…
 🗣️ Dev Backend → Arquiteto [feature/contas--be | gates verdes]: "entreguei X com N testes…"
 🗣️ QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "encontrei…"
 ```
