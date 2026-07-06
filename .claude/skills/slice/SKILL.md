@@ -2,7 +2,8 @@
 description: >
   Opens a new slice through the TUTORIAL's 7-step loop: validates the spec and its Open
   Questions, creates the feature branch from develop, builds the slice plan and the loop
-  checklist (RED test first). Use when starting any slice/feature/fix that has a spec.
+  checklist (build → dev tests+gates → QA homologação → QA battery). Use when starting any
+  slice/feature/fix that has a spec.
   Keywords: fatia, slice, começar feature, start implementation, new task.
 argument-hint: <SPEC-NNNN> [short-slice-name]
 ---
@@ -40,21 +41,28 @@ going to do, report AFTER what you did (CLAUDE.md §Comunicação).
    at `/dod`, with evidence and the detailed why. Use **plan mode** to present it and get
    the owner's approval.
 
-   **Execution mode (architect.md §Execution modes):** Slice Mode is the default. When the
-   owner explicitly asks for a **whole phase**, accept it — don't argue for smaller PRs —
-   and organize the same plan internally in waves. When work will run in **parallel**, the
-   plan additionally fixes: the frozen contract, each dev's owned/forbidden paths, the
-   **single-writer surfaces** (OpenAPI snapshot, migrations numbering, shell/routes, global
-   i18n, `ModularityTest`, shared error mapping, workflows — only the architect or one
-   assigned dev touches them), and the **merge order** of the sub-branches.
+   **Execution mode (architect.md §Execution modes):** Slice Mode is the default, built by
+   ONE `developer` end to end. When the owner explicitly asks for a **whole phase**, accept
+   it — don't argue for smaller PRs — and organize the same plan internally in waves.
+   Parallel developers only for well-isolated scopes (small overlap is acceptable — the
+   architect integrates and resolves conflicts); the plan then additionally fixes: the
+   frozen contract seams, each developer's owned/forbidden paths, the **single-writer
+   surfaces** (OpenAPI snapshot, migrations numbering, shell/routes, global i18n,
+   `ModularityTest`, shared error mapping, workflows — only the architect or one assigned
+   developer touches them), and the **merge order** of the sub-branches.
 6. **Persist the approved plan** to `docs/reports/plans/YYYY-MM-DD-<slice-slug>-plan.md`
    (NOT versioned — the folder is gitignored; see `docs/reports/README.md`). When the
-   architect will run devs in parallel, the plan also names the sub-branches
-   (`feature/<slice>--<scope>`) each dev will use.
+   architect will run developers in parallel, the plan also names the sub-branches
+   (`feature/<slice>--<scope>`) each developer will use — and each work order INLINES its
+   scope and contract seams (a worktree cannot read this gitignored plan).
 7. **TodoWrite checklist** mirroring the loop from `docs/TUTORIAL.md` §3:
-   `0 PERGUNTAS → 1 PLAN → 2 RED → 3 SKELETON → 4 GREEN → 5 REFACTOR → 6 GATES + DoD`.
+   `0 PERGUNTAS → 1 PLAN → 2 BUILD → 3 DEV TESTS+GATES → 4 QA HOMOLOGAÇÃO → 5 QA BATERIA →
+   6 DoD + PR`.
 8. **Method reminders** (non-negotiable):
-   - RED test (acceptance/integration derived from the spec's examples) BEFORE implementation.
-   - Skeleton only to compile; minimal green; refactor under green tests.
+   - Build free (backend first, frontend against the REAL contract); **TDD is optional**, at
+     the developer's judgment.
+   - **Tests at the end are NOT optional**: every layer touched gets its tests, and the
+     touched stacks' full gates run green BEFORE handing to QA.
+   - Bug found ⇒ regression test that fails before and passes after (invariant 8).
    - Gates are never weakened to make code pass (invariant 5).
 9. **End of the slice** = `/dod` (gates + Definition of Done + AC evidence + retrospective + PR).

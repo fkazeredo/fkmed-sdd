@@ -119,7 +119,7 @@ Whenever running in autonomous/auto-accept mode:
 | Writing or changing tests | `docs/architecture/testing.md` |
 | Build, dependencies, Git, CI/CD, Docker, deploy, feature flags | `docs/architecture/delivery.md` |
 | Project rituals (spec/ADR/DL scaffolds, slice open/close, release, manual, dev env, CI triage) | the skills in `.claude/skills/` — `/spec` `/adr` `/dl` `/slice` `/dod` `/release` `/manual` `/dev-env` `/ci-triage` `/new-project` |
-| Delegating work to the agent team (architect, devs ×N, QA) | the agents in `.claude/agents/` — the architect is the owner's single interlocutor; flow documented in `architect.md` |
+| Delegating work to the agent team (architect, developer ×N, QA) | the agents in `.claude/agents/` — the architect is the owner's single interlocutor; flow documented in `architect.md` |
 | Bootstrapping this foundation into a brand-new project | `docs/BOOTSTRAP.md` |
 
 ## Project commands

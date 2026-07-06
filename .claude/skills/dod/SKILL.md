@@ -25,7 +25,8 @@ cd frontend && npm run lint && npm test && npm run build
 ```
 
 - **Reuse green evidence (proportional gates, owner rule):** a gate that already ran **green
-  on this exact commit** (QA's battery or the architect's post-integration run) is **cited as
+  on this exact commit** (QA's Stage-2 full battery — the typical source — or the
+  architect's post-integration run) is **cited as
   evidence, not re-run** — name the run and its result. Re-run only the gates whose inputs
   changed since the last green run (any new commit ⇒ the affected stack's gate runs again).
   The Phase-4 pattern of dev→integration→QA→DoD each re-running the same full battery on the
@@ -95,7 +96,7 @@ the PR (unlike the plan report, which is gitignored; `docs/reports/README.md`).
   stayed clean** (no agent work leaked into it), and no worktree with unpushed/uncommitted
   work is about to be pruned. Don't close on a "done" you haven't confirmed.
 - **Conventional Commits** (small, one purpose per commit).
-- Parallel work already integrated: every dev sub-branch (`feature/<slice>--<scope>`) merged
+- Parallel work already integrated: every developer sub-branch (`feature/<slice>--<scope>`) merged
   into the slice branch (`git merge --no-ff`, run ON the slice branch) with green gates
   after each integration — a PR never carries an unmerged sub-branch.
 - `git push -u origin feature/<slice>` and `gh pr create --base develop` — this is the normal
