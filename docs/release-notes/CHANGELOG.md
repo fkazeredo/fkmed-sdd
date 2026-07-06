@@ -8,6 +8,36 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.10.0] — 2026-07-06
+
+Phase 5 slice 5.2 — "Plano › Finanças" (SPEC-0013 Plan Finance, + the finance actions of SPEC-0018
+Operator Simulation). Second slice of Phase 5 ("Plano e finanças").
+
+### Added
+
+- **Finanças** (SPEC-0013, **titular-only**): the contract's finances in one area — monthly invoices
+  (boletos) with tabs Em aberto/Pagos (derived status), **copiar linha digitável** (47 digits) +
+  **PIX copia-e-cola**, **2ª via PDF** (with a "PAGO" watermark on paid invoices); an **overdue
+  invoice shows the valor atualizado** = original + **multa 2%** + **juros de mora 1%/mês pro rata
+  die** (owner-decided). The **antifraud invoice validator** (normalize → exactly 47 digits →
+  Autêntico / Não reconhecido with a mandatory "Não realize o pagamento" alert). The **copay
+  statement** (period + beneficiary filters, period total). **IR statements** and the annual
+  **Lei 12.007 debt-settlement declaration** (offered only for fully-paid years) as PDFs. The module
+  is hidden/denied for a dependent (by the active beneficiary — owner-decided).
+- **Operator-sim finance actions** (SPEC-0018, dev-only): `/api/sim/finance/invoices` (generate →
+  `InvoiceIssued` → notification), `.../{id}/pay` (**idempotent**), `.../copay`.
+
+### Technical
+
+- New Modulith module **`domain.finance`** (13th, ADR-0019), migration **V24** (`invoice` with
+  `digitable_line varchar(47)` + a `^[0-9]{47}$` check, `copay_entry`; IR/settlement derived; seed:
+  MARIA 2025 fully paid + 2026 open/overdue, 8 copays). `InvoiceIssued` event + a `domain.notification`
+  listener. Error codes `finance.titular-only` 403 / `finance.line-invalid-format` 422 /
+  `finance.invoice-not-found` 404 / `finance.year-not-settled` 409. **ADR-0020** consolidates the
+  full Operator Simulation API (guides + finance), extending ADR-0017. Backend 710 tests + PIT
+  (money calculators 0 survivors), frontend 507, E2E 30 (fresh seed) — all green; QA two-stage
+  (homologação APROVADA + bateria VERDE).
+
 ## [0.9.0] — 2026-07-06
 
 Phase 5 slice 5.1 — "Guias e Token" (SPEC-0012 Guides and Tokens, + the guide actions of SPEC-0018

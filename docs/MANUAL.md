@@ -220,10 +220,28 @@ um novo, o anterior deixa de valer na hora. Você pode **copiar** o código com 
 expira, a tela mostra "Token expirado" e oferece gerar outro. O titular pode gerar o token de um
 dependente pelo seletor de beneficiário (esse acesso fica registrado).
 
+### 15. Finanças (boletos, coparticipação, IR e quitação)
+
+**Finanças** reúne o financeiro do seu contrato e é **exclusiva do titular** — para dependentes os
+cartões ficam ocultos e o acesso direto mostra uma tela de aviso. Em **Boletos** você tem duas abas:
+**Em aberto** (o do mês e os vencidos, em destaque) e **Pagos**. Um boleto **vencido** mostra o
+**valor atualizado** — valor original + **multa de 2%** + **juros de mora de 1% ao mês** (proporcional
+aos dias) — com a orientação para atualizar o boleto pelos canais (o portal não faz pagamento online).
+No detalhe você pode **copiar a linha digitável** (os 47 dígitos), **copiar o código PIX** e **baixar
+a 2ª via em PDF** (um boleto pago vem com a marca **PAGO**).
+
+O **validador de boleto** é o seu antifraude: cole a linha e ele confirma **Boleto autêntico**
+(com competência e valor) ou avisa **"Boleto não reconhecido — não realize o pagamento"** e orienta a
+procurar os canais oficiais. O **Extrato de coparticipação** lista suas utilizações com filtros por
+período e por beneficiário, somando o **total do período**. Em **Imposto de Renda** você baixa o
+informe anual (12 meses + total) dos anos com pagamento, e em **Quitação** a **declaração anual de
+quitação de débitos (Lei 12.007)** é oferecida para os anos totalmente pagos.
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-06 | 0.10.0 | Plano e finanças: Finanças (titular) — boletos (abas em aberto/pagos, valor atualizado com multa+juros no vencido, copiar linha/PIX, 2ª via PDF com marca PAGO), validador antifraude, extrato de coparticipação, informe de IR e declaração de quitação Lei 12.007 |
 | 2026-07-06 | 0.9.0 | Plano e finanças (início): Guias e Token — acompanhamento das guias de autorização (lista, filtros, detalhe com senha/validade ou motivo de negativa, notificação de mudança) e geração do token de atendimento de 6 dígitos (validade 10 min, único válido, copiar, renovar) |
 | 2026-07-06 | 0.8.0 | Cuidado digital: Telemedicina (Pronto Atendimento com fila ao vivo, sala e encerramento; teleconsulta agendada) e Minha Saúde (documentos clínicos com filtros, detalhe, PDF e "agendar" a partir de encaminhamento) — fecha a Fase 4 |
 | 2026-07-05 | 0.7.0 | Encontrar atendimento: Rede Credenciada (busca por localidade/nome, detalhe do prestador) e Agendamento de consultas/exames (vaga real, protocolo, cancelar/remarcar, avisos) — fecha a Fase 3 |
