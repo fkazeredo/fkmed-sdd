@@ -65,7 +65,8 @@ export interface AppointmentView {
   unitName: string;
   scheduledAt: string;
   status: AppointmentStatus;
-  telemedicine?: boolean;
+  /** The backend emits the modality (SPEC-0010 BR14); TELEMEDICINA drives the tele badge (BR13). */
+  modality?: 'PRESENCIAL' | 'TELEMEDICINA';
 }
 
 /** BR13: the backend already splits and orders — Próximos (`upcoming`) soonest-first, Histórico

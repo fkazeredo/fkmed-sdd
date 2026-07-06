@@ -32,7 +32,9 @@ export function isJoinWindowOpen(scheduledAtIso: string, now: Date): boolean {
 /** BR9: running duration `H:MM:SS` (hours dropped when zero) from a start instant to `now`. Negative
  * spans (clock skew) clamp to zero. */
 export function formatElapsed(startIso: string, now: Date): string {
-  const elapsedMs = Math.max(0, now.getTime() - parseLocalDateTime(startIso).getTime());
+  // room.startedAt is a UTC Instant (…Z) — parse it as a real instant (not wall-clock) so the live
+  // running duration does not drift by the timezone offset. A bare local datetime also parses fine.
+  const elapsedMs = Math.max(0, now.getTime() - new Date(startIso).getTime());
   const totalSeconds = Math.floor(elapsedMs / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
