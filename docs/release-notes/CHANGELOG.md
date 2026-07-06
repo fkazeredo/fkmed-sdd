@@ -8,6 +8,37 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.9.0] — 2026-07-06
+
+Phase 5 slice 5.1 — "Guias e Token" (SPEC-0012 Guides and Tokens, + the guide actions of SPEC-0018
+Operator Simulation). First slice of Phase 5 ("Plano e finanças").
+
+### Added
+
+- **Guias** (SPEC-0012): the beneficiary's authorization-guide transparency — a family-scoped list
+  (status/period filters, on-demand refresh, orientative empty state) and a type-specific detail
+  showing items (TUSS), the **authorization password + validity** when authorized, the denial reason
+  when denied, and an expired-authorization notice. Guides carry a state machine whose status
+  **derives from its items**; status changes notify the beneficiary (SPEC-0004) with the guide number
+  and new status only — never clinical detail.
+- **Token de atendimento** (SPEC-0012): a 6-digit antifraud attendance token, valid 10 minutes with a
+  live countdown, **one valid per beneficiary at a time** (generating a new one invalidates the
+  previous), copy-to-clipboard, and a "Token expirado" state; the titular may generate one for a
+  dependent (audited).
+- **Operator-sim guide actions** (SPEC-0018, dev-only): `/api/sim/guides/*` (create / authorize /
+  partially-authorize / deny / cancel / mark-executed), flag-gated and `OPERATOR_SIM`-only, driving
+  the guide state machine and producing the same events/notifications as a real back office —
+  extending the ADR-0017 seam.
+
+### Technical
+
+- New Modulith module **`domain.guides`** (12th verified module, ADR-0018), migration **V23**
+  (`guide`, `guide_item`, `attendance_token` with a partial unique index enforcing single-valid
+  tokens; seed: MARIA 3 guides / PEDRO none). `GuideStatusChanged` event + a `domain.notification`
+  listener. Error codes `guide.not-found` / `token.none-active`. A token flush-ordering bug
+  (partial-unique-index violation on regeneration) was fixed with a two-layer regression
+  (`saveAndFlush`). Backend 658 tests, frontend 484, E2E 29 (fresh seed) — all green.
+
 ## [0.8.0] — 2026-07-06
 
 Phase 4 — "Cuidado digital" (SPEC-0010 Telemedicine, SPEC-0011 Clinical Documents, + the

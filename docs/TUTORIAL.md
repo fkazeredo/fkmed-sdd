@@ -19,7 +19,8 @@ all work happens in slices, each on a `feature/*` branch, each ending in a PR to
 ## 3. The 7-step loop (every slice)
 
 ```
-0 QUESTIONS → 1 PLAN → 2 RED → 3 SKELETON → 4 GREEN → 5 REFACTOR → 6 GATES + DoD
+0 QUESTIONS → 1 PLAN → 2 BUILD → 3 DEV TESTS + GATES → 4 QA HOMOLOGAÇÃO
+→ 5 QA FULL BATTERY → 6 DoD + PR
 ```
 
 **0 — QUESTIONS.** Read the spec in full. Any Open Question affecting this slice's behavior
@@ -31,19 +32,29 @@ the spec (`Open Questions` → `Business Rules`).
 specs, affected modules, files, migrations, tests, docs, risks, implementation order,
 validation commands, open questions. The owner approves before any code.
 
-**2 — RED.** Write the acceptance/integration test derived from the spec's Business Rules and
-I/O examples — and watch it FAIL. No implementation before a failing test. This test is the
-spec made executable.
+**2 — BUILD.** The developer builds freely: backend first (domain, migration, API — the real
+OpenAPI snapshot), then frontend against the REAL contract, never an imagined one. **TDD is
+OPTIONAL** — write a test first when it is genuinely more productive (a tricky state
+machine); no failing-test ritual is required. No speculative structure (Rule Zero); resist
+gold-plating.
 
-**3 — SKELETON.** The minimum types/ports/empty migration for the test to compile. Nothing
-more — no speculative structure (Rule Zero).
+**3 — DEV TESTS + GATES.** At the end, BEFORE handing to QA — not optional: write the tests
+of every layer touched (domain unit, Testcontainers IT, API contract, vitest, i18n parity;
+E2E **green locally** when a user journey changed) and run the full gates of the touched
+stacks (`./mvnw verify`; `npm run lint && npm test && npm run build`). Red ⇒ fix the code,
+never the gate.
 
-**4 — GREEN.** The minimum implementation that makes the test pass. Resist gold-plating.
+**4 — QA HOMOLOGAÇÃO.** QA validates the delivery against the SPEC (BRs/ACs walked on a
+running stack + exploratory: negatives, boundaries, idempotency). Finding ⇒ rework with the
+SAME developer (fix + committed regression test); too complex (design/spec gap) or a 2nd
+REPROVADO ⇒ back to the architect to replan.
 
-**5 — REFACTOR.** Clean up under green tests: naming, duplication, structure. Behavior does
-not change in this step.
+**5 — QA FULL BATTERY.** Only after homologação closes: backend verify + frontend gates
+(always), E2E (user journey), PIT (money/critical domain). **ANY failure ⇒ back to the
+ARCHITECT** to replan/review/solve/re-delegate — never straight to the developer.
 
-**6 — GATES + DoD.** Run `/dod`, which enforces:
+**6 — DoD + PR.** Run `/dod`, which reuses green evidence from the same commit (QA Stage 2)
+instead of re-running it, and enforces:
 
 - [ ] `cd backend && ./mvnw verify` green (Spotless, Checkstyle, JaCoCo floors, ArchUnit,
       Modulith + diagram snapshot, OpenAPI snapshot, i18n/HTTP-mapping completeness).

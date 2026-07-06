@@ -91,44 +91,36 @@ invocá-los direto, mas no dia a dia é mais simples pedir ao arquiteto.
 
 ## 4. O time: arquiteto, devs e QA
 
-Cinco arquivos em `.claude/agents/`:
+Três arquivos em `.claude/agents/`:
 
 | Agente | Papel no time | Modelo / esforço |
 |---|---|---|
-| `architect` | **Seu único interlocutor.** Escreve specs e ADRs com você, planeja, distribui o trabalho, documenta, revisa (com olhos frescos), reporta, media o vai-e-volta. Nunca infere — pergunta. | **Opus em esforço `high`** (o ponto de equilíbrio; `xhigh` só em escalada deliberada — decisão cara de reverter, segurança, dinheiro, planejamento de fase complexa) |
-| `dev-backend` | Constrói a parte Java/banco/APIs de uma fatia, com os testes dela (em cópia isolada do repositório) | Sonnet ou Opus — **o arquiteto decide** pela complexidade; esforço `high` |
-| `dev-frontend` | Constrói a parte Angular/telas, com os testes dela (idem) | idem |
-| `dev-fullstack` | **Somente tarefas pequenas** que cruzam as duas partes (um CRUD simples, um ajuste ponta a ponta) — o padrão é especialista primeiro | idem |
-| `qa` | Bateria **proporcional, uma vez por fatia, na branch integrada** (gates completos sempre; E2E quando há jornada de usuário; PIT quando toca domínio crítico/dinheiro) + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. | **Sonnet em esforço `high`**; o arquiteto sobe para Opus em fatia crítica (segurança/dinheiro/LGPD/documento clínico) |
+| `architect` | **Seu único interlocutor.** Escreve specs e ADRs com você, planeja, distribui o trabalho, **integra e mergeia as branches dos developers (resolver conflito é habilidade dele)**, documenta, revisa (com olhos frescos), reporta, media o vai-e-volta. Nunca infere — pergunta. | **Opus em esforço `high`** (o ponto de equilíbrio; `xhigh` só em escalada deliberada — decisão cara de reverter, segurança, dinheiro, planejamento de fase complexa) |
+| `developer` | Constrói a fatia **inteira, ponta a ponta** (Java/banco/APIs + Angular/telas): backend primeiro, frontend contra o contrato real. Escreve os testes de todas as camadas e **os roda ao final, antes de entregar ao QA** — TDD é opcional, a critério dele. Em cópia isolada do repositório. | Sonnet ou Opus — **o arquiteto decide** pela complexidade; esforço `high` |
+| `qa` | **Primeiro homologa a entrega contra a SPEC** (aceitação da Sprint/fatia + exploratório que o developer não pensou) — achado vira rework para o developer, ou volta ao arquiteto se for complexo. **Fechada a homologação, roda a bateria completa** antes de liberar a entrega (gates sempre; E2E quando há jornada; PIT em domínio crítico) — **qualquer erro na bateria volta ao ARQUITETO** replanejar. Aprova ou reprova. Separado do developer de propósito: autor não audita o próprio trabalho. | **Sonnet em esforço `high`**; o arquiteto sobe para Opus em fatia crítica (segurança/dinheiro/LGPD/documento clínico) |
 
-**A regra de delegação (sua):** **especialista primeiro** — backend com `dev-backend`,
-frontend com `dev-frontend`; o `dev-fullstack` só entra em tarefa pequena. São **dois eixos
-de paralelismo**, tratados de forma diferente:
-
-- **Backend e frontend ao mesmo tempo** numa fatia ponta a ponta é **sempre o padrão** — não
-  é decisão a ponderar. O arquiteto primeiro **desenha e congela o contrato** (endpoints,
-  formatos de dados, erros) e **divide o trabalho em arquivos/módulos que não se cruzam** — é
-  isso que impede os devs de se embolar — e levanta os dois de uma vez, cada um numa sub-branch
-  (`feature/<fatia>--<escopo>`), consolidando na branch da fatia.
-- **Várias instâncias da MESMA especialidade** (dois `dev-backend`, por exemplo) é onde entra
-  o **critério**: só abre outra quando há um escopo de verdade separado que se paga — nunca
-  fragmenta à toa nem deixa instância ociosa. Ele escolhe o modelo de cada um (Sonnet para o
-  rotineiro, Opus para o crítico).
-
-Sequencial vira exceção deliberada (contrato ainda instável, ou um lado trivial); fatia
-pequena de verdade ele faz sozinho. Você sempre sabe em qual branch cada um está, porque cada
-handoff anuncia a branch (ver §5).
+**A regra de delegação (sua):** **um `developer` ponta a ponta é o padrão** — backend
+primeiro, frontend contra o contrato real, testes ao final. **Paralelismo é exceção, com
+predileção por isolamento**: um segundo developer só entra quando há demanda separável de
+verdade, de preferência em escopos que **não se esbarram** (módulos/arquivos disjuntos, sem
+contrato compartilhado). Uma **sobreposição pequena é aceitável** — porque integrar é
+habilidade do arquiteto: é ele quem mergeia as sub-branches
+(`feature/<fatia>--<escopo>`) na branch da fatia, **resolve os conflitos** e valida a
+integração. Ele escolhe o modelo de cada um (Sonnet para o rotineiro, Opus para o crítico) e
+nunca fragmenta à toa nem deixa instância ociosa. Fatia pequena de verdade ele faz sozinho.
+Você sempre sabe em qual branch cada um está, porque cada handoff anuncia a branch (ver §5).
 
 **Fatia é o padrão; fase inteira é sua prerrogativa.** Se você pedir explicitamente uma fase
 completa, o arquiteto **aceita** — não insiste em PRs menores nem pede confirmação de novo —
 e organiza a fase internamente em ondas (contrato congelado → trabalho paralelo → integração
 → jornada/E2E → candidato a release), com **arquivos de "escritor único"** (rotas, i18n
-global, snapshot da API, numeração de migrations…) que só o integrador toca, para os devs
-paralelos não colidirem. **E os gates são proporcionais:** cada dev roda o gate completo da
-sua parte uma vez ao devolver; a bateria inteira roda uma vez na integração final e uma no
-QA; o fechamento reaproveita evidência verde do mesmo commit em vez de rodar tudo de novo. O
-E2E roda **verde localmente antes de qualquer PR** — o CI nunca é a primeira execução dele
-(lição da Fase 4).
+global, snapshot da API, numeração de migrations…) que só o integrador toca, para os
+developers paralelos não colidirem. **E os gates são proporcionais:** o developer escreve e
+roda os testes e gates das stacks tocadas **uma vez, ao final**, antes do QA; a bateria
+inteira roda uma vez na integração final e o QA fecha com a bateria completa **depois da
+homologação**; o fechamento reaproveita evidência verde do mesmo commit em vez de rodar tudo
+de novo. O E2E roda **verde localmente antes de qualquer PR** — o CI nunca é a primeira
+execução dele (lição da Fase 4).
 
 **Cada agente trabalha na própria cópia isolada (worktree), e quem orquestra isso é o
 arquiteto.** Cada dev/QA recebe uma pasta de trabalho separada, para nunca pisar no trabalho
@@ -170,10 +162,10 @@ afiada, não um requisito.)
 | Você diz… | O que acontece |
 |---|---|
 | "Quero uma tela de contas a receber com baixa automática" | O arquiteto conversa com você, pergunta (nunca supõe) e escreve a spec junto. As dúvidas que você não responder ficam registradas como *Open Questions* — nada é implementado por adivinhação. **Pode parar aqui se você só queria a spec.** |
-| "Aprovado, pode implementar" | Ele abre a fatia (`/slice`): branch, plano — e te mostra o plano para aprovação. Depois delega aos devs (1 ou vários, na medida da demanda), cada um em cópia isolada. |
-| *(aguarde; ele reporta o progresso)* | Cada dev constrói com teste primeiro, roda os gates da sua parte e devolve um relatório. |
-| "Roda o QA" (ou o arquiteto propõe) | O `qa` roda a bateria completa + exploratório e emite **APROVADO/REPROVADO** com itens de rework. |
-| *(se reprovado)* | O arquiteto manda os achados de volta **ao mesmo dev**; cada correção ganha um teste novo. Ver §7. |
+| "Aprovado, pode implementar" | Ele abre a fatia (`/slice`): branch, plano — e te mostra o plano para aprovação. Depois delega ao `developer` (1 por padrão; mais de um só com escopos bem isolados), cada um em cópia isolada. |
+| *(aguarde; ele reporta o progresso)* | O developer constrói livre (TDD opcional, a critério dele), escreve e roda os testes **ao final**, roda os gates das stacks tocadas e devolve um relatório. |
+| "Roda o QA" (ou o arquiteto propõe) | O `qa` primeiro **homologa a entrega contra a spec** (aceitação da Sprint + exploratório) e, aprovada a homologação, roda a **bateria completa**. Veredito **APROVADO/REPROVADO** por estágio. |
+| *(se reprovado)* | Achado de homologação volta **ao mesmo developer** (cada correção ganha um teste novo); achado complexo — ou **qualquer erro na bateria completa** — volta **ao arquiteto** para replanejar/resolver/delegar. Ver §7. |
 | "Fecha a fatia" | `/dod`: gates de novo, checklist da Definition of Done, manual/changelog/versão em dia, e **abre o PR** para a `develop`. |
 | "Revisa o PR pra mim" | O arquiteto (com os olhos frescos por dentro) te entrega o briefing: o que o PR faz, pontos críticos, cheiros, comentários prontos para copiar e um veredicto sugerido. |
 | **Você mergeia** (no GitHub) | Essa parte é SÓ SUA. Nenhum agente mergeia, nunca. |
@@ -182,18 +174,21 @@ afiada, não um requisito.)
 
 **Você nunca fica às cegas:** cada handoff entre os agentes aparece no seu chat, em
 português, como diálogo de time — sempre com a branch à mostra e **com a data e a hora reais
-do momento** (relógio do sistema, fuso de São Paulo — nunca estimada):
+do momento, SEMPRE convertidas para o seu fuso (São Paulo)**, independente do ambiente onde
+o agente roda (o comando força o fuso: `TZ=America/Sao_Paulo date` — nunca estimada, nunca
+em UTC):
 
 ```
-🗣️ [2026-07-06 14:02] Arquiteto → Dev Backend [feature/contas--be | sonnet/high]: implementa o endpoint de baixa…
-🗣️ [2026-07-06 14:41] Dev Backend → Arquiteto [feature/contas--be | gates verdes]: "entreguei X com N testes…"
-🗣️ [2026-07-06 15:07] QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "encontrei…"
+🗣️ [2026-07-06 14:02] Arquiteto → Developer [feature/contas--core | sonnet/high]: implementa o endpoint de baixa…
+🗣️ [2026-07-06 14:41] Developer → Arquiteto [feature/contas--core | gates verdes]: "entreguei X com N testes…"
+🗣️ [2026-07-06 15:07] QA → Arquiteto [feature/contas | HOMOLOGAÇÃO REPROVADA, 2 itens]: "encontrei…"
 ```
 
 **E entre um handoff e outro, o arquiteto te dá um "ping por etapa"** (também com data e
 hora reais)**:** o padrão é reportar o
-estado nos pontos naturais — quando o dev fecha o teste-que-falha e começa a implementar,
-quando os gates ficam verdes, e na conclusão — valendo igual para **devs, QA e mudanças no
+estado nos pontos naturais — quando a implementação engrena (primeiros commits), quando os
+testes e gates do developer ficam verdes, no veredito da homologação e da bateria do QA, e
+na conclusão — valendo igual para **developer, QA e mudanças no
 próprio fluxo**. Os agentes rodam em segundo plano e não transmitem ao vivo, então o
 arquiteto mostra o **estado observável** (branch, worktree ativa, commits já feitos, tempo
 decorrido), nunca um progresso inventado. Você escolhe o ritmo por sessão (por etapa /
@@ -227,28 +222,33 @@ porquê detalhado de cada critério de aceite ter passado, mais a retrospectiva 
 Como num time real, o fluxo **não é só para frente** — e quem media é o arquiteto:
 
 ```
-você + arquiteto → spec → plano (com critérios de aceite) → dev(s) → qa
-                                        ▲                        │
-                                        └── rework 1 (mesmo dev) ┤ reprovou
-                                                                 │
-              2ª reprovação / dev travado / CI em ciclo / pós-QA ▼
-                     ARQUITETO analisa a causa raiz e decide:
-       replaneja/divide · reatribui · faz ele mesmo · traz o caso a você
+você + arquiteto → spec → plano (com critérios de aceite) → developer (testes ao final)
+                                   ▲                              │
+                                   │            QA HOMOLOGAÇÃO (valida a spec)
+                                   └── rework (mesmo developer) ──┤ reprovou
+                                                                  │ complexo? → ARQUITETO
+                                              homologação ok ─────▼
+                                       QA BATERIA COMPLETA (gates+E2E+PIT)
+                                                                  │ QUALQUER erro
+                     ARQUITETO analisa a causa raiz e decide:  ◄──┘
+       replaneja/divide · revisa · soluciona · reatribui · traz o caso a você
 
   aprovado → revisão (olhos frescos) → /dod (ACs + retrospectiva) → PR → briefing → VOCÊ mergeia
 ```
 
-- **1ª reprovação do QA** → os achados voltam para o MESMO dev (ele não recomeça do zero — a
-  conversa dele fica preservada). Cada correção exige um teste novo que prove o conserto.
-- **Mais de 1 rework na mesma tarefa** (2ª reprovação), **dev travado ou demorando muito
-  além do combinado** → a tarefa **volta para o arquiteto analisar** a causa raiz: gap de
-  spec? plano ruim? especialidade ou modelo errado? tarefa grande demais? Ele decide:
+- **Reprovação na HOMOLOGAÇÃO** → os achados voltam para o MESMO developer (ele não recomeça
+  do zero — a conversa dele fica preservada). Cada correção exige um teste novo que prove o
+  conserto. **Achado complexo demais** (desenho/spec) pula o developer e vai direto ao
+  arquiteto.
+- **Mais de 1 rework na mesma tarefa** (2ª reprovação), **developer travado ou demorando
+  muito além do combinado** → a tarefa **volta para o arquiteto analisar** a causa raiz: gap
+  de spec? plano ruim? modelo errado? tarefa grande demais? Ele decide:
   replanejar/dividir, reatribuir (subindo para Opus se for o caso), fazer ele mesmo — ou
   trazer o caso a você.
-- **CI vermelho no PR ou falha na fase de testes pós-QA (verificação final)** → volta
-  **primeiro ao arquiteto** (diagnóstico via `/ci-triage`), nunca direto a um dev. Se o CI
-  reprovar de novo depois de um conserto (ciclo de erros), a tarefa **fica com o arquiteto**
-  até ele entender a causa raiz.
+- **Qualquer erro na BATERIA COMPLETA do QA, CI vermelho no PR ou falha na verificação
+  final** → volta **primeiro ao arquiteto** (diagnóstico via `/ci-triage`), nunca direto ao
+  developer. Se o CI reprovar de novo depois de um conserto (ciclo de erros), a tarefa
+  **fica com o arquiteto** até ele entender a causa raiz.
 - **O problema é de desenho** (a spec/plano estava errado) → o arquiteto **replaneja com
   você** — nunca sozinho.
 
@@ -265,8 +265,8 @@ fisicamente bloqueado, não é só combinado):
 | Commitar segredo/senha/chave | Ninguém — o scanner (gitleaks) bloqueia no CI e no pre-commit |
 
 O que eles **podem** (e é o fim normal de toda fatia): fazer commits na branch da fatia,
-integrar as sub-branches dos devs na branch da fatia (merge **local** de `feature/*` — o
-merge de PR em develop/main continua sendo só seu), dar push da branch e **abrir** o PR
+integrar as sub-branches dos developers na branch da fatia (merge **local** de `feature/*` —
+o merge de PR em develop/main continua sendo só seu), dar push da branch e **abrir** o PR
 para develop.
 
 ## 9. Criar um projeto novo a partir deste
@@ -300,11 +300,12 @@ fale com o arquiteto em português — ele sabe o que acionar.
 
 **Quanto custa usar o time inteiro?** Cada agente consome tokens. Por isso o arquiteto tem a
 regra de **escala**: fatia pequena = ele mesmo resolve, sem acionar ninguém; o pipeline
-completo (devs → QA → revisão → docs) é para fatias que justificam. Você pode sempre pedir
-"faz você mesmo, sem delegar".
+completo (developer → QA homologação → QA bateria → revisão → docs) é para fatias que
+justificam. Você pode sempre pedir "faz você mesmo, sem delegar".
 
-**E se um dev travar?** Peça o status ao arquiteto. Devs rodam em worktrees (cópias
-isoladas) — o trabalho deles sobrevive e pode ser retomado; nada encosta no seu diretório.
+**E se um developer travar?** Peça o status ao arquiteto. Developers rodam em worktrees
+(cópias isoladas) — o trabalho deles sobrevive e pode ser retomado; nada encosta no seu
+diretório.
 
 **Isso substitui o TUTORIAL.md?** Não. O [`TUTORIAL.md`](TUTORIAL.md) ensina o **método**
 (o laço de 7 passos, como este sistema foi construído). Este guia ensina a **operar o time**

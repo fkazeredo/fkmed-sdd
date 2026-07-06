@@ -217,6 +217,16 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/telemedicina/meus-agendamentos-tele').then((m) => m.MeusAgendamentosTele),
       },
+      // SPEC-0012 (Phase 5): Guias e Token — reachable via the shell nav (nav-guias). One hub
+      // screen (guides list + token, BR1) plus the guide detail.
+      {
+        path: 'guias',
+        loadComponent: () => import('./features/guias/guias-hub').then((m) => m.GuiasHub),
+      },
+      {
+        path: 'guias/:id',
+        loadComponent: () => import('./features/guias/guide-detail').then((m) => m.GuideDetail),
+      },
     ],
   },
 ];

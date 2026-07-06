@@ -1,6 +1,6 @@
 # 0018 - Operator Simulation API
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 

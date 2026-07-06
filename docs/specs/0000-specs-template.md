@@ -75,7 +75,8 @@
 ## Acceptance Criteria
 
 > fill: executable Given/When/Then, each pointing at the BR(s) it proves. These become the
-> RED tests of step 2 of the loop. If a criterion can't be written as Given/When/Then, the
+> developer's end-of-build tests (step 3 of the loop) and QA's homologação script (step 4).
+> If a criterion can't be written as Given/When/Then, the
 > rule above is not testable yet — fix the rule.
 
 - **AC1** (BR1) — Given …, when …, then …
