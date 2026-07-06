@@ -16,3 +16,11 @@ update symptom set emergency = true where code in ('DOR_TORACICA', 'FALTA_AR');
 -- existing rows that only stored the code.
 alter table clinical_document
     add column target_specialty_name varchar(120);
+
+-- Backfill the seeded referrals (V18) whose name column did not yet exist at insert time, so the
+-- referral detail renders the specialty name (BR6) instead of an empty field. Names mirror the
+-- domain.network specialty registry (V15) for the seeded codes.
+update clinical_document set target_specialty_name = 'Cardiologia'
+    where id = 'dd000000-0000-4000-8000-000000000004';
+update clinical_document set target_specialty_name = 'Dermatologia'
+    where id = 'dd000000-0000-4000-8000-000000000008';

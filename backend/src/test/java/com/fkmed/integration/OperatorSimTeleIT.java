@@ -55,7 +55,8 @@ class OperatorSimTeleIT extends AbstractIntegrationTest {
     jdbc.update("delete from notification");
     // Delete ONLY the documents this IT creates — issued through a real tele session, or
     // operator-issued via /api/sim/documents — never the V18 seed (whose origin_session_id is a
-    // placeholder not present in tele_session, and origin_operator_id is null). ClinicalDocumentSeedIT
+    // placeholder not present in tele_session, and origin_operator_id is null).
+    // ClinicalDocumentSeedIT
     // asserts the seed survives sibling ITs on the shared Postgres (test isolation, checklist §8).
     String testDocs =
         "select id from clinical_document where origin_session_id in (select id from tele_session)"

@@ -26,14 +26,19 @@ test('AC9: prescriptions/sick notes list, detail with CID and PDF download', asy
 
   await page.getByTestId('minha-saude-hub-receituarios').click();
   await expect(page.getByTestId('documentos-lista-page')).toBeVisible();
+  await expect(page.locator('a[data-testid^="documento-card-"]').first()).toBeVisible({ timeout: 15000 });
 
-  // The seeded documents surface with a validity badge; open the first.
-  const firstCard = page.locator('a[data-testid^="documento-card-"]').first();
-  await expect(firstCard).toBeVisible({ timeout: 15000 });
-  await expect(firstCard.getByTestId('documento-card-validade')).toBeVisible();
-  await firstCard.click();
+  // The "Receituários/Atestados" list mixes prescriptions (which carry a validity badge) and sick
+  // notes (which never do — DL-0019, no validity), most-recent-first, so the first card may well be a
+  // sick note. Open a card that HAS validity for the validity + PDF assertions.
+  const validCard = page
+    .locator('a[data-testid^="documento-card-"]')
+    .filter({ has: page.getByTestId('documento-card-validade') })
+    .first();
+  await expect(validCard).toBeVisible();
+  await validCard.click();
 
-  // Type-specific detail with the common header.
+  // Type-specific detail with the common header + the validity row.
   await expect(page.getByTestId('detalhe-page')).toBeVisible();
   await expect(page.getByTestId('detalhe-profissional')).toBeVisible();
   await expect(page.getByTestId('detalhe-validade')).toBeVisible();
@@ -44,6 +49,19 @@ test('AC9: prescriptions/sick notes list, detail with CID and PDF download', asy
     page.getByTestId('detalhe-baixar-pdf').click(),
   ]);
   expect(download.suggestedFilename()).toMatch(/\.pdf$/i);
+
+  // A sick note carries no validity but DOES display the CID end-to-end (DL-0020, owner override of
+  // the spec's proposed default). It is the card in this same list WITHOUT a validity badge.
+  await page.goBack();
+  await expect(page.getByTestId('documentos-lista-page')).toBeVisible();
+  const sickNote = page
+    .locator('a[data-testid^="documento-card-"]')
+    .filter({ hasNot: page.getByTestId('documento-card-validade') })
+    .first();
+  await expect(sickNote).toBeVisible({ timeout: 15000 });
+  await sickNote.click();
+  await expect(page.getByTestId('detalhe-cid')).toBeVisible();
+  await expect(page.getByTestId('detalhe-cid')).not.toBeEmpty();
 });
 
 test('AC9/AC4: a referral opens "Agendar consulta" with the specialty pre-selected', async ({ page }) => {

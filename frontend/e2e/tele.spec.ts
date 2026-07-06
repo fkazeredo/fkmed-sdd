@@ -22,11 +22,19 @@ async function login(page: Page, email: string, senha: string): Promise<void> {
 }
 
 /** A Bearer token for the seeded OPERATOR_SIM account, obtained by logging it into the SPA in an
- *  isolated context and reading the access token angular-oauth2-oidc keeps in sessionStorage. */
+ *  isolated context and reading the access token angular-oauth2-oidc keeps in sessionStorage. The
+ *  operator-sim is an internal credential, NOT an onboarded beneficiary: login succeeds and stores a
+ *  valid token, but the SPA then routes it to the legal-acceptance interceptor (`/aceite-legal`), not
+ *  Home. We only need the token (the backend `/api/sim/**` authorizes by the OPERATOR_SIM allowlist,
+ *  ADR-0017), so wait for the stored token rather than a Home that never renders for this account. */
 async function operatorToken(browser: Browser): Promise<string> {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await login(page, OP_EMAIL, OP_SENHA);
+  await page.goto('/');
+  await page.getByLabel('E-mail').fill(OP_EMAIL);
+  await page.getByLabel('Senha').fill(OP_SENHA);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.waitForFunction(() => !!sessionStorage.getItem('access_token'), null, { timeout: 15000 });
   const token = await page.evaluate(() => sessionStorage.getItem('access_token'));
   await context.close();
   expect(token, 'operator access token').toBeTruthy();
@@ -118,8 +126,8 @@ test('AC2: leaving the queue abandons the session and reopens the hub', async ({
   await expect(page.getByTestId('sessao-confirmar-saida')).toBeVisible();
   await page.getByTestId('sessao-saida-confirmar').click();
 
-  // The session is ABANDONADA; the hub is reachable again.
-  await expect(page.getByTestId('abandonada-voltar-hub')).toBeVisible({ timeout: 15000 });
-  await page.getByTestId('abandonada-voltar-hub').click();
-  await expect(page.getByTestId('telemedicina-hub-page')).toBeVisible();
+  // Leaving abandons the session and returns straight to the hub (AC2 — "reopens the hub"); the
+  // navigation only happens on a successful leave, so reaching the hub proves the session is gone.
+  // (The dedicated ABANDONADA notice screen serves the no-show case, AC3.)
+  await expect(page.getByTestId('telemedicina-hub-page')).toBeVisible({ timeout: 15000 });
 });
