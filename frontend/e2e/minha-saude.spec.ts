@@ -28,7 +28,7 @@ test('AC9: prescriptions/sick notes list, detail with CID and PDF download', asy
   await expect(page.getByTestId('documentos-lista-page')).toBeVisible();
 
   // The seeded documents surface with a validity badge; open the first.
-  const firstCard = page.locator('li[data-testid^="documento-card-"]').first();
+  const firstCard = page.locator('button[data-testid^="documento-card-"]').first();
   await expect(firstCard).toBeVisible({ timeout: 15000 });
   await expect(firstCard.getByTestId('documento-card-validade')).toBeVisible();
   await firstCard.click();
@@ -53,7 +53,7 @@ test('AC9/AC4: a referral opens "Agendar consulta" with the specialty pre-select
   await page.getByTestId('minha-saude-hub-encaminhamentos').click();
   await expect(page.getByTestId('documentos-lista-page')).toBeVisible();
 
-  const firstReferral = page.locator('li[data-testid^="documento-card-"]').first();
+  const firstReferral = page.locator('button[data-testid^="documento-card-"]').first();
   await expect(firstReferral).toBeVisible({ timeout: 15000 });
   await firstReferral.click();
 
