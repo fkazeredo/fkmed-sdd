@@ -4,6 +4,7 @@ import com.fkmed.domain.plan.AccessibleBeneficiary;
 import com.fkmed.domain.plan.BeneficiaryAccess;
 import com.fkmed.domain.plan.BeneficiaryRole;
 import com.fkmed.domain.plan.BeneficiarySummary;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -13,6 +14,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,6 +39,7 @@ public class FinanceService {
   private final CopayEntryRepository copayEntries;
   private final BeneficiaryAccess beneficiaryAccess;
   private final Clock clock;
+  private final MeterRegistry metrics;
 
   /** The invoices of the titular's contract for {@code tab} (BR2), ordered per tab. */
   public List<InvoiceSummary> invoices(String callerCard, InvoiceTab tab) {
@@ -81,6 +84,7 @@ public class FinanceService {
   public byte[] invoicePdf(String callerCard, UUID invoiceId) {
     Invoice invoice = requireOwnInvoice(callerCard, invoiceId);
     LocalDate today = LocalDate.now(clock);
+    metrics.counter("finance.pdf.download", "type", "invoice").increment();
     return InvoicePdfRenderer.render(toSummary(invoice, today), invoice.getDigitableLine());
   }
 
@@ -97,8 +101,13 @@ public class FinanceService {
     if (normalized.length() != DigitableLine.DIGITS) {
       throw new LineInvalidFormatException();
     }
-    return invoices
-        .findByDigitableLine(normalized)
+    Optional<Invoice> match = invoices.findByDigitableLine(normalized);
+    // SPEC-0013 §Observability: count validator uses split by result — the antifraud "fraud
+    // signal" (a spike of not-recognized boletos).
+    metrics
+        .counter("finance.validator", "result", match.isPresent() ? "authentic" : "not_recognized")
+        .increment();
+    return match
         .map(
             invoice ->
                 InvoiceValidation.authentic(
@@ -176,6 +185,7 @@ public class FinanceService {
         months[month] = months[month].add(invoice.getAmount());
       }
     }
+    metrics.counter("finance.pdf.download", "type", "tax-statement").increment();
     return TaxStatementPdfRenderer.render(
         titular.fullName(), titular.cardNumber(), titular.planName(), year, months);
   }
@@ -209,6 +219,7 @@ public class FinanceService {
             .map(invoice -> Competencia.label(invoice.getCompetencia()))
             .toList();
     List<String> beneficiaries = family.stream().map(AccessibleBeneficiary::firstName).toList();
+    metrics.counter("finance.pdf.download", "type", "settlement").increment();
     return SettlementDeclarationPdfRenderer.render(
         titular.fullName(),
         titular.cardNumber(),

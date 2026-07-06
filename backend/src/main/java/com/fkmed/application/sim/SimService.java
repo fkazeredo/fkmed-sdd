@@ -287,7 +287,7 @@ public class SimService {
   }
 
   /**
-   * Records the payment of an invoice idempotently (SPEC-0013 BR6): a repeat on an already-paid
+   * Records the payment of an invoice idempotently (SPEC-0018 BR6): a repeat on an already-paid
    * invoice does not double-pay nor duplicate events.
    *
    * @throws SimTargetNotFoundException when no invoice with {@code invoiceId} exists.

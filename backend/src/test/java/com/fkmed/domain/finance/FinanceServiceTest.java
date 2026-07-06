@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.fkmed.domain.plan.AccessibleBeneficiary;
 import com.fkmed.domain.plan.BeneficiaryAccess;
 import com.fkmed.domain.plan.BeneficiaryRole;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -48,10 +49,13 @@ class FinanceServiceTest {
   @Mock private BeneficiaryAccess beneficiaryAccess;
 
   private FinanceService service;
+  private SimpleMeterRegistry metrics;
 
   @BeforeEach
   void setUp() {
-    service = new FinanceService(invoiceRepository, copayRepository, beneficiaryAccess, CLOCK);
+    metrics = new SimpleMeterRegistry();
+    service =
+        new FinanceService(invoiceRepository, copayRepository, beneficiaryAccess, CLOCK, metrics);
     lenient()
         .when(beneficiaryAccess.accessibleFor(MARIA_CARD))
         .thenReturn(
@@ -163,6 +167,23 @@ class FinanceServiceTest {
     assertThat(result.result()).isEqualTo("NOT_RECOGNIZED");
     assertThat(result.competencia()).isNull();
     assertThat(result.amount()).isNull();
+  }
+
+  @Test
+  void validate_countsUsesByResult_theAntifraudFraudSignal() {
+    // SPEC-0013 §Observability: the validator counter split by result (fresh-eyes review, slice
+    // 5.2).
+    when(invoiceRepository.findByDigitableLine(L1))
+        .thenReturn(
+            Optional.of(invoice(LocalDate.of(2025, 5, 1), LocalDate.of(2025, 5, 10), L1, true)));
+    when(invoiceRepository.findByDigitableLine(L4)).thenReturn(Optional.empty());
+
+    service.validate(MARIA_CARD, L1);
+    service.validate(MARIA_CARD, L4);
+
+    assertThat(metrics.counter("finance.validator", "result", "authentic").count()).isEqualTo(1.0);
+    assertThat(metrics.counter("finance.validator", "result", "not_recognized").count())
+        .isEqualTo(1.0);
   }
 
   @Test

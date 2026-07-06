@@ -147,7 +147,7 @@ public class OperatorSimulationController {
         HttpRequestMetadata.current());
   }
 
-  /** Records the payment of an invoice, idempotently (SPEC-0013 BR6). */
+  /** Records the payment of an invoice, idempotently (SPEC-0018 BR6). */
   @PostMapping("/finance/invoices/{id}/pay")
   void payInvoice(@PathVariable UUID id) {
     UUID operator = operatorAccess.requireOperator();

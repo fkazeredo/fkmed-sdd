@@ -13,8 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
  * or paid. The single caller is the operator simulation ({@code application.sim}, SPEC-0018); no
  * beneficiary write path exists (the portal is read-only over invoices). {@link #issue} publishes
  * {@link InvoiceIssued} inside the issuance transaction for the SPEC-0004 notification wiring;
- * {@link #pay} is idempotent (BR6). Seed-created invoices bypass this facade (a Flyway insert), so
- * they do NOT notify — only this sim path does.
+ * {@link #pay} is idempotent (SPEC-0018 BR6). Seed-created invoices bypass this facade (a Flyway
+ * insert), so they do NOT notify — only this sim path does.
  */
 @Service
 @RequiredArgsConstructor
@@ -56,9 +56,9 @@ public class Invoices {
   }
 
   /**
-   * Records the payment of an invoice idempotently (BR6): the first call stamps the payment
-   * instant; a repeat on an already-paid invoice is a no-op. Publishes no event (payment is not a
-   * notified fact in this slice).
+   * Records the payment of an invoice idempotently (SPEC-0018 BR6): the first call stamps the
+   * payment instant; a repeat on an already-paid invoice is a no-op. Publishes no event (payment is
+   * not a notified fact in this slice).
    *
    * @return {@code true} when {@code invoiceId} exists (whether newly paid or already paid), {@code
    *     false} when there is no such invoice — the sim maps {@code false} to its stable {@code 404

@@ -14,10 +14,10 @@ import lombok.Getter;
 /**
  * A monthly invoice (boleto) issued to a contract's titular (SPEC-0013). Operator-originated (BR8):
  * created only through {@link Invoices#issue} — the portal never writes one. Immutable except for
- * the single business transition {@link #markPaid} (idempotent — BR6). The {@code digitableLine} is
- * stored in its canonical digits-only 47-char form (the validator normalizes input before matching,
- * BR4); {@code amount} is the ORIGINAL amount, on which the overdue update (multa + juros) is
- * computed at read time (BR2).
+ * the single business transition {@link #markPaid} (idempotent — SPEC-0018 BR6). The {@code
+ * digitableLine} is stored in its canonical digits-only 47-char form (the validator normalizes
+ * input before matching, BR4); {@code amount} is the ORIGINAL amount, on which the overdue update
+ * (multa + juros) is computed at read time (BR2).
  */
 @Entity
 @Table(name = "invoice")
@@ -96,8 +96,8 @@ public class Invoice {
   }
 
   /**
-   * Records the payment idempotently (BR6): the first call stamps {@code paidAt}; a repeat on an
-   * already-paid invoice is a no-op (the original payment instant stays).
+   * Records the payment idempotently (SPEC-0018 BR6): the first call stamps {@code paidAt}; a
+   * repeat on an already-paid invoice is a no-op (the original payment instant stays).
    *
    * @return {@code true} when this call transitioned the invoice to paid, {@code false} when it was
    *     already paid.
