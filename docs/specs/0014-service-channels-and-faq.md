@@ -1,6 +1,6 @@
 # 0014 - Service Channels and FAQ
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -120,9 +120,9 @@ for the Libras request (beneficiary, timestamp).
 
 ## Open Questions
 
-- **OQ1** — Definitive channel numbers and service hours · placeholder data until defined ·
-  proposed default: fictitious placeholders in the seed, swapped by content migration when
-  the owner provides the real ones.
+- **OQ1 — RESOLVED** (owner, AskUserQuestion 2026-07-06): channel numbers and service hours
+  ship as **fictitious placeholders** in the seed, to be swapped by a content migration when the
+  owner provides the real ones. Not a blocker for this slice.
 
 ## Out of Scope
 
