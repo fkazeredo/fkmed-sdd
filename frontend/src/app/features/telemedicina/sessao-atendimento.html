@@ -1,0 +1,151 @@
+<section class="mx-auto max-w-2xl p-4" aria-labelledby="sessao-title" data-testid="sessao-atendimento-page">
+  <h1 id="sessao-title" class="mb-4 text-2xl font-semibold text-teal-800">
+    {{ 'telemedicina.sessao.title' | translate }}
+  </h1>
+
+  @if (streamError() === 'not-found') {
+    <div class="rounded-xl bg-white p-6 shadow" data-testid="sessao-sem-sessao">
+      <p class="text-slate-600">{{ 'telemedicina.sessao.semSessao' | translate }}</p>
+      <button type="button" class="mt-3 rounded bg-teal-700 px-4 py-2 text-white" (click)="backToHub()" data-testid="sessao-voltar-hub">
+        {{ 'telemedicina.sessao.voltarHub' | translate }}
+      </button>
+    </div>
+  } @else if (state() === 'EM_FILA') {
+    <div class="flex flex-col gap-4" data-testid="sessao-fila">
+      <app-tele-instability-banner />
+      <div class="rounded-xl bg-white p-6 text-center shadow">
+        <p class="text-slate-500">{{ 'telemedicina.fila.posicaoLabel' | translate }}</p>
+        <p class="my-2 text-5xl font-bold text-teal-700" data-testid="fila-posicao">{{ session()?.position }}</p>
+        <p class="text-slate-600" data-testid="fila-eta">
+          {{ 'telemedicina.fila.eta' | translate: { minutos: session()?.etaMinutes } }}
+        </p>
+      </div>
+      <p class="text-xs text-slate-400">{{ 'telemedicina.fila.atualizaSozinho' | translate }}</p>
+      <button
+        type="button"
+        class="self-start rounded border border-red-300 px-4 py-2 text-red-700"
+        (click)="askLeave()"
+        data-testid="fila-sair"
+      >
+        {{ 'telemedicina.fila.sair' | translate }}
+      </button>
+    </div>
+  } @else if (state() === 'EM_ATENDIMENTO') {
+    <div class="flex flex-col gap-4" data-testid="sessao-sala">
+      <div class="rounded-xl border border-teal-400 bg-teal-50 p-4 text-teal-900" role="status" data-testid="sala-sua-vez">
+        <p class="font-semibold">{{ 'telemedicina.sala.suaVez' | translate }}</p>
+      </div>
+      <div class="rounded-xl bg-white p-6 shadow">
+        <p class="text-xs uppercase text-slate-400">{{ 'telemedicina.sala.profissional' | translate }}</p>
+        <p class="text-lg font-medium text-teal-800" data-testid="sala-profissional">{{ professional()?.name }}</p>
+        <p class="text-sm text-slate-500" data-testid="sala-crm">{{ professional()?.crm }}</p>
+
+        <div class="mt-4 flex gap-8">
+          <div>
+            <p class="text-xs uppercase text-slate-400">{{ 'telemedicina.sala.duracao' | translate }}</p>
+            <p class="text-lg tabular-nums text-slate-700" data-testid="sala-duracao">{{ runningDuration() ?? '—' }}</p>
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="self-start rounded border border-red-300 px-4 py-2 text-red-700"
+        (click)="askLeave()"
+        data-testid="sala-encerrar"
+      >
+        {{ 'telemedicina.sala.encerrar' | translate }}
+      </button>
+    </div>
+  } @else if (state() === 'ENCERRADA') {
+    <div class="flex flex-col gap-4" data-testid="sessao-resumo">
+      <div class="rounded-xl bg-white p-6 shadow">
+        <p class="text-lg font-semibold text-teal-800">{{ 'telemedicina.resumo.title' | translate }}</p>
+        <dl class="mt-3 grid grid-cols-1 gap-2 text-sm">
+          <div class="flex justify-between">
+            <dt class="text-slate-400">{{ 'telemedicina.sala.profissional' | translate }}</dt>
+            <dd class="text-slate-700" data-testid="resumo-profissional">{{ professional()?.name }} · {{ professional()?.crm }}</dd>
+          </div>
+          @if (room()?.durationMinutes) {
+            <div class="flex justify-between">
+              <dt class="text-slate-400">{{ 'telemedicina.sala.duracao' | translate }}</dt>
+              <dd class="text-slate-700" data-testid="resumo-duracao">
+                {{ 'telemedicina.resumo.minutos' | translate: { minutos: room()?.durationMinutes } }}
+              </dd>
+            </div>
+          }
+        </dl>
+        @if (room()?.guidance) {
+          <div class="mt-3">
+            <p class="text-xs uppercase text-slate-400">{{ 'telemedicina.resumo.orientacoes' | translate }}</p>
+            <p class="whitespace-pre-line text-sm text-slate-700" data-testid="resumo-orientacoes">{{ room()?.guidance }}</p>
+          </div>
+        }
+      </div>
+
+      <div class="rounded-xl bg-white p-6 shadow">
+        <p class="text-xs uppercase text-slate-400">{{ 'telemedicina.resumo.documentos' | translate }}</p>
+        @if (room()?.documents?.length) {
+          <ul class="mt-2 flex flex-col gap-2" data-testid="resumo-documentos">
+            @for (doc of room()!.documents!; track doc.id) {
+              <li class="flex items-center gap-2 rounded border border-slate-200 p-2" [attr.data-testid]="'resumo-documento-' + doc.id">
+                <i class="pi pi-file text-teal-700" aria-hidden="true"></i>
+                <span class="text-sm text-slate-700">{{ doc.description ?? doc.type }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mt-2 text-sm text-slate-500" data-testid="resumo-sem-documentos">
+            {{ 'telemedicina.resumo.semDocumentos' | translate }}
+          </p>
+        }
+        <a
+          class="mt-3 inline-block rounded bg-teal-700 px-4 py-2 text-white"
+          routerLink="/minha-saude"
+          data-testid="resumo-minha-saude"
+        >
+          {{ 'telemedicina.resumo.verMinhaSaude' | translate }}
+        </a>
+      </div>
+
+      <button type="button" class="self-start rounded border border-slate-300 px-4 py-2" (click)="backToHub()" data-testid="resumo-voltar-hub">
+        {{ 'telemedicina.sessao.voltarHub' | translate }}
+      </button>
+    </div>
+  } @else if (state() === 'ABANDONADA') {
+    <div class="rounded-xl bg-white p-6 shadow" data-testid="sessao-abandonada">
+      <p class="font-semibold text-slate-700">{{ 'telemedicina.abandonada.titulo' | translate }}</p>
+      <p class="text-sm text-slate-500">{{ 'telemedicina.abandonada.mensagem' | translate }}</p>
+      <button type="button" class="mt-3 rounded bg-teal-700 px-4 py-2 text-white" (click)="backToHub()" data-testid="abandonada-voltar-hub">
+        {{ 'telemedicina.sessao.voltarHub' | translate }}
+      </button>
+    </div>
+  } @else {
+    <p class="rounded-xl bg-white p-6 text-slate-500 shadow" data-testid="sessao-conectando">
+      {{ 'telemedicina.sessao.conectando' | translate }}
+    </p>
+  }
+
+  <!-- Leave confirmation (AC2) -->
+  @if (confirmingLeave()) {
+    <div class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4" data-testid="sessao-confirmar-saida">
+      <p class="text-sm text-red-800">{{ 'telemedicina.sair.confirmar' | translate }}</p>
+      @if (leaveError()) {
+        <p class="mt-1 text-sm text-red-700" data-testid="sessao-saida-erro">{{ leaveError()! | translate }}</p>
+      }
+      <div class="mt-3 flex gap-2">
+        <button type="button" class="rounded border border-slate-300 px-3 py-1.5" (click)="cancelLeave()" data-testid="sessao-saida-voltar">
+          {{ 'telemedicina.acao.voltar' | translate }}
+        </button>
+        <button
+          type="button"
+          class="rounded bg-red-700 px-3 py-1.5 text-white disabled:opacity-50"
+          [disabled]="leaving()"
+          (click)="confirmLeave()"
+          data-testid="sessao-saida-confirmar"
+        >
+          {{ 'telemedicina.sair.sim' | translate }}
+        </button>
+      </div>
+    </div>
+  }
+</section>

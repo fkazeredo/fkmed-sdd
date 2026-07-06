@@ -188,6 +188,35 @@ export const routes: Routes = [
         path: 'minha-saude/documento/:id',
         loadComponent: () => import('./features/minha-saude/document-detail').then((m) => m.DocumentDetail),
       },
+      // SPEC-0010 (Phase 4): the Telemedicina hub and its journeys — reachable via the shell nav
+      // (nav-telemedicina). Pronto Atendimento (triage → term → queue → room → summary, state-driven
+      // per ADR-0015, live via SSE per ADR-0016), scheduled teleconsultation and the tele-filtered
+      // Meus Agendamentos with the join window.
+      {
+        path: 'telemedicina',
+        loadComponent: () =>
+          import('./features/telemedicina/telemedicina-hub').then((m) => m.TelemedicinaHub),
+      },
+      {
+        path: 'telemedicina/triagem',
+        loadComponent: () =>
+          import('./features/telemedicina/pronto-atendimento').then((m) => m.ProntoAtendimento),
+      },
+      {
+        path: 'telemedicina/sessao',
+        loadComponent: () =>
+          import('./features/telemedicina/sessao-atendimento').then((m) => m.SessaoAtendimento),
+      },
+      {
+        path: 'telemedicina/agendar',
+        loadComponent: () =>
+          import('./features/telemedicina/agendar-teleconsulta').then((m) => m.AgendarTeleconsulta),
+      },
+      {
+        path: 'telemedicina/agendamentos',
+        loadComponent: () =>
+          import('./features/telemedicina/meus-agendamentos-tele').then((m) => m.MeusAgendamentosTele),
+      },
     ],
   },
 ];

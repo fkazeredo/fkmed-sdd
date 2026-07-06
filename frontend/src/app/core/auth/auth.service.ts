@@ -65,4 +65,12 @@ export class AuthService {
     const claims = this.oauth.getIdentityClaims() as { sub?: string } | null;
     return claims?.sub ?? '';
   }
+
+  /** The current OIDC access token (empty when none). The resource-server interceptor already
+   * attaches it to HttpClient calls to `/api`; this accessor exists for the few requests made
+   * outside HttpClient that must set the `Authorization` header themselves — notably the
+   * telemedicine SSE stream via `fetch` (SPEC-0010, ADR-0016), since `EventSource` cannot. */
+  accessToken(): string {
+    return this.oauth.getAccessToken() ?? '';
+  }
 }
