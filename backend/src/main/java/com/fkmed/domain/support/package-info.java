@@ -10,7 +10,7 @@
  * check reuses {@code domain.plan.BeneficiaryAccess} (SPEC-0003 BR2/BR3), and every registration is
  * audited via {@code domain.audit.AuditRecorder} (SPEC-0003 BR6) and counted via {@link
  * io.micrometer.core.instrument.MeterRegistry}, mirroring {@code domain.guides.TokenService}.
- * Module map: ADR-0019.
+ * Module map: ADR-0021.
  */
 @org.springframework.modulith.ApplicationModule(displayName = "support")
 package com.fkmed.domain.support;

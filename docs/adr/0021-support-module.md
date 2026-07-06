@@ -1,4 +1,4 @@
-# ADR 0019: Module map revision — `domain.support` (service channels, antifraud, FAQ, Libras — SPEC-0014)
+# ADR 0021: Module map revision — `domain.support` (service channels, antifraud, FAQ, Libras — SPEC-0014)
 
 ## Status
 
