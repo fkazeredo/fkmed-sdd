@@ -155,6 +155,52 @@
         }
       }
     },
+    "/api/tele/sessions" : {
+      "post" : {
+        "tags" : [ "tele-controller" ],
+        "operationId" : "enter",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EnterTeleSessionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EnterTeleSessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tele/sessions/current/leave" : {
+      "post" : {
+        "tags" : [ "tele-controller" ],
+        "operationId" : "leave",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TeleSessionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notifications/{id}/read" : {
       "post" : {
         "tags" : [ "notification-controller" ],
@@ -496,6 +542,33 @@
         }
       }
     },
+    "/api/appointments/{id}/join" : {
+      "post" : {
+        "tags" : [ "tele-join-controller" ],
+        "operationId" : "join",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TeleSessionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/cancel" : {
       "post" : {
         "tags" : [ "appointment-controller" ],
@@ -562,6 +635,47 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProfileView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tele/sessions/current" : {
+      "get" : {
+        "tags" : [ "tele-controller" ],
+        "operationId" : "stream",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/event-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SseEmitter"
+                }
+              },
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TeleSessionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tele/catalog" : {
+      "get" : {
+        "tags" : [ "tele-controller" ],
+        "operationId" : "catalog",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TeleCatalogView"
                 }
               }
             }
@@ -1385,6 +1499,83 @@
         },
         "required" : [ "currentPassword", "newPassword" ]
       },
+      "EnterTeleSessionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "complaint" : {
+            "type" : "string"
+          },
+          "symptoms" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "otherSymptom" : {
+            "type" : "string"
+          },
+          "duration" : {
+            "type" : "string"
+          },
+          "termVersion" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "beneficiaryId" ]
+      },
+      "EnterTeleSessionResponse" : {
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "type" : "string"
+          },
+          "position" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "etaMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "Professional" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "crm" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TeleSessionView" : {
+        "type" : "object",
+        "properties" : {
+          "state" : {
+            "type" : "string"
+          },
+          "position" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "etaMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "professional" : {
+            "$ref" : "#/components/schemas/Professional"
+          },
+          "room" : {
+            "type" : "string"
+          }
+        }
+      },
       "AcceptLegalDocumentRequest" : {
         "type" : "object",
         "properties" : {
@@ -1650,6 +1841,51 @@
             "type" : "string"
           },
           "avatarUrl" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SseEmitter" : {
+        "type" : "object",
+        "properties" : {
+          "timeout" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "SymptomOption" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TeleCatalogView" : {
+        "type" : "object",
+        "properties" : {
+          "symptoms" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SymptomOption"
+            }
+          },
+          "term" : {
+            "$ref" : "#/components/schemas/TeleTermView"
+          }
+        }
+      },
+      "TeleTermView" : {
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "type" : "string"
+          },
+          "body" : {
             "type" : "string"
           }
         }
@@ -2261,6 +2497,10 @@
           "type" : {
             "type" : "string",
             "enum" : [ "CONSULTATION", "EXAM" ]
+          },
+          "modality" : {
+            "type" : "string",
+            "enum" : [ "PRESENCIAL", "TELEMEDICINA" ]
           },
           "specialtyCode" : {
             "type" : "string"

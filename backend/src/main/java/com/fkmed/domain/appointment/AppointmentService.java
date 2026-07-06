@@ -158,6 +158,7 @@ public class AppointmentService {
             ? Appointment.consultation(
                 beneficiary.beneficiaryId(),
                 scopeCode,
+                modalityOf(command.unitId()),
                 command.unitId(),
                 slot.getId(),
                 scheduledAt,
@@ -318,6 +319,37 @@ public class AppointmentService {
     return new AppointmentListResponse(upcoming, history);
   }
 
+  /**
+   * The join-relevant projection of a scheduled appointment for the telemedicine module's room
+   * (SPEC-0010 BR14, DL-0018): scope-checked so it never reveals an appointment outside the
+   * caller's family, and reporting whether it is a Telemedicina booking still open. The entity
+   * never leaves the module.
+   *
+   * @throws AppointmentNotFoundException when unknown or out of the caller's scope.
+   */
+  @Transactional(readOnly = true)
+  public TeleJoinTarget teleJoinTarget(String callerCard, UUID appointmentId) {
+    Appointment appointment = requireAccessibleAppointment(callerCard, appointmentId);
+    return new TeleJoinTarget(
+        appointment.getId(),
+        appointment.getBeneficiaryId(),
+        appointment.getScheduledAt(),
+        appointment.getModality() == AppointmentModality.TELEMEDICINA,
+        appointment.getStatus().isActive(),
+        appointment.getCreatedBy());
+  }
+
+  /**
+   * The modality a booking against {@code unitId} takes: TELEMEDICINA for the virtual tele unit.
+   */
+  private AppointmentModality modalityOf(UUID unitId) {
+    return careUnits
+        .findById(unitId)
+        .filter(CareUnit::isVirtual)
+        .map(unit -> AppointmentModality.TELEMEDICINA)
+        .orElse(AppointmentModality.PRESENCIAL);
+  }
+
   private String validatedScopeCode(BookAppointmentCommand command) {
     if (command.type() == AppointmentType.CONSULTATION) {
       String code = command.specialtyCode();
@@ -447,6 +479,7 @@ public class AppointmentService {
         appointment.getId(),
         appointment.getProtocol(),
         appointment.getType(),
+        appointment.getModality(),
         appointment.getSpecialtyCode(),
         appointment.getExamCode(),
         appointment.getExamCode() == null ? null : examNames.get(appointment.getExamCode()),

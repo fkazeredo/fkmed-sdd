@@ -52,7 +52,8 @@ class ModularityTest {
             "domain.notification",
             "domain.network",
             "domain.appointment",
-            "domain.clinicaldocs");
+            "domain.clinicaldocs",
+            "domain.telemedicine");
   }
 
   @Test

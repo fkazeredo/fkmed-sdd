@@ -10,7 +10,8 @@ import lombok.Getter;
 /**
  * An operator-owned care unit where consultations and exams are scheduled (SPEC-0009 §Business
  * Context: scheduling covers the operator's own units only). Read-only registry data seeded by
- * Flyway V16.
+ * Flyway V16. A {@link #virtual} unit has no physical address and backs the telemedicine agenda
+ * (SPEC-0010 BR14, DL-0018): a booking against it is recorded as a {@code TELEMEDICINA} modality.
  */
 @Entity
 @Table(name = "care_unit")
@@ -21,6 +22,10 @@ public class CareUnit {
 
   @Column(nullable = false)
   private String name;
+
+  /** Whether this is the virtual Telemedicina unit backing the tele agenda (SPEC-0010, DL-0018). */
+  @Column(nullable = false)
+  private boolean virtual;
 
   private String cep;
   private String street;
