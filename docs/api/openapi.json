@@ -348,6 +348,190 @@
         }
       }
     },
+    "/api/appointments" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "createWithAttachment",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "type",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "CONSULTATION", "EXAM" ]
+          }
+        }, {
+          "name" : "specialty",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "exam",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "unitId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "slot",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "medicalOrder" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            },
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateAppointmentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookingConfirmation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/reschedule" : {
+      "post" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "reschedule",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RescheduleAppointmentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookingConfirmation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/cancel" : {
+      "post" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "cancel",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CancelAppointmentRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookingConfirmation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/beneficiaries/{beneficiaryId}/contacts" : {
       "patch" : {
         "tags" : [ "profile-controller" ],
@@ -442,7 +626,7 @@
     "/api/notifications" : {
       "get" : {
         "tags" : [ "notification-controller" ],
-        "operationId" : "list",
+        "operationId" : "list_1",
         "parameters" : [ {
           "name" : "page",
           "in" : "query",
@@ -916,6 +1100,83 @@
           }
         }
       }
+    },
+    "/api/appointments/units" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "units",
+        "parameters" : [ {
+          "name" : "specialty",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "exam",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CareUnitView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/availability" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "availability",
+        "parameters" : [ {
+          "name" : "unitId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "specialty",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "exam",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AvailabilityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -1096,6 +1357,66 @@
           }
         },
         "required" : [ "email", "password", "registrationToken" ]
+      },
+      "BookingConfirmation" : {
+        "type" : "object",
+        "properties" : {
+          "protocol" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "AGENDADO", "REAGENDADO", "CANCELADO", "REALIZADO" ]
+          }
+        }
+      },
+      "CreateAppointmentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "CONSULTATION", "EXAM" ]
+          },
+          "specialty" : {
+            "type" : "string"
+          },
+          "exam" : {
+            "type" : "string"
+          },
+          "unitId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "slot" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "beneficiaryId", "slot", "type", "unitId" ]
+      },
+      "RescheduleAppointmentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "slot" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "slot" ]
+      },
+      "CancelAppointmentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }
       },
       "UpdateContactsRequest" : {
         "type" : "object",
@@ -1633,6 +1954,158 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "AppointmentListResponse" : {
+        "type" : "object",
+        "properties" : {
+          "upcoming" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AppointmentView"
+            }
+          },
+          "history" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AppointmentView"
+            }
+          }
+        }
+      },
+      "AppointmentView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "CONSULTATION", "EXAM" ]
+          },
+          "specialtyCode" : {
+            "type" : "string"
+          },
+          "examCode" : {
+            "type" : "string"
+          },
+          "examName" : {
+            "type" : "string"
+          },
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "beneficiaryName" : {
+            "type" : "string"
+          },
+          "unitId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "unitName" : {
+            "type" : "string"
+          },
+          "scheduledAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "AGENDADO", "REAGENDADO", "CANCELADO", "REALIZADO" ]
+          },
+          "cancelReason" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CareUnitView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "cep" : {
+            "type" : "string"
+          },
+          "street" : {
+            "type" : "string"
+          },
+          "addressNumber" : {
+            "type" : "string"
+          },
+          "complement" : {
+            "type" : "string"
+          },
+          "neighborhood" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "uf" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AvailabilityResponse" : {
+        "type" : "object",
+        "properties" : {
+          "unitId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "scopeType" : {
+            "type" : "string",
+            "enum" : [ "CONSULTATION", "EXAM" ]
+          },
+          "scopeCode" : {
+            "type" : "string"
+          },
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Day"
+            }
+          }
+        }
+      },
+      "Day" : {
+        "type" : "object",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "slots" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Slot"
+            }
+          }
+        }
+      },
+      "Slot" : {
+        "type" : "object",
+        "properties" : {
+          "time" : {
+            "type" : "string"
+          },
+          "remaining" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       }
