@@ -99,7 +99,7 @@ Cinco arquivos em `.claude/agents/`:
 | `dev-backend` | Constrói a parte Java/banco/APIs de uma fatia, com os testes dela (em cópia isolada do repositório) | Sonnet ou Opus — **o arquiteto decide** pela complexidade; esforço `high` |
 | `dev-frontend` | Constrói a parte Angular/telas, com os testes dela (idem) | idem |
 | `dev-fullstack` | **Somente tarefas pequenas** que cruzam as duas partes (um CRUD simples, um ajuste ponta a ponta) — o padrão é especialista primeiro | idem |
-| `qa` | Bateria pesada de testes **uma vez por fatia, na branch integrada** + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. | **Sonnet em esforço `high`**; o arquiteto sobe para Opus em fatia crítica (segurança/dinheiro/LGPD/documento clínico) |
+| `qa` | Bateria **proporcional, uma vez por fatia, na branch integrada** (gates completos sempre; E2E quando há jornada de usuário; PIT quando toca domínio crítico/dinheiro) + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. | **Sonnet em esforço `high`**; o arquiteto sobe para Opus em fatia crítica (segurança/dinheiro/LGPD/documento clínico) |
 
 **A regra de delegação (sua):** **especialista primeiro** — backend com `dev-backend`,
 frontend com `dev-frontend`; o `dev-fullstack` só entra em tarefa pequena. São **dois eixos
@@ -181,15 +181,17 @@ afiada, não um requisito.)
 **Seus 4 portões:** spec → plano → merge → tag/release (este último só quando você pedir).
 
 **Você nunca fica às cegas:** cada handoff entre os agentes aparece no seu chat, em
-português, como diálogo de time — sempre com a branch à mostra:
+português, como diálogo de time — sempre com a branch à mostra e **com a data e a hora reais
+do momento** (relógio do sistema, fuso de São Paulo — nunca estimada):
 
 ```
-🗣️ Arquiteto → Dev Backend [feature/contas--be | sonnet/high]: implementa o endpoint de baixa…
-🗣️ Dev Backend → Arquiteto [feature/contas--be | gates verdes]: "entreguei X com N testes…"
-🗣️ QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "encontrei…"
+🗣️ [2026-07-06 14:02] Arquiteto → Dev Backend [feature/contas--be | sonnet/high]: implementa o endpoint de baixa…
+🗣️ [2026-07-06 14:41] Dev Backend → Arquiteto [feature/contas--be | gates verdes]: "entreguei X com N testes…"
+🗣️ [2026-07-06 15:07] QA → Arquiteto [feature/contas | REPROVADO, 2 itens]: "encontrei…"
 ```
 
-**E entre um handoff e outro, o arquiteto te dá um "ping por etapa":** o padrão é reportar o
+**E entre um handoff e outro, o arquiteto te dá um "ping por etapa"** (também com data e
+hora reais)**:** o padrão é reportar o
 estado nos pontos naturais — quando o dev fecha o teste-que-falha e começa a implementar,
 quando os gates ficam verdes, e na conclusão — valendo igual para **devs, QA e mudanças no
 próprio fluxo**. Os agentes rodam em segundo plano e não transmitem ao vivo, então o
