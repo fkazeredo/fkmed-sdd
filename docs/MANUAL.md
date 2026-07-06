@@ -202,10 +202,29 @@ botão **"Agendar consulta"** abre o assistente de agendamento já com a especia
 os documentos dos beneficiários a que tem acesso; o acesso do titular a um documento de dependente é
 registrado.
 
+### 14. Guias e Token
+
+Em **Guias e Token** você acompanha as suas **guias de autorização** e gera o **token de atendimento**.
+As guias são abertas pelo prestador junto à operadora — você apenas **acompanha**. A lista mostra, da
+mais recente para a mais antiga, o **número**, o **tipo** (Consulta · SP/SADT–Exames · Internação), o
+prestador solicitante, a data e um **selo de situação** (em análise, autorizada, parcialmente autorizada,
+negada, cancelada ou executada); dá para **filtrar** por situação e por período e **atualizar** a
+qualquer momento. Se você não tem guias, a tela orienta o que fazer — nunca fica em branco. No **detalhe**
+aparecem os itens (com código TUSS), e, quando a guia está **autorizada**, a **senha de autorização e a
+validade**; quando **negada**, o **motivo**; uma autorização vencida mostra um aviso para procurar o
+prestador/os canais. Toda mudança de situação gera uma **notificação** para você.
+
+O **token de atendimento** é um código antifraude de **6 dígitos** que você apresenta na recepção. Ele
+vale **10 minutos** (com contagem regressiva na tela), e só existe **um token válido por vez** — ao gerar
+um novo, o anterior deixa de valer na hora. Você pode **copiar** o código com um toque e, quando ele
+expira, a tela mostra "Token expirado" e oferece gerar outro. O titular pode gerar o token de um
+dependente pelo seletor de beneficiário (esse acesso fica registrado).
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-06 | 0.9.0 | Plano e finanças (início): Guias e Token — acompanhamento das guias de autorização (lista, filtros, detalhe com senha/validade ou motivo de negativa, notificação de mudança) e geração do token de atendimento de 6 dígitos (validade 10 min, único válido, copiar, renovar) |
 | 2026-07-06 | 0.8.0 | Cuidado digital: Telemedicina (Pronto Atendimento com fila ao vivo, sala e encerramento; teleconsulta agendada) e Minha Saúde (documentos clínicos com filtros, detalhe, PDF e "agendar" a partir de encaminhamento) — fecha a Fase 4 |
 | 2026-07-05 | 0.7.0 | Encontrar atendimento: Rede Credenciada (busca por localidade/nome, detalhe do prestador) e Agendamento de consultas/exames (vaga real, protocolo, cancelar/remarcar, avisos) — fecha a Fase 3 |
 | 2026-07-05 | 0.6.0 | Minha conta e identificação: central de notificações (sino), perfil (foto, cadastro, termos versionados, sair) e carteirinha digital com PDF — fecha a Fase 2 |
