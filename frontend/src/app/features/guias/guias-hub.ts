@@ -57,9 +57,7 @@ export class GuiasHub implements OnDestroy {
   protected readonly guides = signal<GuideCard[]>([]);
   protected readonly showFilters = signal(false);
   protected readonly statusFilter = signal<GuideStatus | 'all'>('all');
-  protected readonly period = signal<GuidePeriodOption>('P90D');
-  protected readonly customFrom = signal('');
-  protected readonly customTo = signal('');
+  protected readonly period = signal<GuidePeriodOption>('LAST_90D');
 
   // Token section (BR9/BR10/BR11).
   protected readonly tokenLoading = signal(true);
@@ -117,19 +115,10 @@ export class GuiasHub implements OnDestroy {
     this.loadGuides();
   }
 
-  /** Switching to a named period re-queries immediately; switching to "custom" waits for
-   * "Aplicar filtro" — both dates are required before there is anything sane to query. */
+  /** BR2: switching the period re-queries immediately (the backend's `GuidePeriod` enum — no
+   * custom range). */
   onPeriodChange(value: GuidePeriodOption): void {
     this.period.set(value);
-    if (value !== 'CUSTOM') {
-      this.loadGuides();
-    }
-  }
-
-  applyCustomRange(): void {
-    if (!this.customFrom() || !this.customTo()) {
-      return;
-    }
     this.loadGuides();
   }
 
@@ -146,8 +135,8 @@ export class GuiasHub implements OnDestroy {
     this.loading.set(true);
     this.errorKey.set(null);
     this.api.getGuides(this.buildFilters(beneficiaryId)).subscribe({
-      next: (response) => {
-        this.guides.set(response.items);
+      next: (items) => {
+        this.guides.set(items);
         this.loading.set(false);
       },
       error: () => {
@@ -222,15 +211,11 @@ export class GuiasHub implements OnDestroy {
 
   private buildFilters(beneficiaryId: string): GuideListFilters {
     const status = this.statusFilter();
-    const period = this.period();
-    const base: GuideListFilters = { beneficiaryId };
+    const base: GuideListFilters = { beneficiaryId, period: this.period() };
     if (status !== 'all') {
       base.status = status;
     }
-    if (period === 'CUSTOM') {
-      return { ...base, from: this.customFrom(), to: this.customTo() };
-    }
-    return { ...base, period };
+    return base;
   }
 
   private clearCopyTimer(): void {

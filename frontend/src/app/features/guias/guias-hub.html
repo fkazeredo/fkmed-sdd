@@ -80,44 +80,11 @@
           [ngModel]="period()"
           (ngModelChange)="onPeriodChange($event)"
         >
-          <option value="P30D">{{ 'guias.filtro.periodo30' | translate }}</option>
-          <option value="P90D">{{ 'guias.filtro.periodo90' | translate }}</option>
-          <option value="P365D">{{ 'guias.filtro.periodo365' | translate }}</option>
-          <option value="CUSTOM">{{ 'guias.filtro.periodoCustom' | translate }}</option>
+          <option value="LAST_30D">{{ 'guias.periodo.LAST_30D' | translate }}</option>
+          <option value="LAST_90D">{{ 'guias.periodo.LAST_90D' | translate }}</option>
+          <option value="LAST_12M">{{ 'guias.periodo.LAST_12M' | translate }}</option>
         </select>
       </label>
-
-      @if (period() === 'CUSTOM') {
-        <label class="flex flex-col text-sm text-slate-600">
-          {{ 'guias.filtro.de' | translate }}
-          <input
-            type="date"
-            class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
-            data-testid="guias-filtro-de"
-            [ngModel]="customFrom()"
-            (ngModelChange)="customFrom.set($event)"
-          />
-        </label>
-        <label class="flex flex-col text-sm text-slate-600">
-          {{ 'guias.filtro.ate' | translate }}
-          <input
-            type="date"
-            class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
-            data-testid="guias-filtro-ate"
-            [ngModel]="customTo()"
-            (ngModelChange)="customTo.set($event)"
-          />
-        </label>
-        <button
-          type="button"
-          class="rounded-lg bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
-          [disabled]="!customFrom() || !customTo()"
-          data-testid="guias-filtro-aplicar"
-          (click)="applyCustomRange()"
-        >
-          {{ 'guias.filtro.aplicar' | translate }}
-        </button>
-      }
     </div>
   }
 

@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { provideI18n } from '../../core/i18n/provide-i18n';
+import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
 import { GuideDetail as GuideDetailModel, GuidesApi } from './guias.api';
 import { GuideDetail } from './guide-detail';
 
@@ -51,12 +52,22 @@ describe('GuideDetail (SPEC-0012 BR5/BR7)', () => {
         { provide: ActivatedRoute, useValue: routeWithId(id) },
       ],
     }).compileComponents();
+    TestBed.inject(BeneficiaryContextService).active.set({
+      beneficiaryId: 'maria-id',
+      firstName: 'MARIA',
+      role: 'TITULAR',
+    });
     fixture = TestBed.createComponent(GuideDetail);
     fixture.detectChanges();
   }
 
   beforeEach(() => {
     api = { getGuide: vi.fn().mockReturnValue(of(AUTHORIZED_GUIDE)) };
+  });
+
+  it('passes the id and the active beneficiaryId to GET /api/guides/{id} (required param)', async () => {
+    await setup('guide-1');
+    expect(api.getGuide).toHaveBeenCalledWith('guide-1', 'maria-id');
   });
 
   it('AC3 (BR5): shows the authorization password and its validity for an authorized guide', async () => {

@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
 import { GuideDetail as GuideDetailModel, GuidesApi } from './guias.api';
 import { formatBrDate, GUIDE_STATUS_BADGE, showsAuthPassword } from './guide-format';
 
@@ -11,7 +12,8 @@ import { formatBrDate, GUIDE_STATUS_BADGE, showsAuthPassword } from './guide-for
  * password (`authExpired`) shows the dedicated notice (BR7); NEGADA shows the denial reason; plus
  * contact guidance. A missing/out-of-scope id renders a dedicated "não encontrada" state (404
  * `guide.not-found`), distinct from a transient/unexpected failure — mirrors DocumentDetail
- * (features/minha-saude/document-detail.ts).
+ * (features/minha-saude/document-detail.ts). The detail endpoint requires the active beneficiary's
+ * id (the guide is scoped to a beneficiary — BR12), read from the SPEC-0003 context.
  */
 @Component({
   selector: 'app-guide-detail',
@@ -22,6 +24,7 @@ import { formatBrDate, GUIDE_STATUS_BADGE, showsAuthPassword } from './guide-for
 export class GuideDetail implements OnInit {
   private readonly api = inject(GuidesApi);
   private readonly route = inject(ActivatedRoute);
+  private readonly context = inject(BeneficiaryContextService);
 
   protected readonly loading = signal(true);
   protected readonly notFound = signal(false);
@@ -38,13 +41,14 @@ export class GuideDetail implements OnInit {
 
   load(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
+    const beneficiaryId = this.context.active()?.beneficiaryId;
+    if (!id || !beneficiaryId) {
       return;
     }
     this.loading.set(true);
     this.notFound.set(false);
     this.errorKey.set(null);
-    this.api.getGuide(id).subscribe({
+    this.api.getGuide(id, beneficiaryId).subscribe({
       next: (detail) => {
         this.guide.set(detail);
         this.loading.set(false);

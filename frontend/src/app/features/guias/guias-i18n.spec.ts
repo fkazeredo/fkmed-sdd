@@ -47,7 +47,7 @@ describe('guias i18n completeness (pt-BR)', () => {
 
   beforeEach(() => {
     guidesApi = {
-      getGuides: vi.fn().mockReturnValue(of({ items: [] })),
+      getGuides: vi.fn().mockReturnValue(of([])),
       getGuide: vi.fn().mockReturnValue(of(AUTHORIZED_GUIDE)),
       getCurrentToken: vi.fn().mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 }))),
       generateToken: vi.fn().mockReturnValue(of(TOKEN)),
@@ -87,9 +87,9 @@ describe('guias i18n completeness (pt-BR)', () => {
     hub.detectChanges(); // empty state (BR3) + plan strip + token empty (BR9)
 
     hub.componentInstance.toggleFilters();
-    hub.detectChanges(); // filter panel
-    hub.componentInstance.onPeriodChange('CUSTOM');
-    hub.detectChanges(); // custom from/to inputs
+    hub.detectChanges(); // filter panel (status + period selects)
+    hub.componentInstance.onPeriodChange('LAST_12M');
+    hub.detectChanges(); // period re-query
 
     hub.componentInstance.generateToken();
     hub.detectChanges(); // token active + countdown
@@ -116,13 +116,13 @@ describe('guias i18n completeness (pt-BR)', () => {
 
   it('AC1 (BR2): renders the 3 seeded guide statuses in the list without a missing key', async () => {
     guidesApi['getGuides'] = vi.fn().mockReturnValue(
-      of({
-        items: [
+      of(
+        [
           { id: 'g1', number: 'GU-0001', type: 'CONSULTA', requestingProvider: 'Dr. João', requestedAt: '2026-07-01', status: 'EM_ANALISE' },
           { id: 'g2', number: 'GU-0002', type: 'SP_SADT', requestingProvider: 'Clínica Central', requestedAt: '2026-06-20', status: 'AUTORIZADA' },
           { id: 'g3', number: 'GU-0003', type: 'INTERNACAO', requestingProvider: 'Hospital São Lucas', requestedAt: '2026-06-10', status: 'NEGADA' },
         ],
-      }),
+      ),
     );
     await TestBed.configureTestingModule({
       imports: [GuiasHub],
@@ -152,6 +152,11 @@ describe('guias i18n completeness (pt-BR)', () => {
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'guide-1' } } } },
       ],
     }).compileComponents();
+    TestBed.inject(BeneficiaryContextService).active.set({
+      beneficiaryId: 'maria-id',
+      firstName: 'MARIA',
+      role: 'TITULAR',
+    });
     const detail = TestBed.createComponent(GuideDetail);
     detail.detectChanges();
 

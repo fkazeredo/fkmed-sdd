@@ -79,7 +79,7 @@ describe('GuiasHub', () => {
 
   beforeEach(() => {
     api = {
-      getGuides: vi.fn().mockReturnValue(of({ items: [] })),
+      getGuides: vi.fn().mockReturnValue(of([])),
       getGuide: vi.fn(),
       getCurrentToken: vi.fn().mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 }))),
       generateToken: vi.fn(),
@@ -119,7 +119,7 @@ describe('GuiasHub', () => {
   });
 
   it('AC1 (BR2): renders 3 guides with distinct status badges', async () => {
-    api.getGuides.mockReturnValue(of({ items: [GUIDE_EM_ANALISE, GUIDE_AUTORIZADA, GUIDE_NEGADA] }));
+    api.getGuides.mockReturnValue(of([GUIDE_EM_ANALISE, GUIDE_AUTORIZADA, GUIDE_NEGADA]));
     await setup();
     expect(el().querySelector('[data-testid="guia-card-guide-1"]')).not.toBeNull();
     expect(el().querySelector('[data-testid="guia-card-guide-2"]')).not.toBeNull();
@@ -139,14 +139,14 @@ describe('GuiasHub', () => {
   it('BR4: Atualizar re-fetches immediately with a loading indicator', async () => {
     await setup();
     api.getGuides.mockClear();
-    api.getGuides.mockReturnValue(of({ items: [GUIDE_EM_ANALISE] }));
+    api.getGuides.mockReturnValue(of([GUIDE_EM_ANALISE]));
     (el().querySelector('[data-testid="guias-atualizar"]') as HTMLElement).click();
     expect(api.getGuides).toHaveBeenCalledTimes(1);
     fixture.detectChanges();
     expect(el().querySelector('[data-testid="guia-card-guide-1"]')).not.toBeNull();
   });
 
-  it('Filtrar toggles the filter panel; changing status re-queries', async () => {
+  it('Filtrar toggles the filter panel; changing status or period re-queries', async () => {
     await setup();
     expect(el().querySelector('[data-testid="guias-filtros"]')).toBeNull();
     (el().querySelector('[data-testid="guias-filtrar"]') as HTMLElement).click();
@@ -155,7 +155,16 @@ describe('GuiasHub', () => {
 
     api.getGuides.mockClear();
     fixture.componentInstance.onStatusChange('NEGADA');
-    expect(api.getGuides).toHaveBeenCalledWith(expect.objectContaining({ status: 'NEGADA' }));
+    expect(api.getGuides).toHaveBeenCalledWith(expect.objectContaining({ status: 'NEGADA', period: 'LAST_90D' }));
+
+    // BR2: the period is the backend's 3-value GuidePeriod enum (no custom range).
+    api.getGuides.mockClear();
+    fixture.componentInstance.onPeriodChange('LAST_12M');
+    expect(api.getGuides).toHaveBeenCalledWith(expect.objectContaining({ period: 'LAST_12M' }));
+    const periodOptions = Array.from(
+      el().querySelectorAll('[data-testid="guias-filtro-periodo"] option'),
+    ).map((o) => o.getAttribute('value'));
+    expect(periodOptions).toEqual(['LAST_30D', 'LAST_90D', 'LAST_12M']);
   });
 
   it('AC4/BR9/BR11: generating a token shows the code + countdown; Copiar copies exactly the 6 digits', async () => {
