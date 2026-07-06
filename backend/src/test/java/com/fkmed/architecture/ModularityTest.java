@@ -50,7 +50,8 @@ class ModularityTest {
             "domain.content",
             "domain.card",
             "domain.notification",
-            "domain.network");
+            "domain.network",
+            "domain.appointment");
   }
 
   @Test

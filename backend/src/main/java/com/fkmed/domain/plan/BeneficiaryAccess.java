@@ -64,6 +64,21 @@ public class BeneficiaryAccess {
   }
 
   /**
+   * Scope-checks a target beneficiary for a write another module performs on their behalf and
+   * returns the selector DTO (SPEC-0009 BR1: an appointment binds to the active beneficiary within
+   * the caller's family scope). Added for the appointment module the way {@link #cardDetailsFor}
+   * was added for the digital-card feature, because {@link #requireInScope} — which returns the
+   * entity — is package-private and must not leak across the module boundary. Only active
+   * beneficiaries are bookable, so an inactive dependent is treated as out of scope.
+   *
+   * @throws BeneficiaryNotAccessibleException when the caller card is absent/unknown or the target
+   *     falls outside the caller's active family scope (existence never revealed, BR2).
+   */
+  public AccessibleBeneficiary requireAccessible(String beneficiaryCard, UUID targetBeneficiaryId) {
+    return toAccessible(requireInScope(beneficiaryCard, targetBeneficiaryId));
+  }
+
+  /**
    * The avatar URL for a beneficiary (SPEC-0006 BR3): the photo endpoint when a photo exists, else
    * {@code null} so the client shows the placeholder.
    */
