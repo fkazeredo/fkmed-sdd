@@ -122,11 +122,45 @@ V17 + IT) → gates finais → release lockstep → close-out.
   reusada para código de especialidade/exame inválido e agenda inexistente — edge-case-only (funil/
   catálogo garantem código válido); (2) `NetworkSearch.detail` não é escopado por cobertura — aceitável
   (diretório de prestador não é PII por-beneficiário; BR13 satisfeito).
-- **E2E/PIT/CodeQL/gitleaks** rodam autoritativos no CI no push; monitoro até verde e faço triagem de
-  qualquer vermelho (padrão da Fase 2).
-- Merge do PR e tag v0.7.0 são ações **humanas** do owner (§0023). Recomendo mergear antes o PR #15
-  (Fase 2) para o PR da Fase 3 ficar limpo contra `develop`.
+- **E2E/PIT/CodeQL/gitleaks** rodam autoritativos no CI no push; monitorei até verde e triei os
+  vermelhos (padrão da Fase 2 — ver "Desfecho do CI").
+- Merge do PR e tag v0.7.0 são ações **humanas** do owner (§0023). O PR #15 (Fase 2) **já foi
+  mergeado** pelo owner, então o PR #16 é um diff limpo só da Fase 3 contra `develop`.
 
-## Desfecho do CI (pós-abertura do PR)
+## Desfecho do CI (pós-abertura do PR #16)
 
-_A preencher após o push e a corrida do CI (checks verdes, contagens finais de E2E/PIT)._
+A primeira corrida do CI subiu **13/15 verde** com **2 vermelhos** (padrão da Fase 2 — a bateria
+pesada só roda no CI, não nos gates locais dos devs); triados e corrigidos numa rodada, validados
+localmente antes de re-empurrar.
+
+**Vermelho 1 — Mutation (PIT): 56% < piso 60%.** Causa raiz: o perfil `mutation` roda apenas testes
+em `com.fkmed.domain.*`, mas os devs cobriram `AppointmentService` e `NetworkSearch` **só por IT**
+(`com.fkmed.integration.*`, que o PIT não executa) — 269 mutações "sem cobertura" apesar de test
+strength 92%. Correção **sem enfraquecer o gate**: escrevi `AppointmentServiceTest` (23 testes) e
+`NetworkSearchTest` (19 testes, foco na fronteira de cobertura fail-closed), seguindo o padrão
+`IdentityServiceTest`/`CardServiceTest`. PIT subiu para **~72%**.
+
+**Vermelho 2 — Playwright E2E: 3 falhas** (primeira vez que a jornada de agendamento roda ponta a
+ponta — as falhas anteriores mascaravam as seguintes). Cinco defeitos encadeados, todos corrigidos:
+1. **Unit picker vazio** — o wizard de consulta reusa `/api/network/specialties` (registry completa),
+   mas o seed V16 só dava agenda a 6 especialidades; a 1ª alfabética não tinha unidade. V16 agora
+   serve **todas** as especialidades/exames nas 2 unidades (slots cascateiam).
+2. **Disponibilidade vazia** — mismatch de contrato nunca testado: `/api/appointments/availability`
+   devolvia `{unitId,…,days:[{date,slots:[{time,remaining}]}]}`, mas o FE espera um **array nu** de
+   dias com slots `{slot(ISO datetime),remaining,available}`. Reconciliei o **backend** para o shape
+   do FE (alinha com o `slot` do POST de booking); snapshot OpenAPI regenerado.
+3. **rede:18** — o host inline `<app-network-results>` interceptava o clique do botão de topo numa
+   página alta (`:host{display:block}`).
+4. **Seletores E2E ambíguos** — `[data-testid^="meus-card-"]`/`[data-testid^="meus-cancelar-"]`
+   casavam o container **e** os nós internos (strict-mode violation / clique no dialog oculto):
+   escopados a `li[…]`/ao card do próprio protocolo.
+5. **Assertion de p-dialog** — o host `<p-dialog data-testid="meus-cancelar-dialog">` não tem box
+   visível (conteúdo vai pro overlay, como já documentado em `perfil.spec`): passei a asserir o
+   conteúdo (`meus-cancelar-confirmar`). Também: cada booking pega um **slot distinto** (contador),
+   pois `workers:1` compartilha um DB e dois bookings do mesmo beneficiário no mesmo horário
+   disparariam o time-conflict BR8.
+
+**Validação local antes de re-empurrar:** `./mvnw verify` verde (413+ testes), PIT ≥ piso, e a
+**suíte Playwright completa 21/21** contra a stack `compose.e2e`. Todas as correções de E2E têm a
+própria E2E como regressão (falha antes, passa depois — invariante 8, camada E2E). Fixes no commit
+`bacc4d7`; CI re-monitorado até **100% verde**.
