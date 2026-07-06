@@ -1,0 +1,29 @@
+<div data-testid="unit-picker">
+  @if (units().length === 0) {
+    <p class="rounded-lg bg-white p-4 text-slate-500" data-testid="unit-picker-vazio">
+      {{ 'agendamento.unidade.vazio' | translate }}
+    </p>
+  } @else {
+    <ul class="flex flex-col gap-2">
+      @for (unit of units(); track unit.id) {
+        <li>
+          <button
+            type="button"
+            class="flex w-full flex-col items-start gap-1 rounded-lg border p-4 text-left hover:bg-slate-50"
+            [class.border-teal-600]="unit.id === selectedId()"
+            [class.bg-teal-50]="unit.id === selectedId()"
+            [class.border-slate-200]="unit.id !== selectedId()"
+            [attr.aria-pressed]="unit.id === selectedId()"
+            [attr.data-testid]="'unit-option-' + unit.id"
+            (click)="select(unit.id)"
+          >
+            <span class="font-medium text-teal-800">{{ unit.name }}</span>
+            <span class="text-sm text-slate-500" [attr.data-testid]="'unit-option-' + unit.id + '-endereco'">
+              {{ unit.address }}
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>
