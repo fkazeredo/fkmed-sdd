@@ -229,6 +229,34 @@
         }
       }
     },
+    "/api/support/libras-requests" : {
+      "post" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "requestLibras",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LibrasRequestInput"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LibrasRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sim/tele/sessions/{id}/close" : {
       "post" : {
         "tags" : [ "operator-simulation" ],
@@ -1061,6 +1089,81 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/SystemHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/support/faq" : {
+      "get" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "faq",
+        "parameters" : [ {
+          "name" : "category",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/FaqQuestionView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/support/channels" : {
+      "get" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "channels",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SupportChannelView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/support/antifraud" : {
+      "get" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "antifraud",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AntifraudView"
                 }
               }
             }
@@ -2069,6 +2172,31 @@
           }
         }
       },
+      "LibrasRequestInput" : {
+        "type" : "object",
+        "properties" : {
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "beneficiaryId" ]
+      },
+      "LibrasRequestResponse" : {
+        "type" : "object",
+        "properties" : {
+          "situation" : {
+            "type" : "string",
+            "enum" : [ "REGISTERED", "ATTENDED" ]
+          },
+          "nextStep" : {
+            "type" : "string"
+          },
+          "hours" : {
+            "type" : "string"
+          }
+        }
+      },
       "CloseTeleSessionRequest" : {
         "type" : "object",
         "properties" : {
@@ -2718,6 +2846,67 @@
           },
           "database" : {
             "type" : "string"
+          }
+        }
+      },
+      "FaqQuestionView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "question" : {
+            "type" : "string"
+          },
+          "answer" : {
+            "type" : "string"
+          },
+          "displayOrder" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SupportChannelView" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "enum" : [ "CENTRAL", "WHATSAPP", "OUVIDORIA", "ANS" ]
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          },
+          "hours" : {
+            "type" : "string"
+          },
+          "displayOrder" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "AntifraudView" : {
+        "type" : "object",
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "bestPractices" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
