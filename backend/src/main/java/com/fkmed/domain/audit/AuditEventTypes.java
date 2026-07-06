@@ -46,5 +46,12 @@ public final class AuditEventTypes {
   /** A user accepted a legal-document version (SPEC-0006 BR8). */
   public static final String TERM_ACCEPTED = "legal.term-accepted";
 
+  /**
+   * A titular viewed a dependent's clinical document — list filtered to the dependent, detail or
+   * PDF (SPEC-0011 BR9) — sensitive clinical content that must be auditable. Never recorded for a
+   * self-view.
+   */
+  public static final String DEPENDENT_CLINICAL_DOCUMENT_VIEWED = "clinicaldocs.dependent-viewed";
+
   private AuditEventTypes() {}
 }
