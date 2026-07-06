@@ -132,10 +132,48 @@ beneficiário a que você tem acesso; selecionar uma abre o cartão desse benefi
 aparece por extenso **apenas** nesta tela e no PDF; em qualquer outro lugar do portal ele é
 mascarado. Um beneficiário **inativo** mostra o aviso "carteirinha indisponível".
 
+### 10. Rede Credenciada (encontrar prestadores)
+
+Em **Rede Credenciada** você encontra os prestadores da rede — dentro da **cobertura do seu plano**
+e apenas os que estão **ativos**. O hub abre em **Busca de rede** (os cartões **Agendamento**,
+**Telemedicina** e **Minha Saúde** levam às demais jornadas). Há duas formas de buscar:
+
+- **Buscar por localidade** (funil): escolha **Estado → Município → Bairro** (o bairro é opcional —
+  "Todos"), depois **O que deseja buscar?** (o tipo de serviço) e, quando o tipo pedir, a
+  **especialidade**. As opções vão sendo montadas a partir dos prestadores realmente disponíveis, então
+  você só vê localidades e especialidades que existem na rede.
+- **Buscar por nome**: digite ao menos **3 caracteres** do nome do prestador (dá para **filtrar por
+  município**).
+
+A lista **Prestadores encontrados** mostra a data de **referência** e permite **alterar localidade** ou
+**especialidade**. Ao abrir um prestador, o **Detalhe** traz **Especialidades**, **Endereço**,
+**Telefone** e **Selos** de qualificação, com **Traçar rota** (abre o mapa) e **Copiar endereço**. Um
+prestador que saiu da rede mostra "**Prestador indisponível**".
+
+### 11. Agendamento (consultas e exames)
+
+Em **Agendamento** você marca, cancela e remarca **consultas** e **exames** nas unidades próprias da
+operadora. O hub tem **Agendar Consulta**, **Agendar Exame**, **Meus Agendamentos** e **Telemedicina**.
+
+- **Agendar Consulta** (4 etapas): **Especialidade → Unidade → Data e horário → Revisão** e
+  **Confirmar agendamento**. Ao confirmar, aparece o seu **protocolo**.
+- **Agendar Exame** (5 etapas): **Exame → Pedido médico → Unidade → Data e horário → Revisão**. O
+  **pedido médico** é obrigatório — anexe um **JPG, PNG ou PDF de até 5 MB**.
+- Os horários respeitam a **antecedência mínima de 2 horas** e a janela dos **próximos 30 dias**. Como
+  a vaga é real, se alguém confirmar o último lugar antes de você o portal avisa "**O horário acabou de
+  ser preenchido. Escolha outro.**".
+
+**Meus Agendamentos** separa **Próximos** e **Histórico** (com filtro por **beneficiário**) e mostra o
+**status** de cada um — *Agendado, Reagendado, Cancelado, Realizado*. Você pode **Cancelar** (libera o
+horário; motivo opcional; não é possível após o horário de início) e **Reagendar** (escolhe nova data e
+horário **mantendo o protocolo**). A cada confirmação, cancelamento ou remarcação você recebe um aviso
+na **central de notificações** e, conforme suas preferências, por **e-mail**.
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-05 | 0.7.0 | Encontrar atendimento: Rede Credenciada (busca por localidade/nome, detalhe do prestador) e Agendamento de consultas/exames (vaga real, protocolo, cancelar/remarcar, avisos) — fecha a Fase 3 |
 | 2026-07-05 | 0.6.0 | Minha conta e identificação: central de notificações (sino), perfil (foto, cadastro, termos versionados, sair) e carteirinha digital com PDF — fecha a Fase 2 |
 | 2026-07-05 | 0.5.0 | Home (Início): cartão do beneficiário ativo, Acesso Rápido, banners e avisos — fecha a Fase 1 |
 | 2026-07-04 | 0.4.0 | Beneficiário ativo: seletor no topo do portal com escopo familiar (titular vê dependentes) |
