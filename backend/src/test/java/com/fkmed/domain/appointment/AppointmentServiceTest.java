@@ -472,6 +472,7 @@ class AppointmentServiceTest {
     return Appointment.consultation(
         BENEFICIARY,
         "CARDIOLOGIA",
+        AppointmentModality.PRESENCIAL,
         UNIT,
         SLOT,
         SCHEDULED_AT,
@@ -484,6 +485,7 @@ class AppointmentServiceTest {
     return Appointment.consultation(
         BENEFICIARY,
         "CARDIOLOGIA",
+        AppointmentModality.PRESENCIAL,
         UNIT,
         SLOT,
         Instant.parse("2026-07-05T09:00:00Z"),
@@ -496,6 +498,7 @@ class AppointmentServiceTest {
     return Appointment.consultation(
         BENEFICIARY,
         "DERMATOLOGIA",
+        AppointmentModality.PRESENCIAL,
         UNIT,
         UUID.randomUUID(),
         SCHEDULED_AT,

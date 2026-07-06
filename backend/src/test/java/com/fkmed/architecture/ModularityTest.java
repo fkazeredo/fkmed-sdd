@@ -51,7 +51,8 @@ class ModularityTest {
             "domain.card",
             "domain.notification",
             "domain.network",
-            "domain.appointment");
+            "domain.appointment",
+            "domain.telemedicine");
   }
 
   @Test

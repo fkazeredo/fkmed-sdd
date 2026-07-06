@@ -56,6 +56,10 @@ public class Appointment {
   @Column(nullable = false)
   private AppointmentStatus status;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private AppointmentModality modality;
+
   @Column(name = "cancel_reason")
   private String cancelReason;
 
@@ -73,6 +77,7 @@ public class Appointment {
 
   private Appointment(
       AppointmentType type,
+      AppointmentModality modality,
       UUID beneficiaryId,
       String specialtyCode,
       String examCode,
@@ -84,6 +89,7 @@ public class Appointment {
       Instant now) {
     this.id = UUID.randomUUID();
     this.type = type;
+    this.modality = modality;
     this.beneficiaryId = beneficiaryId;
     this.specialtyCode = specialtyCode;
     this.examCode = examCode;
@@ -105,6 +111,7 @@ public class Appointment {
   static Appointment consultation(
       UUID beneficiaryId,
       String specialtyCode,
+      AppointmentModality modality,
       UUID unitId,
       UUID slotId,
       Instant scheduledAt,
@@ -116,6 +123,7 @@ public class Appointment {
     }
     return new Appointment(
         AppointmentType.CONSULTATION,
+        modality,
         beneficiaryId,
         specialtyCode,
         null,
@@ -146,6 +154,7 @@ public class Appointment {
     }
     return new Appointment(
         AppointmentType.EXAM,
+        AppointmentModality.PRESENCIAL,
         beneficiaryId,
         null,
         examCode,
