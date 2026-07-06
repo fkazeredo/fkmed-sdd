@@ -35,7 +35,7 @@ import { ExameWizard } from '../../features/agendamento/exame-wizard';
 import { MeusAgendamentos } from '../../features/agendamento/meus-agendamentos';
 import { UnitPicker } from '../../features/agendamento/unit-picker';
 import { SlotPicker } from '../../features/agendamento/slot-picker';
-import { Appointment, AvailabilityDay } from '../../features/agendamento/appointments.api';
+import { AppointmentView, AvailabilityDay } from '../../features/agendamento/appointments.api';
 import { APP_VERSION } from '../config/app-version';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
@@ -743,42 +743,51 @@ describe('i18n completeness (pt-BR)', () => {
     exame.detectChanges();
 
     // Meus Agendamentos: loading → both tabs (all status labels + tipo + telemedicina badge) →
-    // cancel dialog (with too-late error) → reschedule dialog (with slot-taken) → empty + error states.
-    const APPTS: Appointment[] = [
+    // cancel dialog (too-late + not-found) → reschedule dialog (slot-taken) → empty + error states.
+    const UPCOMING: AppointmentView[] = [
       {
-        id: 'a1', type: 'CONSULTATION', specialty: 'Cardiologia', exam: null, beneficiary: 'MARIA',
-        unit: 'Unidade Centro', scheduledAt: '2026-07-10T09:00', status: 'AGENDADO', protocol: 'AG-1',
-        telemedicine: true, unitId: 'u1', specialtyCode: 'CARDIOLOGIA',
+        id: 'a1', protocol: 'AG-1', type: 'CONSULTATION', specialtyCode: 'CARDIOLOGIA',
+        specialtyName: 'Cardiologia', examCode: null, examName: null, beneficiaryId: 'maria-id',
+        beneficiaryName: 'MARIA', unitId: 'u1', unitName: 'Unidade Centro',
+        scheduledAt: '2026-07-10T09:00', status: 'AGENDADO', telemedicine: true,
       },
       {
-        id: 'a2', type: 'EXAM', specialty: null, exam: 'Hemograma', beneficiary: 'PEDRO',
-        unit: 'Unidade Tijuca', scheduledAt: '2026-07-12T10:00', status: 'REAGENDADO', protocol: 'AG-2',
-        unitId: 'u2', examCode: 'HEMOGRAMA',
+        id: 'a2', protocol: 'AG-2', type: 'EXAM', specialtyCode: null, examCode: 'HEMOGRAMA',
+        examName: 'Hemograma', beneficiaryId: 'pedro-id', beneficiaryName: 'PEDRO', unitId: 'u2',
+        unitName: 'Unidade Tijuca', scheduledAt: '2026-07-12T10:00', status: 'REAGENDADO',
+      },
+    ];
+    const HISTORY: AppointmentView[] = [
+      {
+        id: 'a4', protocol: 'AG-4', type: 'CONSULTATION', specialtyCode: 'ORTOPEDIA',
+        specialtyName: 'Ortopedia', examCode: null, examName: null, beneficiaryId: 'pedro-id',
+        beneficiaryName: 'PEDRO', unitId: 'u1', unitName: 'Unidade Centro',
+        scheduledAt: '2026-06-25T14:00', status: 'REALIZADO',
       },
       {
-        id: 'a3', type: 'CONSULTATION', specialty: 'Dermatologia', exam: null, beneficiary: 'MARIA',
-        unit: 'Unidade Centro', scheduledAt: '2026-06-20T10:00', status: 'CANCELADO', protocol: 'AG-3',
-      },
-      {
-        id: 'a4', type: 'CONSULTATION', specialty: 'Ortopedia', exam: null, beneficiary: 'PEDRO',
-        unit: 'Unidade Centro', scheduledAt: '2026-06-25T14:00', status: 'REALIZADO', protocol: 'AG-4',
+        id: 'a3', protocol: 'AG-3', type: 'CONSULTATION', specialtyCode: 'DERMATOLOGIA',
+        specialtyName: 'Dermatologia', examCode: null, examName: null, beneficiaryId: 'maria-id',
+        beneficiaryName: 'MARIA', unitId: 'u1', unitName: 'Unidade Centro',
+        scheduledAt: '2026-06-20T10:00', status: 'CANCELADO',
       },
     ];
     const meus = TestBed.createComponent(MeusAgendamentos);
     meus.detectChanges(); // loading (common.loading)
-    http.expectOne((r) => r.url === '/api/appointments').flush(APPTS);
+    http.expectOne((r) => r.url === '/api/appointments').flush({ upcoming: UPCOMING, history: HISTORY });
     meus.detectChanges();
     el(meus, 'meus-tab-historico').click();
     meus.detectChanges();
     el(meus, 'meus-tab-proximos').click();
     meus.detectChanges();
-    meus.componentInstance.askCancel(APPTS[0]);
+    meus.componentInstance.askCancel(UPCOMING[0]);
     meus.detectChanges();
     meus.componentInstance['cancelError'].set('appointment.cancel-too-late');
     meus.detectChanges();
+    meus.componentInstance['cancelError'].set('appointment.not-found');
+    meus.detectChanges();
     meus.componentInstance.closeCancel();
     meus.detectChanges();
-    meus.componentInstance.askReschedule(APPTS[1]);
+    meus.componentInstance.askReschedule(UPCOMING[1]);
     http.expectOne((r) => r.url === '/api/appointments/availability').flush(DAYS);
     meus.detectChanges();
     meus.componentInstance['rescheduleError'].set('appointment.slot-taken');
@@ -787,7 +796,7 @@ describe('i18n completeness (pt-BR)', () => {
     meus.detectChanges();
     // Empty state.
     meus.componentInstance.load();
-    http.expectOne((r) => r.url === '/api/appointments').flush([]);
+    http.expectOne((r) => r.url === '/api/appointments').flush({ upcoming: [], history: [] });
     meus.detectChanges();
     // Error state (common.error + retry).
     meus.componentInstance.load();

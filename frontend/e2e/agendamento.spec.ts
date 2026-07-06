@@ -6,16 +6,14 @@ import { expect, Page, test } from '@playwright/test';
  * advance when no medical order is attached (AC2/BR4), and cancel → the item moves to Histórico as
  * CANCELADO with a fresh rebook afterwards (AC4/BR9).
  *
- * NOTE for the architect: this branch is frontend-only — `/api/appointments/*` does not exist on the
- * backend yet. This spec is authored strictly against the contract frozen in the slice plan and the
- * seed described in SPEC-0009 §Persistence (2 own units; a 30-day Mon–Sat 08:00–17:00 30-min agenda;
- * the exam_type catalog). It is expected to run once the backend half lands and both halves
- * integrate; it is NOT part of this dev's own gate (lint + unit + build only, per the work order).
- * The exact specialty/exam registry codes, unit ids and slot casing are backend-authored fixtures
- * this dev cannot know ahead of integration, so the selectors match the FIRST available option /
- * enabled slot rather than a hardcoded code. If the real OpenAPI snapshot diverges from the frozen
- * contract (e.g. the exam-catalog endpoint, or the Meus item's identifier fields), that is an
- * integration impediment for the architect to re-sync, not a change this spec pre-bakes.
+ * NOTE for the architect: reconciled to the REAL backend contract (integration rework) — JSON
+ * `POST /api/appointments` for consultations, multipart part `medicalOrder` for exams,
+ * `GET /api/appointments` → `{upcoming,history}`, `GET /api/appointments/exams`. This cross-stack
+ * spec runs at integration once both halves land; it is NOT part of this dev's own gate (lint +
+ * unit + build only, per the work order). The exact specialty/exam registry codes, unit ids and
+ * slot casing are backend-authored fixtures (SPEC-0009 §Persistence seed: 2 own units; a 30-day
+ * Mon–Sat 08:00–17:00 30-min agenda; the exam_type catalog), so the selectors match the FIRST
+ * available option / enabled slot rather than a hardcoded code.
  */
 
 async function login(page: Page): Promise<void> {

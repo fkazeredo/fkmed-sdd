@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import {
-  Appointment,
+  AppointmentList,
   AppointmentsApi,
   AvailabilityDay,
   BookingConfirmation,
@@ -11,9 +11,9 @@ import {
 } from './appointments.api';
 
 /**
- * SPEC-0009 §API Contracts, against the contract frozen in the slice plan: verifies each endpoint's
- * path, HTTP method, query params, JSON vs multipart body and response shape. Raw arrays for lists
- * (the convention the backend adopted for SPEC-0008).
+ * SPEC-0009 §API Contracts, reconciled to the REAL backend at integration: verifies each endpoint's
+ * path, HTTP method, query params, JSON vs multipart body (part `medicalOrder`) and response shape
+ * (`GET /api/appointments` → `{upcoming,history}`; raw arrays for the registry/unit/availability lists).
  */
 describe('AppointmentsApi', () => {
   let api: AppointmentsApi;
@@ -95,7 +95,7 @@ describe('AppointmentsApi', () => {
     expect(received).toEqual(confirmation);
   });
 
-  it('bookExam() POSTs multipart FormData carrying the file and type EXAM (BR4/BR7)', () => {
+  it('bookExam() POSTs multipart FormData with the file as part "medicalOrder" and type EXAM (BR4/BR7)', () => {
     const file = new Blob(['order'], { type: 'application/pdf' });
     api
       .bookExam({ beneficiaryId: 'b1', exam: 'HEMOGRAMA', unitId: 'u1', slot: '2026-07-10T09:00', file })
@@ -107,23 +107,26 @@ describe('AppointmentsApi', () => {
     expect(body.get('exam')).toBe('HEMOGRAMA');
     expect(body.get('unitId')).toBe('u1');
     expect(body.get('slot')).toBe('2026-07-10T09:00');
-    expect(body.get('file')).toBeInstanceOf(Blob);
+    expect(body.get('medicalOrder')).toBeInstanceOf(Blob);
+    expect(body.get('file')).toBeNull(); // reconciled: the backend part is `medicalOrder`
     req.flush({ protocol: 'AG-20260704-0002', status: 'AGENDADO' });
   });
 
-  it('getAppointments() omits beneficiaryId when not given (BR13, all accessible)', () => {
-    const items: Appointment[] = [];
-    api.getAppointments().subscribe((r) => (items.push(...r)));
+  it('getAppointments() omits beneficiaryId when not given and returns {upcoming,history} (BR13)', () => {
+    const list: AppointmentList = { upcoming: [], history: [] };
+    let received: AppointmentList | undefined;
+    api.getAppointments().subscribe((r) => (received = r));
     const req = http.expectOne((request) => request.url === '/api/appointments');
     expect(req.request.params.has('beneficiaryId')).toBe(false);
-    req.flush([]);
+    req.flush(list);
+    expect(received).toEqual(list);
   });
 
   it('getAppointments() sends beneficiaryId when filtering (BR13)', () => {
     api.getAppointments('b1').subscribe();
     const req = http.expectOne((request) => request.url === '/api/appointments');
     expect(req.request.params.get('beneficiaryId')).toBe('b1');
-    req.flush([]);
+    req.flush({ upcoming: [], history: [] });
   });
 
   it('cancel() POSTs the reason when given (BR9)', () => {
