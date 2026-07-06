@@ -4,19 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { DialogModule } from 'primeng/dialog';
 import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
-import { Appointment, AppointmentsApi, AvailabilityDay } from './appointments.api';
+import { AppointmentsApi, AppointmentView, AvailabilityDay } from './appointments.api';
 import { formatDayLabel, formatSlotTime } from './slot-picker';
 import { SlotPicker } from './slot-picker';
 
-const ACTIVE_STATUSES: readonly Appointment['status'][] = ['AGENDADO', 'REAGENDADO'];
+const ACTIVE_STATUSES: readonly AppointmentView['status'][] = ['AGENDADO', 'REAGENDADO'];
 
 /**
  * Meus Agendamentos (SPEC-0009 BR13): commitments of ALL beneficiaries accessible to the user, with
- * a beneficiary filter (server-side via `?beneficiaryId=`). Tab Próximos (AGENDADO/REAGENDADO,
- * soonest-first) and tab Histórico (CANCELADO/REALIZADO, most-recent-first). Cancel (until the start
- * time, optional reason ≤ 200 — BR9) and Reschedule (only the date/time step reopens, same
- * protocol — BR10) act on active items only, each in a confirmation dialog; a slot-taken race on
- * reschedule keeps the dialog open with a fresh availability (BR6).
+ * a beneficiary filter (server-side via `?beneficiaryId=`). The backend already splits and orders the
+ * result — `upcoming` (Próximos, soonest-first) and `history` (Histórico, most-recent-first) — so
+ * the client renders each list as-is. Cancel (until the start time, optional reason ≤ 200 — BR9) and
+ * Reschedule (only the date/time step reopens, same protocol — BR10) act on active items only, each
+ * in a confirmation dialog; a slot-taken race on reschedule keeps the dialog open with a fresh
+ * availability (BR6), and a missing/out-of-scope id surfaces `appointment.not-found` (404).
  */
 @Component({
   selector: 'app-meus-agendamentos',
@@ -30,32 +31,25 @@ export class MeusAgendamentos implements OnInit {
 
   protected readonly loading = signal(true);
   protected readonly errorKey = signal<string | null>(null);
-  protected readonly appointments = signal<Appointment[]>([]);
+  protected readonly upcoming = signal<AppointmentView[]>([]);
+  protected readonly history = signal<AppointmentView[]>([]);
   protected readonly tab = signal<'proximos' | 'historico'>('proximos');
   protected readonly filterId = signal<string | null>(null);
 
-  protected readonly proximos = computed(() =>
-    this.appointments()
-      .filter((appointment) => ACTIVE_STATUSES.includes(appointment.status))
-      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)),
-  );
-  protected readonly historico = computed(() =>
-    this.appointments()
-      .filter((appointment) => !ACTIVE_STATUSES.includes(appointment.status))
-      .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt)),
-  );
+  /** BR13: rendered as the backend returns them — Próximos soonest-first, Histórico most-recent-first
+   * are already applied server-side, so there is no client-side split or sort. */
   protected readonly visible = computed(() =>
-    this.tab() === 'proximos' ? this.proximos() : this.historico(),
+    this.tab() === 'proximos' ? this.upcoming() : this.history(),
   );
 
   // Cancel dialog (BR9).
-  protected readonly cancelTarget = signal<Appointment | null>(null);
+  protected readonly cancelTarget = signal<AppointmentView | null>(null);
   protected readonly cancelReason = signal('');
   protected readonly cancelError = signal<string | null>(null);
   protected readonly cancelling = signal(false);
 
   // Reschedule dialog (BR10).
-  protected readonly rescheduleTarget = signal<Appointment | null>(null);
+  protected readonly rescheduleTarget = signal<AppointmentView | null>(null);
   protected readonly rescheduleDays = signal<AvailabilityDay[]>([]);
   protected readonly rescheduleSlot = signal<string | null>(null);
   protected readonly rescheduleError = signal<string | null>(null);
@@ -70,7 +64,8 @@ export class MeusAgendamentos implements OnInit {
     this.errorKey.set(null);
     this.api.getAppointments(this.filterId() ?? undefined).subscribe({
       next: (list) => {
-        this.appointments.set(list);
+        this.upcoming.set(list.upcoming);
+        this.history.set(list.history);
         this.loading.set(false);
       },
       error: () => {
@@ -89,23 +84,26 @@ export class MeusAgendamentos implements OnInit {
     this.load();
   }
 
-  subjectOf(appointment: Appointment): string {
-    return (appointment.type === 'EXAM' ? appointment.exam : appointment.specialty) ?? '';
+  subjectOf(appointment: AppointmentView): string {
+    if (appointment.type === 'EXAM') {
+      return appointment.examName ?? appointment.examCode ?? '';
+    }
+    return appointment.specialtyName ?? appointment.specialtyCode ?? '';
   }
 
-  whenOf(appointment: Appointment): string {
+  whenOf(appointment: AppointmentView): string {
     const value = appointment.scheduledAt;
     return `${formatDayLabel(value.split('T')[0])} · ${formatSlotTime(value)}`;
   }
 
   /** BR9/BR10: cancel and reschedule act only on active commitments (the backend has already flipped
    * a passed appointment to REALIZADO — BR12 — so an active item is by definition before its start). */
-  canModify(appointment: Appointment): boolean {
+  canModify(appointment: AppointmentView): boolean {
     return ACTIVE_STATUSES.includes(appointment.status);
   }
 
   // --- Cancel (BR9) ---
-  askCancel(appointment: Appointment): void {
+  askCancel(appointment: AppointmentView): void {
     this.cancelTarget.set(appointment);
     this.cancelReason.set('');
     this.cancelError.set(null);
@@ -131,17 +129,13 @@ export class MeusAgendamentos implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.cancelling.set(false);
-        this.cancelError.set(
-          error.error?.code === 'appointment.cancel-too-late'
-            ? 'appointment.cancel-too-late'
-            : 'common.error',
-        );
+        this.cancelError.set(this.actionErrorKey(error, 'appointment.cancel-too-late'));
       },
     });
   }
 
   // --- Reschedule (BR10) ---
-  askReschedule(appointment: Appointment): void {
+  askReschedule(appointment: AppointmentView): void {
     this.rescheduleTarget.set(appointment);
     this.rescheduleSlot.set(null);
     this.rescheduleError.set(null);
@@ -180,16 +174,12 @@ export class MeusAgendamentos implements OnInit {
           this.loadRescheduleAvailability(target);
           return;
         }
-        this.rescheduleError.set(
-          error.error?.code === 'appointment.time-conflict'
-            ? 'appointment.time-conflict'
-            : 'common.error',
-        );
+        this.rescheduleError.set(this.actionErrorKey(error, 'appointment.time-conflict'));
       },
     });
   }
 
-  private loadRescheduleAvailability(appointment: Appointment): void {
+  private loadRescheduleAvailability(appointment: AppointmentView): void {
     if (!appointment.unitId) {
       return;
     }
@@ -200,5 +190,15 @@ export class MeusAgendamentos implements OnInit {
         exam: appointment.examCode ?? undefined,
       })
       .subscribe((days) => this.rescheduleDays.set(days));
+  }
+
+  /** Maps the cancel/reschedule action errors: the passed specific code, the shared
+   * `appointment.not-found` (404, missing/out-of-scope id), else the generic message. */
+  private actionErrorKey(error: HttpErrorResponse, specific: string): string {
+    const code = error.error?.code;
+    if (code === specific || code === 'appointment.not-found') {
+      return code;
+    }
+    return 'common.error';
   }
 }

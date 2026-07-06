@@ -375,12 +375,13 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'agendamento.reagendar.mensagem': 'Escolha uma nova data e horário. O protocolo é mantido.',
     'agendamento.reagendar.voltar': 'Voltar',
     'agendamento.reagendar.confirmar': 'Confirmar novo horário',
-    // Error codes surfaced inline (mirror the backend 409/422 codes)
+    // Error codes surfaced inline (mirror the backend 404/409/422 codes)
     'appointment.slot-taken': 'O horário acabou de ser preenchido. Escolha outro.',
     'appointment.time-conflict': 'Já existe um agendamento para este beneficiário nesta data e horário.',
     'appointment.attachment-required': 'Anexe o pedido médico para agendar o exame.',
     'appointment.attachment-invalid': 'Arquivo inválido. Envie um JPG, PNG ou PDF de até 5 MB.',
     'appointment.outside-horizon': 'Este horário não está mais disponível para agendamento.',
     'appointment.cancel-too-late': 'Não é possível cancelar após o horário de início.',
+    'appointment.not-found': 'Agendamento não encontrado. Ele pode ter sido alterado — atualize a lista.',
   },
 };

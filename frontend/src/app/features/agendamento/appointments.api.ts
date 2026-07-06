@@ -4,8 +4,9 @@ import { Observable } from 'rxjs';
 
 /**
  * Domain-oriented API of the Appointments feature (SPEC-0009). No raw HttpClient in components
- * (frontend-angular.md §HTTP and errors). Built against the contract the architect froze in the
- * slice plan — see the header note on `getExams()` for the one endpoint not enumerated there.
+ * (frontend-angular.md §HTTP and errors). Reconciled to the REAL backend contract at integration:
+ * JSON `POST /api/appointments` for consultations, multipart (part `medicalOrder`) for exams,
+ * `GET /api/appointments` returning `{upcoming,history}`, and `GET /api/appointments/exams`.
  */
 
 export type AppointmentType = 'CONSULTATION' | 'EXAM';
@@ -42,30 +43,36 @@ export interface AvailabilityDay {
   slots: AvailabilitySlot[];
 }
 
-/** BR13 card item — `beneficiary`/`unit`/`specialty`/`exam` are display names (`specialty`/`exam`
- * mutually exclusive by `type`); `telemedicine` drives the future SPEC-0010 badge (BR13),
- * absent/false for now.
+/** BR13 card item — the REAL backend `AppointmentView` (integration reconcile): identifiers plus
+ * display names, `specialtyCode`/`examCode`+`examName` mutually exclusive by `type`, and the
+ * `unitId`/`specialtyCode`/`examCode` the reschedule action reuses to reopen `/availability` (BR10).
+ * `telemedicine` drives the future SPEC-0010 badge (BR13), absent/false for now.
  *
- * The frozen item list in the slice plan is terse; the reschedule action (BR10, "only date/time
- * reopens") needs the availability query params for the kept unit + scope, so the item is enriched
- * with the `unitId`/`specialtyCode`/`examCode` identifiers used only to reopen the calendar — this
- * reuses the frozen `/availability` endpoint (no new endpoint). Flagged to the architect to confirm
- * against the real OpenAPI snapshot at integration; kept optional so a divergent shape degrades
- * gracefully (reschedule simply cannot preselect without them). */
-export interface Appointment {
+ * `specialtyName` is kept optional and the card falls back to `specialtyCode` when the view omits it
+ * — the backend snapshot was not yet on this base to confirm the field, so display degrades safely
+ * either way (flagged to the architect). */
+export interface AppointmentView {
   id: string;
+  protocol: string;
   type: AppointmentType;
-  specialty: string | null;
-  exam: string | null;
-  beneficiary: string;
-  unit: string;
+  specialtyCode: string | null;
+  specialtyName?: string | null;
+  examCode: string | null;
+  examName: string | null;
+  beneficiaryId: string;
+  beneficiaryName: string;
+  unitId: string;
+  unitName: string;
   scheduledAt: string;
   status: AppointmentStatus;
-  protocol: string;
   telemedicine?: boolean;
-  unitId?: string;
-  specialtyCode?: string | null;
-  examCode?: string | null;
+}
+
+/** BR13: the backend already splits and orders — Próximos (`upcoming`) soonest-first, Histórico
+ * (`history`) most-recent-first — so the client consumes both lists as-is (no client-side split/sort). */
+export interface AppointmentList {
+  upcoming: AppointmentView[];
+  history: AppointmentView[];
 }
 
 /** BR7 confirmation payload (`201 {protocol, status:"AGENDADO"}`); reschedule keeps the protocol
@@ -99,14 +106,8 @@ export class AppointmentsApi {
     return this.http.get<RegistryOption[]>('/api/network/specialties');
   }
 
-  /**
-   * BR4: the exam catalog (`exam_type` registry owned by `domain.appointment`, ADR-0012). The slice
-   * plan's frozen contract enumerates `/units`, `/availability`, POST/GET `/appointments` and
-   * cancel/reschedule but does NOT name the exam-catalog endpoint (it names `/api/network/specialties`
-   * for the consultation side). Built here against the symmetric `/api/appointments/exams` returning
-   * the same `{code,name}` registry shape — flagged to the architect to confirm or re-sync against
-   * the real OpenAPI snapshot at integration. Isolated in this single method so re-pointing is trivial.
-   */
+  /** BR4: the exam catalog (`exam_type` registry owned by `domain.appointment`, ADR-0012) —
+   * `GET /api/appointments/exams` → raw `{code,name}[]`, confirmed against the real backend. */
   getExams(): Observable<RegistryOption[]> {
     return this.http.get<RegistryOption[]>('/api/appointments/exams');
   }
@@ -137,8 +138,8 @@ export class AppointmentsApi {
     });
   }
 
-  /** BR4/BR7: confirm an exam as multipart carrying the mandatory medical-order file (field `file`,
-   * mirroring the profile-photo upload convention). */
+  /** BR4/BR7: confirm an exam as multipart carrying the mandatory medical-order file. The backend
+   * reads it as `@RequestPart("medicalOrder")`; the other parts are flat form fields. */
   bookExam(booking: ExamBooking): Observable<BookingConfirmation> {
     const form = new FormData();
     form.append('beneficiaryId', booking.beneficiaryId);
@@ -146,17 +147,18 @@ export class AppointmentsApi {
     form.append('exam', booking.exam);
     form.append('unitId', booking.unitId);
     form.append('slot', booking.slot);
-    form.append('file', booking.file);
+    form.append('medicalOrder', booking.file);
     return this.http.post<BookingConfirmation>('/api/appointments', form);
   }
 
-  /** BR13: all accessible beneficiaries' commitments; `beneficiaryId` narrows to one. */
-  getAppointments(beneficiaryId?: string): Observable<Appointment[]> {
+  /** BR13: all accessible beneficiaries' commitments, already split (`upcoming`/`history`) and
+   * ordered by the backend; `beneficiaryId` narrows to one. */
+  getAppointments(beneficiaryId?: string): Observable<AppointmentList> {
     let params = new HttpParams();
     if (beneficiaryId) {
       params = params.set('beneficiaryId', beneficiaryId);
     }
-    return this.http.get<Appointment[]>('/api/appointments', { params });
+    return this.http.get<AppointmentList>('/api/appointments', { params });
   }
 
   /** BR9: cancel until the start time; optional reason ≤ 200 chars. */
