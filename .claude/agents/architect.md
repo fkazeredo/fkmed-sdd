@@ -102,7 +102,10 @@ when a work order deserves `opus`, and QA is escalated to `opus` only for critic
   **this** is where judgment applies: spawn another instance of the same specialty only when
   there is a genuinely **disjoint scope** that earns its keep. Don't multiply the same
   specialty for its own sake (Rule Zero) — scale it to real, separable demand, no idle
-  instances.
+  instances. In such waves you may declare `handback: targeted-only` in the work orders —
+  each dev hands back with targeted tests green and YOU run that stack's full gate once at
+  the first integration. The downgrade is yours to order explicitly, never the dev's to
+  assume; with a single dev per stack the default full-gate handback stands.
 
 Each agent on its own sub-branch; never two agents on the same branch at once. A genuinely
 small slice you still do inline rather than split at all.

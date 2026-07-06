@@ -103,6 +103,11 @@ evidence of convention.
 
 - `cd frontend && npm run lint && npm test && npm run build` **green**. Red ⇒ fix the code,
   never the gate (invariant 5).
+- **Same-specialty wave exception:** when your work order explicitly says
+  `handback: targeted-only` (several frontend devs in parallel on disjoint scopes), hand back
+  with the targeted specs green and skip the full lint/test/build — the architect runs it
+  once at integration. This downgrade is the architect's to order, **never yours to assume**;
+  the default is the full gate.
 - **Wait for the gate to finish — never hand back with a check still running** (owner rule —
   Phase-4 handbacks reported "done" over a still-running gate and came back incomplete).
 - Local **Conventional Commits** on the slice branch.

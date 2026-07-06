@@ -99,7 +99,7 @@ Cinco arquivos em `.claude/agents/`:
 | `dev-backend` | Constrói a parte Java/banco/APIs de uma fatia, com os testes dela (em cópia isolada do repositório) | Sonnet ou Opus — **o arquiteto decide** pela complexidade; esforço `high` |
 | `dev-frontend` | Constrói a parte Angular/telas, com os testes dela (idem) | idem |
 | `dev-fullstack` | **Somente tarefas pequenas** que cruzam as duas partes (um CRUD simples, um ajuste ponta a ponta) — o padrão é especialista primeiro | idem |
-| `qa` | Bateria pesada de testes **uma vez por fatia, na branch integrada** + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. | **Sonnet em esforço `high`**; o arquiteto sobe para Opus em fatia crítica (segurança/dinheiro/LGPD/documento clínico) |
+| `qa` | Bateria **proporcional, uma vez por fatia, na branch integrada** (gates completos sempre; E2E quando há jornada de usuário; PIT quando toca domínio crítico/dinheiro) + testes exploratórios que o dev não pensou; **aprova ou reprova**. Separado do dev de propósito: autor não audita o próprio trabalho. | **Sonnet em esforço `high`**; o arquiteto sobe para Opus em fatia crítica (segurança/dinheiro/LGPD/documento clínico) |
 
 **A regra de delegação (sua):** **especialista primeiro** — backend com `dev-backend`,
 frontend com `dev-frontend`; o `dev-fullstack` só entra em tarefa pequena. São **dois eixos
