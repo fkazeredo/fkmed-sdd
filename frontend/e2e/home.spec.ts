@@ -6,7 +6,8 @@ import { expect, test } from '@playwright/test';
  * shell selector updates the card immediately (AC5 — this phase's title journey); the notices
  * accordion allows only one open at a time (AC4); shortcuts/banners whose destination module is
  * not yet delivered render disabled with the "em breve" hint (BR4/BR6, phased-delivery note —
- * AC2/AC6 deferred to Phase 2/5).
+ * AC2 deferred to Phase 2). AC6 (the fraud banner → antifraud anchor) closes in Phase 5/SPEC-0014
+ * — see the dedicated assertion below and `e2e/atendimento.spec.ts`.
  */
 test('login → Home shows MARIA, switching to PEDRO updates the card, notices single-open, "em breve" shortcuts/banners', async ({
   page,
@@ -43,11 +44,24 @@ test('login → Home shows MARIA, switching to PEDRO updates the card, notices s
   await expect(page.getByTestId('shortcut-carteirinha')).toBeDisabled();
   await expect(page.getByTestId('shortcut-carteirinha-em-breve')).toContainText('Em breve');
 
-  // BR6 extended to banner buttons (phased-delivery note): the fraud-alert banner's CTA is
-  // disabled with "em breve" too (AC6 deferred — Canais de Atendimento/antifraude lands Phase 5).
-  // .first(): the banner carousel is [circular], so PrimeNG clones the slide for looping and the
-  // title text resolves to 2 nodes — assert the first (visible) one (matches banner-button/em-breve).
+  // BR6 extended to banner buttons (phased-delivery note): a banner whose destination module is
+  // still undelivered ("Valide seu boleto" → finance, not in this phase) stays disabled with
+  // "em breve". The carousel is [circular] (PrimeNG clones slides for looping) AND only the
+  // currently active slide is exposed to the accessibility tree (inactive/cloned slides are
+  // `aria-hidden`) — so the disabled banner is asserted via `data-testid`, not `getByRole`, which
+  // would see 0 matches while that slide isn't active.
   await expect(page.getByText('Alerta de golpe!').first()).toBeVisible();
-  await expect(page.getByTestId('banner-em-breve').first()).toContainText('Em breve');
-  await expect(page.getByTestId('banner-button').first()).toBeDisabled();
+  const boletoButton = page.locator('[data-testid="banner-button"]', { hasText: 'Validar boleto' }).first();
+  await expect(boletoButton).toBeDisabled();
+  await expect(boletoButton).toContainText('Em breve');
+
+  // AC6 (BR9), closed by SPEC-0014: the fraud banner's action IS enabled now that Canais de
+  // Atendimento landed (Phase 5) — clicking it lands positioned at the antifraud section. It is
+  // the initially active slide, so `getByRole` (the accessibility-exposed one) reliably finds it.
+  // See `e2e/atendimento.spec.ts` for the FAQ/Libras/WhatsApp journeys of that same screen.
+  const saibaMais = page.getByRole('button', { name: 'Saiba mais' }).first();
+  await expect(saibaMais).toBeEnabled();
+  await saibaMais.click();
+  await expect(page).toHaveURL(/\/atendimento#antifraude$/);
+  await expect(page.getByTestId('antifraude-titulo')).toBeVisible();
 });
