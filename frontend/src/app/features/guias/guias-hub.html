@@ -1,0 +1,259 @@
+<section class="mx-auto max-w-3xl p-4" aria-labelledby="guias-title" data-testid="guias-page">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <h1 id="guias-title" class="text-2xl font-semibold text-teal-800">{{ 'guias.title' | translate }}</h1>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-sm text-white disabled:opacity-50"
+        [disabled]="loading()"
+        data-testid="guias-atualizar"
+        (click)="refresh()"
+      >
+        <i class="pi pi-refresh" aria-hidden="true"></i>
+        {{ (loading() ? 'guias.acoes.atualizando' : 'guias.acoes.atualizar') | translate }}
+      </button>
+      <button
+        type="button"
+        class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700"
+        data-testid="guias-filtrar"
+        (click)="toggleFilters()"
+      >
+        <i class="pi pi-filter" aria-hidden="true"></i>
+        {{ 'guias.acoes.filtrar' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Plan strip (BR1) -->
+  @if (summary(); as s) {
+    <div
+      class="mb-4 flex items-center justify-between rounded-lg bg-white px-4 py-2 text-sm text-slate-600 shadow-sm"
+      data-testid="guias-plano-strip"
+    >
+      <span>{{ s.planName }}</span>
+      <span class="text-slate-400">{{ 'guias.planoStrip.cartao' | translate }} {{ s.cardNumber }}</span>
+    </div>
+  }
+
+  <!-- Beneficiary picker (BR1) -->
+  @if (context.accessible().length > 0) {
+    <div class="mb-4 flex flex-wrap gap-2" data-testid="guias-beneficiarios">
+      @for (beneficiary of context.accessible(); track beneficiary.beneficiaryId) {
+        <button
+          type="button"
+          class="rounded-full border px-3 py-1 text-sm"
+          [class.border-teal-600]="beneficiary.beneficiaryId === context.active()?.beneficiaryId"
+          [class.bg-teal-50]="beneficiary.beneficiaryId === context.active()?.beneficiaryId"
+          [class.border-slate-300]="beneficiary.beneficiaryId !== context.active()?.beneficiaryId"
+          [attr.data-testid]="'guias-beneficiario-' + beneficiary.beneficiaryId"
+          (click)="selectBeneficiary(beneficiary.beneficiaryId)"
+        >
+          {{ beneficiary.firstName }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Filters (Filtrar toggle) -->
+  @if (showFilters()) {
+    <div class="mb-4 flex flex-wrap items-end gap-3 rounded-lg bg-white p-4 shadow-sm" data-testid="guias-filtros">
+      <label class="flex flex-col text-sm text-slate-600">
+        {{ 'guias.filtro.status' | translate }}
+        <select
+          class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
+          data-testid="guias-filtro-status"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="onStatusChange($event)"
+        >
+          <option value="all">{{ 'guias.filtro.statusTodos' | translate }}</option>
+          @for (status of guideStatuses; track status) {
+            <option [value]="status">{{ 'guias.status.' + status | translate }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col text-sm text-slate-600">
+        {{ 'guias.filtro.periodo' | translate }}
+        <select
+          class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
+          data-testid="guias-filtro-periodo"
+          [ngModel]="period()"
+          (ngModelChange)="onPeriodChange($event)"
+        >
+          <option value="P30D">{{ 'guias.filtro.periodo30' | translate }}</option>
+          <option value="P90D">{{ 'guias.filtro.periodo90' | translate }}</option>
+          <option value="P365D">{{ 'guias.filtro.periodo365' | translate }}</option>
+          <option value="CUSTOM">{{ 'guias.filtro.periodoCustom' | translate }}</option>
+        </select>
+      </label>
+
+      @if (period() === 'CUSTOM') {
+        <label class="flex flex-col text-sm text-slate-600">
+          {{ 'guias.filtro.de' | translate }}
+          <input
+            type="date"
+            class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
+            data-testid="guias-filtro-de"
+            [ngModel]="customFrom()"
+            (ngModelChange)="customFrom.set($event)"
+          />
+        </label>
+        <label class="flex flex-col text-sm text-slate-600">
+          {{ 'guias.filtro.ate' | translate }}
+          <input
+            type="date"
+            class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
+            data-testid="guias-filtro-ate"
+            [ngModel]="customTo()"
+            (ngModelChange)="customTo.set($event)"
+          />
+        </label>
+        <button
+          type="button"
+          class="rounded-lg bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+          [disabled]="!customFrom() || !customTo()"
+          data-testid="guias-filtro-aplicar"
+          (click)="applyCustomRange()"
+        >
+          {{ 'guias.filtro.aplicar' | translate }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Guias section (BR2/BR3/BR4) -->
+  <section aria-labelledby="guias-secao-title" class="mb-8">
+    <h2 id="guias-secao-title" class="mb-3 text-lg font-medium text-teal-800">{{ 'guias.secao.guias' | translate }}</h2>
+
+    @if (loading()) {
+      <p class="rounded-lg bg-white p-4 text-slate-500" role="status" data-testid="guias-carregando">
+        {{ 'common.loading' | translate }}
+      </p>
+    } @else if (errorKey(); as key) {
+      <div class="rounded-lg bg-white p-4" data-testid="guias-erro">
+        <p class="text-slate-600">{{ key | translate }}</p>
+        <button
+          type="button"
+          class="mt-3 rounded-lg bg-teal-700 px-4 py-2 text-white"
+          data-testid="guias-retry"
+          (click)="refresh()"
+        >
+          {{ 'common.retry' | translate }}
+        </button>
+      </div>
+    } @else if (guides().length === 0) {
+      <!-- Empty state (BR3): never a blank screen -->
+      <div class="flex flex-col items-center gap-3 rounded-lg bg-white p-8 text-center" data-testid="guias-vazio">
+        <i class="pi pi-key text-4xl text-slate-400" aria-hidden="true"></i>
+        <p class="text-lg font-medium text-slate-700">{{ 'guias.vazio.titulo' | translate }}</p>
+        <p class="text-sm text-slate-500">{{ 'guias.vazio.orientacao' | translate }}</p>
+        <button
+          type="button"
+          class="mt-2 rounded-lg bg-teal-700 px-4 py-2 text-sm text-white"
+          data-testid="guias-vazio-atualizar"
+          (click)="refresh()"
+        >
+          {{ 'guias.vazio.atualizar' | translate }}
+        </button>
+      </div>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (guide of guides(); track guide.id) {
+          <li>
+            <a
+              [routerLink]="['/guias', guide.id]"
+              class="block rounded-xl bg-white p-4 shadow-sm hover:bg-slate-50"
+              [attr.data-testid]="'guia-card-' + guide.id"
+            >
+              <div class="flex items-center justify-between">
+                <p class="text-lg font-medium text-teal-800" data-testid="guia-card-numero">{{ guide.number }}</p>
+                <span
+                  class="rounded-full px-2 py-0.5 text-xs font-medium"
+                  [class]="badgeClass[guide.status]"
+                  data-testid="guia-card-status"
+                >
+                  {{ 'guias.status.' + guide.status | translate }}
+                </span>
+              </div>
+              <p class="text-sm text-slate-600" data-testid="guia-card-tipo">{{ 'guias.tipo.' + guide.type | translate }}</p>
+              <p class="text-sm text-slate-600" data-testid="guia-card-prestador">{{ guide.requestingProvider }}</p>
+              <p class="text-sm text-slate-600" data-testid="guia-card-data">{{ formatBrDate(guide.requestedAt) }}</p>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <!-- Token section (BR9/BR10/BR11) -->
+  <section aria-labelledby="token-secao-title" data-testid="token-section">
+    <h2 id="token-secao-title" class="mb-3 text-lg font-medium text-teal-800">{{ 'guias.secao.token' | translate }}</h2>
+
+    <div class="rounded-xl bg-white p-6 shadow-sm">
+      @if (tokenLoading()) {
+        <p class="text-slate-500" role="status" data-testid="token-carregando">{{ 'common.loading' | translate }}</p>
+      } @else if (tokenErrorKey(); as key) {
+        <p class="text-red-700" role="alert" data-testid="token-erro">{{ key | translate }}</p>
+      } @else if (token() && !tokenExpired()) {
+        <div data-testid="token-ativo">
+          <p class="text-4xl font-bold tracking-widest text-teal-700" data-testid="token-codigo">{{ token()!.code }}</p>
+          <p class="mt-1 text-sm text-slate-500" data-testid="token-countdown">
+            {{ 'token.validoAte' | translate }} {{ countdown() }}
+          </p>
+          <p class="mt-2 text-xs text-slate-400">{{ 'token.orientacao' | translate }}</p>
+          <div class="mt-4 flex items-center gap-3">
+            <button
+              type="button"
+              class="rounded-lg bg-teal-700 px-4 py-2 text-sm text-white"
+              data-testid="token-copiar"
+              (click)="copyToken()"
+            >
+              {{ 'token.copiar' | translate }}
+            </button>
+            @if (copied()) {
+              <span class="text-sm font-medium text-emerald-700" role="status" data-testid="token-copiado">
+                {{ 'token.copiado' | translate }}
+              </span>
+            }
+            <button
+              type="button"
+              class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 disabled:opacity-50"
+              [disabled]="generating()"
+              data-testid="token-gerar-novo"
+              (click)="generateToken()"
+            >
+              {{ (generating() ? 'token.gerando' : 'token.gerarNovo') | translate }}
+            </button>
+          </div>
+        </div>
+      } @else if (token() && tokenExpired()) {
+        <div data-testid="token-expirado">
+          <p class="text-lg font-semibold text-slate-700">{{ 'token.expirado' | translate }}</p>
+          <p class="mt-1 text-sm text-slate-500">{{ 'token.expirado.mensagem' | translate }}</p>
+          <button
+            type="button"
+            class="mt-4 rounded-lg bg-teal-700 px-4 py-2 text-sm text-white disabled:opacity-50"
+            [disabled]="generating()"
+            data-testid="token-gerar-novo"
+            (click)="generateToken()"
+          >
+            {{ (generating() ? 'token.gerando' : 'token.gerarNovo') | translate }}
+          </button>
+        </div>
+      } @else {
+        <div data-testid="token-vazio">
+          <p class="text-sm text-slate-500">{{ 'token.vazio.mensagem' | translate }}</p>
+          <button
+            type="button"
+            class="mt-4 rounded-lg bg-teal-700 px-4 py-2 text-sm text-white disabled:opacity-50"
+            [disabled]="generating()"
+            data-testid="token-gerar"
+            (click)="generateToken()"
+          >
+            {{ (generating() ? 'token.gerando' : 'token.gerar') | translate }}
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+</section>
