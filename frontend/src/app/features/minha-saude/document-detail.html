@@ -1,0 +1,127 @@
+<section class="mx-auto max-w-2xl p-4" aria-labelledby="detalhe-title" data-testid="detalhe-page">
+  <h1 id="detalhe-title" class="sr-only">{{ 'minhaSaude.detalhe.title' | translate }}</h1>
+
+  @if (loading()) {
+    <p class="text-slate-500" role="status" data-testid="detalhe-carregando">{{ 'common.loading' | translate }}</p>
+  } @else if (notFound()) {
+    <div class="rounded-lg bg-amber-50 p-4 text-amber-800" role="alert" data-testid="detalhe-nao-encontrado">
+      {{ 'document.not-found' | translate }}
+    </div>
+  } @else if (errorKey(); as key) {
+    <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert" data-testid="detalhe-erro">
+      <p>{{ key | translate }}</p>
+      <button type="button" class="mt-3 rounded-lg bg-teal-700 px-4 py-2 text-white" data-testid="detalhe-retry" (click)="load()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (doc(); as doc) {
+    <article class="rounded-xl bg-white p-5 shadow">
+      <p class="text-xl font-semibold text-teal-800" data-testid="detalhe-tipo">
+        {{ 'minhaSaude.tipo.' + doc.type | translate }}
+      </p>
+
+      <dl class="mt-3 text-sm">
+        <div class="flex justify-between border-b border-slate-100 py-2">
+          <dt class="text-slate-500">{{ 'minhaSaude.detalhe.profissional' | translate }}</dt>
+          <dd class="font-medium text-teal-800" data-testid="detalhe-profissional">{{ doc.professional }} · {{ doc.crm }}</dd>
+        </div>
+        <div class="flex justify-between border-b border-slate-100 py-2">
+          <dt class="text-slate-500">{{ 'minhaSaude.detalhe.dataEmissao' | translate }}</dt>
+          <dd class="font-medium text-teal-800" data-testid="detalhe-data-emissao">{{ formatBrDate(doc.issuedAt) }}</dd>
+        </div>
+        <div class="flex justify-between border-b border-slate-100 py-2">
+          <dt class="text-slate-500">{{ 'minhaSaude.detalhe.beneficiario' | translate }}</dt>
+          <dd class="font-medium text-teal-800" data-testid="detalhe-beneficiario">{{ doc.beneficiary }}</dd>
+        </div>
+        @if (validityStatus(doc) !== 'none') {
+          <div class="flex justify-between py-2">
+            <dt class="text-slate-500">{{ 'minhaSaude.detalhe.validade' | translate }}</dt>
+            <dd class="font-medium text-teal-800" data-testid="detalhe-validade">
+              @if (validityStatus(doc) === 'valid') {
+                {{ 'minhaSaude.validade.validoAte' | translate }} {{ formatBrDate(doc.validUntil!) }}
+              } @else {
+                {{ 'minhaSaude.validade.expirado' | translate }}
+              }
+            </dd>
+          </div>
+        }
+      </dl>
+
+      @switch (doc.type) {
+        @case ('EXAM_ORDER') {
+          <div class="mt-4">
+            <h2 class="mb-1 text-sm font-medium text-slate-500">{{ 'minhaSaude.detalhe.exames' | translate }}</h2>
+            <ul class="flex flex-col gap-1">
+              @for (exam of doc.exams; track exam.tuss; let i = $index) {
+                <li class="text-sm text-slate-700" [attr.data-testid]="'detalhe-exame-' + i">
+                  {{ exam.name }} — {{ 'minhaSaude.detalhe.tuss' | translate }} {{ exam.tuss }}
+                </li>
+              }
+            </ul>
+            <h2 class="mt-3 mb-1 text-sm font-medium text-slate-500">{{ 'minhaSaude.detalhe.indicacaoClinica' | translate }}</h2>
+            <p class="text-sm text-slate-700" data-testid="detalhe-indicacao-clinica">{{ doc.clinicalIndication }}</p>
+          </div>
+        }
+        @case ('REFERRAL') {
+          <div class="mt-4">
+            <h2 class="mb-1 text-sm font-medium text-slate-500">{{ 'minhaSaude.detalhe.especialidadeAlvo' | translate }}</h2>
+            <p class="text-sm text-slate-700" data-testid="detalhe-especialidade-alvo">{{ doc.specialtyName }}</p>
+            <h2 class="mt-3 mb-1 text-sm font-medium text-slate-500">{{ 'minhaSaude.detalhe.motivo' | translate }}</h2>
+            <p class="text-sm text-slate-700" data-testid="detalhe-motivo">{{ doc.reason }}</p>
+            <button
+              type="button"
+              class="mt-4 rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
+              data-testid="detalhe-agendar-consulta"
+              (click)="agendarConsulta()"
+            >
+              {{ 'minhaSaude.detalhe.agendarConsulta' | translate }}
+            </button>
+          </div>
+        }
+        @case ('PRESCRIPTION') {
+          <div class="mt-4">
+            <h2 class="mb-1 text-sm font-medium text-slate-500">{{ 'minhaSaude.detalhe.medicamentos' | translate }}</h2>
+            <ul class="flex flex-col gap-2">
+              @for (medication of doc.medications; track medication.medication; let i = $index) {
+                <li class="text-sm text-slate-700" [attr.data-testid]="'detalhe-medicacao-' + i">
+                  <p class="font-medium text-teal-800">{{ medication.medication }}</p>
+                  <p>{{ 'minhaSaude.detalhe.posologia' | translate }}: {{ medication.posology }}</p>
+                  <p>{{ 'minhaSaude.detalhe.orientacao' | translate }}: {{ medication.guidance }}</p>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        @case ('SICK_NOTE') {
+          <div class="mt-4">
+            <h2 class="mb-1 text-sm font-medium text-slate-500">{{ 'minhaSaude.detalhe.periodoAfastamento' | translate }}</h2>
+            <p class="text-sm text-slate-700" data-testid="detalhe-periodo-afastamento">
+              {{ formatBrDate(doc.periodStart!) }} – {{ formatBrDate(doc.periodEnd!) }}
+            </p>
+            <!-- DL-0020: the CID IS displayed (owner override of the spec's proposed default). -->
+            <h2 class="mt-3 mb-1 text-sm font-medium text-slate-500">{{ 'minhaSaude.detalhe.cid' | translate }}</h2>
+            <p class="text-sm text-slate-700" data-testid="detalhe-cid">{{ doc.cid }}</p>
+            <h2 class="mt-3 mb-1 text-sm font-medium text-slate-500">{{ 'minhaSaude.detalhe.notas' | translate }}</h2>
+            <p class="text-sm text-slate-700" data-testid="detalhe-notas">{{ doc.notes }}</p>
+          </div>
+        }
+      }
+
+      <div class="mt-6 flex items-center gap-3">
+        <button
+          type="button"
+          class="flex items-center gap-2 rounded bg-teal-700 px-4 py-2 text-sm text-white disabled:opacity-50"
+          [disabled]="downloading()"
+          data-testid="detalhe-baixar-pdf"
+          (click)="downloadPdf()"
+        >
+          <i class="pi pi-download" aria-hidden="true"></i>
+          {{ (downloading() ? 'minhaSaude.detalhe.baixando' : 'minhaSaude.detalhe.baixarPdf') | translate }}
+        </button>
+        @if (pdfErrorKey(); as pdfKey) {
+          <p class="text-sm text-red-700" role="alert" data-testid="detalhe-pdf-erro">{{ pdfKey | translate }}</p>
+        }
+      </div>
+    </article>
+  }
+</section>

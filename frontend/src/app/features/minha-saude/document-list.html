@@ -1,0 +1,125 @@
+<section class="mx-auto max-w-3xl p-4" aria-labelledby="lista-title" data-testid="documentos-lista-page">
+  <h1 id="lista-title" class="mb-4 text-2xl font-semibold text-teal-800">{{ titleKey() | translate }}</h1>
+
+  <div class="mb-4 flex flex-wrap items-end gap-3">
+    <label class="flex flex-col text-sm text-slate-600">
+      {{ 'minhaSaude.filtro.beneficiario' | translate }}
+      <select
+        class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
+        data-testid="lista-filtro-beneficiario"
+        [ngModel]="beneficiaryId()"
+        (ngModelChange)="onBeneficiaryChange($event)"
+      >
+        <option value="all">{{ 'minhaSaude.filtro.todos' | translate }}</option>
+        @for (beneficiary of context.accessible(); track beneficiary.beneficiaryId) {
+          <option [value]="beneficiary.beneficiaryId">{{ beneficiary.firstName }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="flex flex-col text-sm text-slate-600">
+      {{ 'minhaSaude.filtro.periodo' | translate }}
+      <select
+        class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
+        data-testid="lista-filtro-periodo"
+        [ngModel]="period()"
+        (ngModelChange)="onPeriodChange($event)"
+      >
+        <option value="P30D">{{ 'minhaSaude.filtro.periodo30' | translate }}</option>
+        <option value="P90D">{{ 'minhaSaude.filtro.periodo90' | translate }}</option>
+        <option value="P365D">{{ 'minhaSaude.filtro.periodo365' | translate }}</option>
+        <option value="CUSTOM">{{ 'minhaSaude.filtro.periodoCustom' | translate }}</option>
+      </select>
+    </label>
+
+    @if (period() === 'CUSTOM') {
+      <label class="flex flex-col text-sm text-slate-600">
+        {{ 'minhaSaude.filtro.de' | translate }}
+        <input
+          type="date"
+          class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
+          data-testid="lista-filtro-de"
+          [ngModel]="customFrom()"
+          (ngModelChange)="customFrom.set($event)"
+        />
+      </label>
+      <label class="flex flex-col text-sm text-slate-600">
+        {{ 'minhaSaude.filtro.ate' | translate }}
+        <input
+          type="date"
+          class="mt-1 rounded-lg border border-slate-300 px-3 py-2"
+          data-testid="lista-filtro-ate"
+          [ngModel]="customTo()"
+          (ngModelChange)="customTo.set($event)"
+        />
+      </label>
+      <button
+        type="button"
+        class="rounded-lg bg-teal-700 px-4 py-2 text-white disabled:opacity-50"
+        [disabled]="!customFrom() || !customTo()"
+        data-testid="lista-filtro-aplicar"
+        (click)="applyCustomRange()"
+      >
+        {{ 'minhaSaude.filtro.aplicar' | translate }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="rounded-lg bg-white p-4 text-slate-500" role="status" data-testid="lista-carregando">
+      {{ 'common.loading' | translate }}
+    </p>
+  } @else if (errorKey(); as key) {
+    <div class="rounded-lg bg-white p-4" data-testid="lista-erro">
+      <p class="text-slate-600">{{ key | translate }}</p>
+      <button
+        type="button"
+        class="mt-3 rounded-lg bg-teal-700 px-4 py-2 text-white"
+        data-testid="lista-retry"
+        (click)="load()"
+      >
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (items().length === 0) {
+    <p class="rounded-lg bg-white p-4 text-slate-500" data-testid="lista-vazio">
+      {{ 'minhaSaude.lista.vazio' | translate }}
+    </p>
+  } @else {
+    <ul class="flex flex-col gap-3">
+      @for (doc of items(); track doc.id) {
+        <li>
+          <a
+            [routerLink]="['/minha-saude/documento', doc.id]"
+            class="block rounded-xl bg-white p-4 shadow-sm hover:bg-slate-50"
+            [attr.data-testid]="'documento-card-' + doc.id"
+          >
+            <p class="text-lg font-medium text-teal-800" data-testid="documento-card-titulo">
+              {{ 'minhaSaude.tipo.' + doc.type | translate }}
+            </p>
+            <p class="text-sm text-slate-600" data-testid="documento-card-profissional">
+              {{ doc.professional }} · {{ doc.crm }}
+            </p>
+            <p class="text-sm text-slate-600" data-testid="documento-card-data">{{ formatBrDate(doc.issuedAt) }}</p>
+            <p class="text-sm text-slate-600" data-testid="documento-card-beneficiario">{{ doc.beneficiary }}</p>
+            @if (validityStatus(doc) === 'valid') {
+              <span
+                class="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"
+                data-testid="documento-card-validade"
+              >
+                {{ 'minhaSaude.validade.validoAte' | translate }} {{ formatBrDate(doc.validUntil!) }}
+              </span>
+            } @else if (validityStatus(doc) === 'expired') {
+              <span
+                class="mt-1 inline-block rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700"
+                data-testid="documento-card-validade"
+              >
+                {{ 'minhaSaude.validade.expirado' | translate }}
+              </span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</section>
