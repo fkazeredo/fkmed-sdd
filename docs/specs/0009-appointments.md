@@ -1,6 +1,6 @@
 # 0009 - Appointments
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -148,8 +148,8 @@ reschedules, slot-race conflicts (BR6 signal).
 
 ## Open Questions
 
-- **OQ1** — Minimum booking antecedence (e.g. block bookings < 2 h before the slot) ·
-  affects availability filtering · proposed default: **2 hours**.
+- **OQ1** *(resolved — DL-0013, owner-decided)* — Minimum booking antecedence = **2 hours**:
+  availability filtering blocks slots less than 2 h ahead.
 
 ## Out of Scope
 

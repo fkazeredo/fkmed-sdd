@@ -1,5 +1,12 @@
 package com.fkmed.infra.web;
 
+import com.fkmed.domain.appointment.AppointmentNotFoundException;
+import com.fkmed.domain.appointment.AppointmentOutsideHorizonException;
+import com.fkmed.domain.appointment.AppointmentTimeConflictException;
+import com.fkmed.domain.appointment.AppointmentTooLateException;
+import com.fkmed.domain.appointment.MedicalOrderInvalidException;
+import com.fkmed.domain.appointment.MedicalOrderRequiredException;
+import com.fkmed.domain.appointment.SlotUnavailableException;
 import com.fkmed.domain.card.CardUnavailableException;
 import com.fkmed.domain.error.DomainException;
 import com.fkmed.domain.identity.AccountAlreadyExistsException;
@@ -12,6 +19,9 @@ import com.fkmed.domain.identity.PasswordPolicyViolationException;
 import com.fkmed.domain.identity.RegistrationNotFoundException;
 import com.fkmed.domain.identity.ResetLinkInvalidException;
 import com.fkmed.domain.identity.VerificationLinkInvalidException;
+import com.fkmed.domain.network.NetworkQueryTooShortException;
+import com.fkmed.domain.network.OutsideCoverageException;
+import com.fkmed.domain.network.ProviderUnavailableException;
 import com.fkmed.domain.notification.MandatoryPreferenceOptOutException;
 import com.fkmed.domain.notification.NotificationNotFoundException;
 import com.fkmed.domain.plan.BeneficiaryNotAccessibleException;
@@ -74,7 +84,20 @@ public final class HttpErrorMapping {
           Map.entry(UfInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(PhotoInvalidContentException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(PhotoTooLargeException.class, HttpStatus.UNPROCESSABLE_CONTENT),
-          Map.entry(LegalVersionOutdatedException.class, HttpStatus.CONFLICT));
+          Map.entry(LegalVersionOutdatedException.class, HttpStatus.CONFLICT),
+          // SPEC-0008 §Error Behavior.
+          Map.entry(NetworkQueryTooShortException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(ProviderUnavailableException.class, HttpStatus.GONE),
+          Map.entry(OutsideCoverageException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          // SPEC-0009 §Error Behavior: the slot race and time conflict are retryable 409s; the
+          // attachment and horizon failures are 422s; the appointment 404 never reveals existence.
+          Map.entry(SlotUnavailableException.class, HttpStatus.CONFLICT),
+          Map.entry(AppointmentTimeConflictException.class, HttpStatus.CONFLICT),
+          Map.entry(AppointmentTooLateException.class, HttpStatus.CONFLICT),
+          Map.entry(MedicalOrderRequiredException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(MedicalOrderInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(AppointmentOutsideHorizonException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(AppointmentNotFoundException.class, HttpStatus.NOT_FOUND));
 
   private HttpErrorMapping() {}
 

@@ -26,3 +26,8 @@ old one.
 | [0009](DL-0009-digital-card-pdf-layout.md) | 2026-07-05 | 2 / digital-card | 0007 | High | Cheap | Digital-card PDF layout (OQ1) |
 | [0010](DL-0010-digital-card-plan-category-value.md) | 2026-07-05 | 2 / digital-card | 0007 | Medium | Cheap | Digital-card `planCategory` column and seeded value |
 | [0011](DL-0011-profile-and-legal-documents-design.md) | 2026-07-05 | 2 / profile | 0006 | Medium | Cheap | Profile & legal-document design (module placement, code-space mapping, current-version source, UF no-cache) |
+| [0012](DL-0012-provider-seals-parameterizable.md) | 2026-07-05 | 3 / network | 0008 | High | Cheap | Provider seals as parameterizable qualification badges (OQ1) |
+| [0013](DL-0013-booking-antecedence-2h.md) | 2026-07-05 | 3 / appointments | 0009 | High | Cheap | Minimum booking antecedence = 2 hours (OQ1, owner-decided) |
+| [0014](DL-0014-geography-registry-and-coverage.md) | 2026-07-05 | 3 / network | 0008 | High | Cheap | Full IBGE geography registry + plan coverage model (owner-decided) |
+| [0015](DL-0015-medical-order-magic-byte-duplication.md) | 2026-07-05 | 3 / appointments | 0009 | Medium | Cheap | Duplicate the magic-byte upload check in domain.appointment |
+| [0016](DL-0016-protocol-generator-placement.md) | 2026-07-05 | 3 / appointments | 0003, 0009 | Medium | Cheap | Protocol generator placement and format (domain.plan) |

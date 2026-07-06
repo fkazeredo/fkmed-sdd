@@ -1,0 +1,89 @@
+<section class="mx-auto max-w-3xl p-4" aria-labelledby="resultados-title" data-testid="resultados-page">
+  <button
+    type="button"
+    class="mb-3 flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+    data-testid="resultados-pesquisar-localidade"
+    (click)="pesquisarPorLocalidade()"
+  >
+    <i class="pi pi-search" aria-hidden="true"></i>
+    {{ 'rede.resultados.pesquisarPorLocalidade' | translate }}
+  </button>
+
+  <h1 id="resultados-title" class="mb-1 text-2xl font-semibold text-teal-800">
+    {{ 'rede.resultados.title' | translate }}
+  </h1>
+
+  @if (loading()) {
+    <p class="text-slate-500" role="status">{{ 'common.loading' | translate }}</p>
+  } @else if (errorKey(); as key) {
+    <div class="rounded-lg bg-red-50 p-4 text-red-700" role="alert" data-testid="resultados-erro">
+      {{ key | translate }}
+    </div>
+  } @else {
+    @if (referenceDate(); as date) {
+      <p class="mb-4 text-sm text-slate-500" data-testid="resultados-data-referencia">
+        {{ 'rede.resultados.dataReferencia' | translate }} {{ date }}
+      </p>
+    }
+
+    @if (items().length === 0) {
+      <div class="rounded-lg bg-amber-50 p-4 text-amber-800" role="status" data-testid="resultados-vazio">
+        <p class="mb-3">{{ 'rede.resultados.vazio' | translate }}</p>
+        <div class="flex flex-wrap gap-2">
+          @if (!isNameMode) {
+            <button
+              type="button"
+              class="rounded bg-teal-700 px-3 py-1 text-sm text-white"
+              data-testid="resultados-alterar-localidade"
+              (click)="alterarLocalidade()"
+            >
+              {{ 'rede.resultados.alterarLocalidade' | translate }}
+            </button>
+            @if (funnel.hasSpecialtyStep()) {
+              <button
+                type="button"
+                class="rounded border border-teal-700 px-3 py-1 text-sm text-teal-700"
+                data-testid="resultados-alterar-especialidade"
+                (click)="alterarEspecialidade()"
+              >
+                {{ 'rede.resultados.alterarEspecialidade' | translate }}
+              </button>
+            }
+          }
+        </div>
+      </div>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (item of items(); track item.id) {
+          <li>
+            <button
+              type="button"
+              class="w-full rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm hover:bg-slate-50"
+              [attr.data-testid]="'resultado-card-' + item.id"
+              (click)="abrirDetalhe(item.id)"
+            >
+              <p class="text-lg font-medium text-teal-800">{{ item.name }}</p>
+              <p class="text-sm text-slate-600" data-testid="resultado-localidade">{{ item.locality }}</p>
+              @if (showServiceType) {
+                <p class="text-sm text-slate-500" data-testid="resultado-servico">{{ item.serviceType }}</p>
+              }
+              @if (item.seals.length > 0) {
+                <div class="mt-2 flex flex-wrap gap-1">
+                  @for (seal of item.seals; track seal.code) {
+                    <span
+                      class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700"
+                      [attr.title]="seal.description"
+                      [attr.data-testid]="'resultado-selo-' + seal.code"
+                    >
+                      {{ seal.name }}
+                    </span>
+                  }
+                </div>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

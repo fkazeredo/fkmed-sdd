@@ -26,5 +26,11 @@ public final class NotificationEventTypes {
   /** An appointment was confirmed (business, opt-outable). */
   public static final String APPOINTMENT_CONFIRMED = "appointment.confirmed";
 
+  /** An appointment was cancelled (business, opt-outable — SPEC-0009 BR9). */
+  public static final String APPOINTMENT_CANCELLED = "appointment.cancelled";
+
+  /** An appointment was rescheduled (business, opt-outable — SPEC-0009 BR10). */
+  public static final String APPOINTMENT_RESCHEDULED = "appointment.rescheduled";
+
   private NotificationEventTypes() {}
 }

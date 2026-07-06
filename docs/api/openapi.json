@@ -3,7 +3,7 @@
   "info" : {
     "title" : "FKMed",
     "description" : "FKMed — health plan beneficiary portal API",
-    "version" : "0.6.0"
+    "version" : "0.7.0"
   },
   "servers" : [ {
     "url" : "http://localhost",
@@ -348,6 +348,190 @@
         }
       }
     },
+    "/api/appointments" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "createWithAttachment",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "type",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "CONSULTATION", "EXAM" ]
+          }
+        }, {
+          "name" : "specialty",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "exam",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "unitId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "slot",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "medicalOrder" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            },
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateAppointmentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookingConfirmation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/reschedule" : {
+      "post" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "reschedule",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RescheduleAppointmentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookingConfirmation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/cancel" : {
+      "post" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "cancel",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CancelAppointmentRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookingConfirmation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/beneficiaries/{beneficiaryId}/contacts" : {
       "patch" : {
         "tags" : [ "profile-controller" ],
@@ -442,7 +626,7 @@
     "/api/notifications" : {
       "get" : {
         "tags" : [ "notification-controller" ],
-        "operationId" : "list",
+        "operationId" : "list_1",
         "parameters" : [ {
           "name" : "page",
           "in" : "query",
@@ -469,6 +653,255 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/NotificationListView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/states" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "states",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/specialties" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "specialties",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SpecialtyOption"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/service-types" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "serviceTypes",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ServiceTypeOption"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/providers" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "providers",
+        "parameters" : [ {
+          "name" : "uf",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "municipality",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "neighborhood",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "serviceType",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "specialty",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProviderSearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/providers/{id}" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "provider",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProviderDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/providers/search" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "searchProviders",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "municipality",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProviderSearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/neighborhoods" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "neighborhoods",
+        "parameters" : [ {
+          "name" : "uf",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "municipality",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/network/municipalities" : {
+      "get" : {
+        "tags" : [ "network-controller" ],
+        "operationId" : "municipalities",
+        "parameters" : [ {
+          "name" : "uf",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
                 }
               }
             }
@@ -667,6 +1100,107 @@
           }
         }
       }
+    },
+    "/api/appointments/units" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "units",
+        "parameters" : [ {
+          "name" : "specialty",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "exam",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CareUnitView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/exams" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "exams",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ExamTypeView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/availability" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "availability",
+        "parameters" : [ {
+          "name" : "unitId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "specialty",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "exam",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Day"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -847,6 +1381,66 @@
           }
         },
         "required" : [ "email", "password", "registrationToken" ]
+      },
+      "BookingConfirmation" : {
+        "type" : "object",
+        "properties" : {
+          "protocol" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "AGENDADO", "REAGENDADO", "CANCELADO", "REALIZADO" ]
+          }
+        }
+      },
+      "CreateAppointmentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "CONSULTATION", "EXAM" ]
+          },
+          "specialty" : {
+            "type" : "string"
+          },
+          "exam" : {
+            "type" : "string"
+          },
+          "unitId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "slot" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "beneficiaryId", "slot", "type", "unitId" ]
+      },
+      "RescheduleAppointmentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "slot" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "slot" ]
+      },
+      "CancelAppointmentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }
       },
       "UpdateContactsRequest" : {
         "type" : "object",
@@ -1067,6 +1661,143 @@
           }
         }
       },
+      "SpecialtyOption" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ServiceTypeOption" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "hasSpecialtyStep" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ProviderCard" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "serviceType" : {
+            "type" : "string"
+          },
+          "seals" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SealBadge"
+            }
+          }
+        }
+      },
+      "ProviderSearchResponse" : {
+        "type" : "object",
+        "properties" : {
+          "referenceDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProviderCard"
+            }
+          }
+        }
+      },
+      "SealBadge" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AddressView" : {
+        "type" : "object",
+        "properties" : {
+          "cep" : {
+            "type" : "string"
+          },
+          "street" : {
+            "type" : "string"
+          },
+          "number" : {
+            "type" : "string"
+          },
+          "complement" : {
+            "type" : "string"
+          },
+          "neighborhood" : {
+            "type" : "string"
+          },
+          "municipality" : {
+            "type" : "string"
+          },
+          "uf" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ProviderDetailResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "serviceType" : {
+            "type" : "string"
+          },
+          "specialties" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "address" : {
+            "$ref" : "#/components/schemas/AddressView"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "seals" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SealBadge"
+            }
+          }
+        }
+      },
       "LegalDocumentView" : {
         "type" : "object",
         "properties" : {
@@ -1247,6 +1978,150 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "AppointmentListResponse" : {
+        "type" : "object",
+        "properties" : {
+          "upcoming" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AppointmentView"
+            }
+          },
+          "history" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AppointmentView"
+            }
+          }
+        }
+      },
+      "AppointmentView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "CONSULTATION", "EXAM" ]
+          },
+          "specialtyCode" : {
+            "type" : "string"
+          },
+          "examCode" : {
+            "type" : "string"
+          },
+          "examName" : {
+            "type" : "string"
+          },
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "beneficiaryName" : {
+            "type" : "string"
+          },
+          "unitId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "unitName" : {
+            "type" : "string"
+          },
+          "scheduledAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "AGENDADO", "REAGENDADO", "CANCELADO", "REALIZADO" ]
+          },
+          "cancelReason" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CareUnitView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "cep" : {
+            "type" : "string"
+          },
+          "street" : {
+            "type" : "string"
+          },
+          "addressNumber" : {
+            "type" : "string"
+          },
+          "complement" : {
+            "type" : "string"
+          },
+          "neighborhood" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "uf" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ExamTypeView" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Day" : {
+        "type" : "object",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "slots" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Slot"
+            }
+          }
+        }
+      },
+      "Slot" : {
+        "type" : "object",
+        "properties" : {
+          "slot" : {
+            "type" : "string"
+          },
+          "remaining" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "available" : {
+            "type" : "boolean"
           }
         }
       }

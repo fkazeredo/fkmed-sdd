@@ -8,6 +8,44 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.7.0] — 2026-07-05
+
+Phase 3 — "Encontrar atendimento" (SPEC-0008 Provider Network Search, SPEC-0009 Appointments).
+**Closes Phase 3.**
+
+### Added
+
+- **Provider network search** (SPEC-0008): a read-only network hub with a guided **funnel**
+  (state → municipality → neighborhood → service type → specialty) and a **name search** (≥ 3
+  chars), every list derived from the **active** provider base **within the plan's coverage**,
+  plus a provider **detail** sheet (address, phone, specialties, qualification **seals**) with
+  route/copy actions. New `domain.network` module + `/api/network/*`; a full **IBGE geography
+  registry** (27 UFs + ~5,570 municipalities) and a `plan.coverage`/`plan.coverage_uf` coverage
+  model (V15; ADR-0011; DL-0012/0014).
+- **Appointments** (SPEC-0009): book, cancel and reschedule **consultations and exams** in the
+  operator's own units against **real slot capacity under concurrency** (last-seat race resolved
+  fail-fast — exactly one wins), a unique **protocol** (`AG-…`), a **medical-order upload** for
+  exams (JPG/PNG/PDF ≤ 5 MB, magic-byte validated) and **Meus Agendamentos** (upcoming/history,
+  per-beneficiary filter). New `domain.appointment` module + `/api/appointments/*` (V16;
+  ADR-0012; DL-0013/0015/0016). Minimum booking antecedence **2 h**; 30-day horizon.
+- **Cross-spec wiring**: `AppointmentConfirmed`/`Cancelled`/`Rescheduled` become in-app plus
+  e-mail notifications through the SPEC-0004 center, delivered **AFTER_COMMIT** (V17 seeds the
+  `appointment.cancelled`/`.rescheduled` catalog types).
+
+### Changed
+
+- The provider **specialty registry** is shared with appointments (a one-directional
+  `appointment → network` dependency; no cycle).
+- The Modulith module map grows to **9 modules** (adds `domain.network`, `domain.appointment`);
+  `modules.puml` regenerated with the `notification → appointment` edge.
+
+### Technical
+
+- Slot capacity guarded by an optimistic `@Version` lock (fail-fast, no retry — ADR-0012),
+  proven by a real 2-thread Testcontainers concurrency IT (exactly one of two racers wins).
+- Shared **protocol generator** in `domain.plan` (atomic DB sequence, `AG-AAAAMMDD-####`; DL-0016).
+- Lockstep bump 0.6.0 → 0.7.0 (pom / OpenApiConfig / OpenAPI snapshot / frontend `appVersion`).
+
 ## [0.6.0] — 2026-07-05
 
 Phase 2 — "Minha conta e identificação" (SPEC-0004 Notifications, SPEC-0006 Profile & Account,
