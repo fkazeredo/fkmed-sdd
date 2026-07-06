@@ -11,6 +11,7 @@ import com.fkmed.domain.telemedicine.TeleService;
 import com.fkmed.domain.telemedicine.TeleSessionNotFoundException;
 import com.fkmed.domain.telemedicine.TeleSessionView;
 import com.fkmed.infra.security.UserContextProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +67,11 @@ public class TeleController {
 
   /** The current session as a live SSE stream that pushes recomputed state (BR6, ADR-0016). */
   @GetMapping(value = "/sessions/current", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-  SseEmitter stream() {
+  SseEmitter stream(HttpServletResponse response) {
+    // Tell any reverse proxy (nginx) NOT to buffer this stream — otherwise the periodic re-emits
+    // are held back and the client never receives live position/ETA updates (ADR-0016).
+    response.setHeader("X-Accel-Buffering", "no");
+    response.setHeader("Cache-Control", "no-cache");
     TeleCurrentSession current =
         tele.currentSessionFor(callerCard()).orElseThrow(TeleSessionNotFoundException::new);
     return stream.open(current.sessionId(), current.view());

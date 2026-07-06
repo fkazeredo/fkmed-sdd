@@ -104,9 +104,9 @@ test('AC1/AC4: Pronto Atendimento → operator attends and closes with a prescri
   await expect(page.getByTestId('minha-saude-hub-page')).toBeVisible();
   await page.getByTestId('minha-saude-hub-receituarios').click();
   await expect(page.getByTestId('documentos-lista-page')).toBeVisible();
-  const card = page.locator('button[data-testid^="documento-card-"]', { hasText: 'Paracetamol' }).first();
+  const card = page.locator('a[data-testid^="documento-card-"]', { hasText: 'Paracetamol' }).first();
   // fall back to the first card if the title does not surface the medication
-  const anyCard = page.locator('button[data-testid^="documento-card-"]').first();
+  const anyCard = page.locator('a[data-testid^="documento-card-"]').first();
   await expect(anyCard).toBeVisible({ timeout: 15000 });
 });
 
