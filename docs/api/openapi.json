@@ -1019,6 +1019,119 @@
         }
       }
     },
+    "/api/clinical-documents" : {
+      "get" : {
+        "tags" : [ "clinical-document-controller" ],
+        "operationId" : "list_2",
+        "parameters" : [ {
+          "name" : "category",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "EXAM_ORDER", "REFERRAL", "PRESCRIPTION", "SICK_NOTE" ]
+          }
+        }, {
+          "name" : "beneficiaryId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "all"
+          }
+        }, {
+          "name" : "period",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicalDocumentListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-documents/{id}" : {
+      "get" : {
+        "tags" : [ "clinical-document-controller" ],
+        "operationId" : "detail",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicalDocumentDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-documents/{id}/pdf" : {
+      "get" : {
+        "tags" : [ "clinical-document-controller" ],
+        "operationId" : "pdf",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/pdf" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/cards/{beneficiaryId}" : {
       "get" : {
         "tags" : [ "card-controller" ],
@@ -1946,6 +2059,143 @@
           "order" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "ClinicalDocumentListResponse" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            }
+          }
+        }
+      },
+      "Item" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "EXAM_ORDER", "REFERRAL", "PRESCRIPTION", "SICK_NOTE" ]
+          },
+          "professional" : {
+            "type" : "string"
+          },
+          "crm" : {
+            "type" : "string"
+          },
+          "issuedAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "beneficiary" : {
+            "type" : "string"
+          },
+          "validUntil" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "expired" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ClinicalDocumentDetail" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "EXAM_ORDER", "REFERRAL", "PRESCRIPTION", "SICK_NOTE" ]
+          },
+          "issuedAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "professional" : {
+            "type" : "string"
+          },
+          "crm" : {
+            "type" : "string"
+          },
+          "beneficiary" : {
+            "type" : "string"
+          },
+          "validUntil" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "expired" : {
+            "type" : "boolean"
+          },
+          "clinicalIndication" : {
+            "type" : "string"
+          },
+          "examItems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExamItemView"
+            }
+          },
+          "targetSpecialty" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "medications" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PrescriptionItemView"
+            }
+          },
+          "periodStart" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "periodEnd" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "cid" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ExamItemView" : {
+        "type" : "object",
+        "properties" : {
+          "examName" : {
+            "type" : "string"
+          },
+          "tussCode" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PrescriptionItemView" : {
+        "type" : "object",
+        "properties" : {
+          "medication" : {
+            "type" : "string"
+          },
+          "posology" : {
+            "type" : "string"
+          },
+          "guidance" : {
+            "type" : "string"
           }
         }
       },

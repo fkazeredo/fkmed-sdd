@@ -8,6 +8,7 @@ import com.fkmed.domain.appointment.MedicalOrderInvalidException;
 import com.fkmed.domain.appointment.MedicalOrderRequiredException;
 import com.fkmed.domain.appointment.SlotUnavailableException;
 import com.fkmed.domain.card.CardUnavailableException;
+import com.fkmed.domain.clinicaldocs.ClinicalDocumentNotFoundException;
 import com.fkmed.domain.error.DomainException;
 import com.fkmed.domain.identity.AccountAlreadyExistsException;
 import com.fkmed.domain.identity.ConcurrentAccountUpdateException;
@@ -97,7 +98,10 @@ public final class HttpErrorMapping {
           Map.entry(MedicalOrderRequiredException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(MedicalOrderInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(AppointmentOutsideHorizonException.class, HttpStatus.UNPROCESSABLE_CONTENT),
-          Map.entry(AppointmentNotFoundException.class, HttpStatus.NOT_FOUND));
+          Map.entry(AppointmentNotFoundException.class, HttpStatus.NOT_FOUND),
+          // SPEC-0011 §Error Behavior: unknown/out-of-scope never distinguished (existence not
+          // revealed).
+          Map.entry(ClinicalDocumentNotFoundException.class, HttpStatus.NOT_FOUND));
 
   private HttpErrorMapping() {}
 
