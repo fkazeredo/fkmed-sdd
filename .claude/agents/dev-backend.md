@@ -106,6 +106,11 @@ class/module you are driving (`./mvnw test -Dtest=...` or the module's suite) �
   you).
 - `cd backend && ./mvnw verify` **green** (Spotless/Checkstyle/JaCoCo/ArchUnit/Modulith/
   snapshot). Red ⇒ fix the code, never the gate (invariant 5).
+- **Same-specialty wave exception:** when your work order explicitly says
+  `handback: targeted-only` (several backend devs in parallel on disjoint scopes), hand back
+  with the targeted tests green and skip the full verify — the architect runs it once at
+  integration. This downgrade is the architect's to order, **never yours to assume**; the
+  default is the full gate.
 - **Wait for the gate to finish — never hand back with a verify still running** (owner rule —
   two Phase-4 handbacks came back incomplete because the dev reported "done" while the
   background verify was still going). A gate you didn't see finish is a gate you didn't run.

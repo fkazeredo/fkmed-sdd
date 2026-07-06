@@ -134,9 +134,11 @@ cd frontend && npm run lint && npm test && npm run build   # frontend
 ```
 
 Destructive and remote operations are governed by `.claude/settings.json` (invariant 9):
-pushing a **feature branch** and `gh pr create` (PR → `develop`) are **allowed** as the normal
-end of a slice; `git tag` **asks**; `git merge`, `gh pr merge`, `gh release create` and
-force-push are **denied**. Do not work around a denied command; explain and ask the owner.
+pushing a **feature branch**, `gh pr create` (PR → `develop`) and **local merges of
+`feature/*` sub-branches into the slice branch** (architect integration of parallel dev work
+— never while on develop/main) are **allowed**; `git tag` **asks**; merging **into
+develop/main**, `gh pr merge`, `gh release create` and force-push are **denied**. Do not
+work around a denied command; explain and ask the owner.
 
 ## Command — User manual [`/manual`]
 
