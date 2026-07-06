@@ -9,6 +9,10 @@ import com.fkmed.domain.clinicaldocs.DocumentOrigin;
 import com.fkmed.domain.clinicaldocs.ExamItemInput;
 import com.fkmed.domain.clinicaldocs.IssueClinicalDocumentCommand;
 import com.fkmed.domain.clinicaldocs.PrescriptionItemInput;
+import com.fkmed.domain.finance.Copays;
+import com.fkmed.domain.finance.InvoiceIssuedResult;
+import com.fkmed.domain.finance.Invoices;
+import com.fkmed.domain.finance.IssueInvoiceCommand;
 import com.fkmed.domain.guides.GuideItemInput;
 import com.fkmed.domain.guides.GuideItemStatus;
 import com.fkmed.domain.guides.GuideNotFoundException;
@@ -21,6 +25,7 @@ import com.fkmed.domain.telemedicine.TeleClosureSummary;
 import com.fkmed.domain.telemedicine.TeleService;
 import com.fkmed.domain.telemedicine.TeleSessionNotFoundException;
 import com.fkmed.domain.telemedicine.TeleSessionView;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +56,8 @@ public class SimService {
   private final TeleService tele;
   private final ClinicalDocuments clinicalDocuments;
   private final GuideService guides;
+  private final Invoices invoices;
+  private final Copays copays;
   private final NetworkSpecialties specialties;
   private final AuditRecorder auditRecorder;
 
@@ -248,6 +255,65 @@ public class SimService {
     GuideTransitionResult guide = guardGuideTransition(() -> guides.markExecuted(guideId));
     audit(operatorAccountId, guide.beneficiaryId(), auditContext, "guide.mark-executed", guideId);
     return resultOf(guide);
+  }
+
+  /**
+   * Issues a new OPEN invoice for a contract titular (SPEC-0013 §Operator-sim), publishing {@code
+   * InvoiceIssued} (→ SPEC-0004 notification). The digitable line is normalized to 47 digits by the
+   * finance facade.
+   */
+  @Transactional
+  public SimInvoiceResult issueInvoice(
+      UUID titularBeneficiaryId,
+      LocalDate competencia,
+      LocalDate dueDate,
+      BigDecimal amount,
+      String digitableLine,
+      String pixCode,
+      UUID operatorAccountId,
+      AuditContext auditContext) {
+    InvoiceIssuedResult result =
+        invoices.issue(
+            new IssueInvoiceCommand(
+                titularBeneficiaryId, competencia, dueDate, amount, digitableLine, pixCode));
+    audit(
+        operatorAccountId,
+        titularBeneficiaryId,
+        auditContext,
+        "finance.issue-invoice",
+        result.id());
+    log.info("sim: operator issued invoice {} for a titular", result.id());
+    return new SimInvoiceResult(result.id(), result.competencia(), "OPEN");
+  }
+
+  /**
+   * Records the payment of an invoice idempotently (SPEC-0013 BR6): a repeat on an already-paid
+   * invoice does not double-pay nor duplicate events.
+   *
+   * @throws SimTargetNotFoundException when no invoice with {@code invoiceId} exists.
+   */
+  @Transactional
+  public void payInvoice(UUID invoiceId, UUID operatorAccountId, AuditContext auditContext) {
+    if (!invoices.pay(invoiceId)) {
+      throw new SimTargetNotFoundException();
+    }
+    audit(operatorAccountId, null, auditContext, "finance.pay-invoice", invoiceId);
+    log.info("sim: operator paid invoice {}", invoiceId);
+  }
+
+  /** Records a copay charge for a family member's usage (SPEC-0013 §Operator-sim). */
+  @Transactional
+  public SimCopayResult recordCopay(
+      LocalDate entryDate,
+      String procedure,
+      String provider,
+      UUID beneficiaryId,
+      BigDecimal amount,
+      UUID operatorAccountId,
+      AuditContext auditContext) {
+    UUID id = copays.record(entryDate, procedure, provider, beneficiaryId, amount);
+    audit(operatorAccountId, beneficiaryId, auditContext, "finance.record-copay", id);
+    return new SimCopayResult(id);
   }
 
   /**

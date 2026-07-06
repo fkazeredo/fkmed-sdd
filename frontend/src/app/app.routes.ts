@@ -227,6 +227,37 @@ export const routes: Routes = [
         path: 'guias/:id',
         loadComponent: () => import('./features/guias/guide-detail').then((m) => m.GuideDetail),
       },
+      // SPEC-0013 (Phase 5): Finanças — reachable via the shell nav (nav-financas, hidden for
+      // dependents). Titular-only (BR1): every screen renders a friendly denial when the active
+      // beneficiary is a dependent. Hub (invoice tabs) + boleto detail + validator + copay + IR +
+      // Lei 12.007 settlement.
+      {
+        path: 'financas',
+        loadComponent: () => import('./features/financas/financas-hub').then((m) => m.FinancasHub),
+      },
+      {
+        path: 'financas/boleto/:id',
+        loadComponent: () => import('./features/financas/boleto-detail').then((m) => m.BoletoDetail),
+      },
+      {
+        path: 'financas/validar',
+        loadComponent: () =>
+          import('./features/financas/validar-boleto').then((m) => m.ValidarBoleto),
+      },
+      {
+        path: 'financas/coparticipacao',
+        loadComponent: () =>
+          import('./features/financas/coparticipacao').then((m) => m.Coparticipacao),
+      },
+      {
+        path: 'financas/imposto-renda',
+        loadComponent: () =>
+          import('./features/financas/imposto-renda').then((m) => m.ImpostoRenda),
+      },
+      {
+        path: 'financas/quitacao',
+        loadComponent: () => import('./features/financas/quitacao').then((m) => m.Quitacao),
+      },
     ],
   },
 ];

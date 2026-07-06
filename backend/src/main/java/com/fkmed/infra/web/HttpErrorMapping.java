@@ -10,6 +10,10 @@ import com.fkmed.domain.appointment.SlotUnavailableException;
 import com.fkmed.domain.card.CardUnavailableException;
 import com.fkmed.domain.clinicaldocs.ClinicalDocumentNotFoundException;
 import com.fkmed.domain.error.DomainException;
+import com.fkmed.domain.finance.FinanceTitularOnlyException;
+import com.fkmed.domain.finance.InvoiceNotFoundException;
+import com.fkmed.domain.finance.LineInvalidFormatException;
+import com.fkmed.domain.finance.YearNotSettledException;
 import com.fkmed.domain.guides.GuideNotFoundException;
 import com.fkmed.domain.guides.TokenNoneActiveException;
 import com.fkmed.domain.identity.AccountAlreadyExistsException;
@@ -119,7 +123,15 @@ public final class HttpErrorMapping {
           // SPEC-0012 §Error Behavior: unknown/out-of-scope guide never reveals existence; no
           // current valid token is a distinct 404.
           Map.entry(GuideNotFoundException.class, HttpStatus.NOT_FOUND),
-          Map.entry(TokenNoneActiveException.class, HttpStatus.NOT_FOUND));
+          Map.entry(TokenNoneActiveException.class, HttpStatus.NOT_FOUND),
+          // SPEC-0013 §Error Behavior: the whole finance module is titular-only (403); a validator
+          // format error is a 422 (before any lookup); an unknown/out-of-contract invoice is a 404
+          // that never reveals existence; a settlement declaration for a not-fully-paid year is a
+          // 409.
+          Map.entry(FinanceTitularOnlyException.class, HttpStatus.FORBIDDEN),
+          Map.entry(LineInvalidFormatException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(InvoiceNotFoundException.class, HttpStatus.NOT_FOUND),
+          Map.entry(YearNotSettledException.class, HttpStatus.CONFLICT));
 
   private HttpErrorMapping() {}
 

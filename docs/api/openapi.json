@@ -487,6 +487,82 @@
         }
       }
     },
+    "/api/sim/finance/invoices" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "createInvoice",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SimCreateInvoiceRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimInvoiceResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sim/finance/invoices/{id}/pay" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "payInvoice",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/sim/finance/copay" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "createCopay",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SimCreateCopayRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimCopayResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sim/documents" : {
       "post" : {
         "tags" : [ "operator-simulation" ],
@@ -571,6 +647,34 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/finance/invoices/validate" : {
+      "post" : {
+        "tags" : [ "finance-controller" ],
+        "operationId" : "validate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ValidateInvoiceRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InvoiceValidation"
+                }
+              }
+            }
           }
         }
       }
@@ -1497,6 +1601,242 @@
         }
       }
     },
+    "/api/finance/tax-statements" : {
+      "get" : {
+        "tags" : [ "finance-controller" ],
+        "operationId" : "taxStatements",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/StatementYear"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finance/tax-statements/{year}/pdf" : {
+      "get" : {
+        "tags" : [ "finance-controller" ],
+        "operationId" : "taxStatementPdf",
+        "parameters" : [ {
+          "name" : "year",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/pdf" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finance/settlement-declarations" : {
+      "get" : {
+        "tags" : [ "finance-controller" ],
+        "operationId" : "settlementDeclarations",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/StatementYear"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finance/settlement-declarations/{year}/pdf" : {
+      "get" : {
+        "tags" : [ "finance-controller" ],
+        "operationId" : "settlementPdf",
+        "parameters" : [ {
+          "name" : "year",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/pdf" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finance/invoices" : {
+      "get" : {
+        "tags" : [ "finance-controller" ],
+        "operationId" : "invoices",
+        "parameters" : [ {
+          "name" : "tab",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "OPEN",
+            "enum" : [ "OPEN", "PAID" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/InvoiceSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finance/invoices/{id}" : {
+      "get" : {
+        "tags" : [ "finance-controller" ],
+        "operationId" : "invoice",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InvoiceDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finance/invoices/{id}/pdf" : {
+      "get" : {
+        "tags" : [ "finance-controller" ],
+        "operationId" : "invoicePdf",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/pdf" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finance/copay" : {
+      "get" : {
+        "tags" : [ "finance-controller" ],
+        "operationId" : "copay",
+        "parameters" : [ {
+          "name" : "period",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "CURRENT_MONTH",
+            "enum" : [ "CURRENT_MONTH", "LAST_3M", "CUSTOM" ]
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "beneficiaryId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CopayStatement"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/context/beneficiaries/{beneficiaryId}" : {
       "get" : {
         "tags" : [ "context-controller" ],
@@ -2313,6 +2653,85 @@
         },
         "required" : [ "password", "validUntil" ]
       },
+      "SimCreateInvoiceRequest" : {
+        "type" : "object",
+        "properties" : {
+          "titularBeneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "competencia" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "\\d{4}-\\d{2}"
+          },
+          "dueDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amount" : {
+            "type" : "number"
+          },
+          "digitableLine" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "pixCode" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "amount", "competencia", "digitableLine", "dueDate", "pixCode", "titularBeneficiaryId" ]
+      },
+      "SimInvoiceResult" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "competencia" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SimCreateCopayRequest" : {
+        "type" : "object",
+        "properties" : {
+          "entryDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "procedure" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "provider" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "amount" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "amount", "beneficiaryId", "entryDate", "procedure", "provider" ]
+      },
+      "SimCopayResult" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }
+      },
       "IssueOperatorDocumentRequest" : {
         "type" : "object",
         "properties" : {
@@ -2388,6 +2807,34 @@
           }
         },
         "required" : [ "version" ]
+      },
+      "ValidateInvoiceRequest" : {
+        "type" : "object",
+        "properties" : {
+          "line" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "line" ]
+      },
+      "InvoiceValidation" : {
+        "type" : "object",
+        "properties" : {
+          "result" : {
+            "type" : "string"
+          },
+          "competencia" : {
+            "type" : "string"
+          },
+          "dueDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amount" : {
+            "type" : "number"
+          }
+        }
       },
       "ResendVerificationRequest" : {
         "type" : "object",
@@ -3092,6 +3539,138 @@
           "status" : {
             "type" : "string",
             "enum" : [ "EM_ANALISE", "AUTORIZADO", "NEGADO" ]
+          }
+        }
+      },
+      "StatementYear" : {
+        "type" : "object",
+        "properties" : {
+          "year" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "InvoiceSummary" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "competencia" : {
+            "type" : "string"
+          },
+          "dueDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amount" : {
+            "type" : "number"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "OPEN", "OVERDUE", "PAID" ]
+          },
+          "paidAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "updatedAmount" : {
+            "$ref" : "#/components/schemas/UpdatedAmount"
+          }
+        }
+      },
+      "UpdatedAmount" : {
+        "type" : "object",
+        "properties" : {
+          "original" : {
+            "type" : "number"
+          },
+          "fine" : {
+            "type" : "number"
+          },
+          "interest" : {
+            "type" : "number"
+          },
+          "daysOverdue" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "total" : {
+            "type" : "number"
+          }
+        }
+      },
+      "InvoiceDetail" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "competencia" : {
+            "type" : "string"
+          },
+          "dueDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amount" : {
+            "type" : "number"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "OPEN", "OVERDUE", "PAID" ]
+          },
+          "paidAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "updatedAmount" : {
+            "$ref" : "#/components/schemas/UpdatedAmount"
+          },
+          "digitableLine" : {
+            "type" : "string"
+          },
+          "pixCode" : {
+            "type" : "string"
+          },
+          "barcodePayload" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CopayLine" : {
+        "type" : "object",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "procedure" : {
+            "type" : "string"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "beneficiaryName" : {
+            "type" : "string"
+          },
+          "amount" : {
+            "type" : "number"
+          }
+        }
+      },
+      "CopayStatement" : {
+        "type" : "object",
+        "properties" : {
+          "entries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CopayLine"
+            }
+          },
+          "total" : {
+            "type" : "number"
           }
         }
       },
