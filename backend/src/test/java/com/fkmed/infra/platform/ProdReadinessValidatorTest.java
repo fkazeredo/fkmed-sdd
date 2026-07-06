@@ -50,6 +50,10 @@ class ProdReadinessValidatorTest {
         "a-real-registration-secret", "https://fkmed.example.com", 24, 30, 30);
   }
 
+  private static SimProperties simOff() {
+    return new SimProperties(false, List.of());
+  }
+
   @SuppressWarnings("unchecked")
   private static JdbcTemplate noDevAccount() {
     JdbcTemplate jdbc = mock(JdbcTemplate.class);
@@ -65,7 +69,7 @@ class ProdReadinessValidatorTest {
 
     ProdReadinessValidator validator =
         new ProdReadinessValidator(
-            devSecurity(), devIdentity(), environment, noDevAccount(), ENCODER);
+            devSecurity(), devIdentity(), simOff(), environment, noDevAccount(), ENCODER);
 
     assertThatIllegalStateException()
         .isThrownBy(() -> validator.run(null))
@@ -89,7 +93,7 @@ class ProdReadinessValidatorTest {
 
     ProdReadinessValidator validator =
         new ProdReadinessValidator(
-            productionSecurity(), productionIdentity(), environment, jdbc, ENCODER);
+            productionSecurity(), productionIdentity(), simOff(), environment, jdbc, ENCODER);
 
     assertThatIllegalStateException()
         .isThrownBy(() -> validator.run(null))
@@ -112,7 +116,7 @@ class ProdReadinessValidatorTest {
 
     ProdReadinessValidator validator =
         new ProdReadinessValidator(
-            productionSecurity(), productionIdentity(), environment, jdbc, ENCODER);
+            productionSecurity(), productionIdentity(), simOff(), environment, jdbc, ENCODER);
 
     assertThatIllegalStateException()
         .isThrownBy(() -> validator.run(null))
@@ -134,7 +138,7 @@ class ProdReadinessValidatorTest {
 
     ProdReadinessValidator validator =
         new ProdReadinessValidator(
-            productionSecurity(), productionIdentity(), environment, jdbc, ENCODER);
+            productionSecurity(), productionIdentity(), simOff(), environment, jdbc, ENCODER);
 
     assertThatIllegalStateException()
         .isThrownBy(() -> validator.run(null))
@@ -156,11 +160,56 @@ class ProdReadinessValidatorTest {
 
     ProdReadinessValidator validator =
         new ProdReadinessValidator(
-            productionSecurity(), productionIdentity(), environment, jdbc, ENCODER);
+            productionSecurity(), productionIdentity(), simOff(), environment, jdbc, ENCODER);
 
     assertThatIllegalStateException()
         .isThrownBy(() -> validator.run(null))
         .withMessageContaining("termos-e2e@fkmed.local");
+  }
+
+  @Test
+  void refusesToBoot_whenTheOperatorSimulationFlagIsEnabled() {
+    // SPEC-0018 BR1/AC4: the operator-simulation API must never be active under a prod-like
+    // profile;
+    // the startup validator refuses the enabled flag.
+    MockEnvironment environment = new MockEnvironment();
+    environment.setActiveProfiles("prod");
+    environment.setProperty("spring.datasource.password", "a-real-secret-from-env");
+
+    ProdReadinessValidator validator =
+        new ProdReadinessValidator(
+            productionSecurity(),
+            productionIdentity(),
+            new SimProperties(true, List.of("operador-sim@fkmed.local")),
+            environment,
+            noDevAccount(),
+            ENCODER);
+
+    assertThatIllegalStateException()
+        .isThrownBy(() -> validator.run(null))
+        .withMessageContaining("app.sim.enabled");
+  }
+
+  @Test
+  void refusesToBoot_whenTheOperatorSimSeedAccountIsPresent() {
+    // SPEC-0018: the dev-seeded operator credential (V22) is dev-only and must equally block a prod
+    // boot, reusing the same seedAccountPresent(...) path as the other disposable identities.
+    MockEnvironment environment = new MockEnvironment();
+    environment.setActiveProfiles("prod");
+    environment.setProperty("spring.datasource.password", "a-real-secret-from-env");
+
+    JdbcTemplate jdbc = mock(JdbcTemplate.class);
+    when(jdbc.queryForList(anyString(), eq(String.class), any())).thenReturn(List.of());
+    when(jdbc.queryForList(anyString(), eq(String.class), eq("operador-sim@fkmed.local")))
+        .thenReturn(List.of(ENCODER.encode("operador12345")));
+
+    ProdReadinessValidator validator =
+        new ProdReadinessValidator(
+            productionSecurity(), productionIdentity(), simOff(), environment, jdbc, ENCODER);
+
+    assertThatIllegalStateException()
+        .isThrownBy(() -> validator.run(null))
+        .withMessageContaining("operador-sim@fkmed.local");
   }
 
   @Test
@@ -171,7 +220,12 @@ class ProdReadinessValidatorTest {
 
     ProdReadinessValidator validator =
         new ProdReadinessValidator(
-            productionSecurity(), productionIdentity(), environment, noDevAccount(), ENCODER);
+            productionSecurity(),
+            productionIdentity(),
+            simOff(),
+            environment,
+            noDevAccount(),
+            ENCODER);
 
     assertThatCode(() -> validator.run(null)).doesNotThrowAnyException();
   }

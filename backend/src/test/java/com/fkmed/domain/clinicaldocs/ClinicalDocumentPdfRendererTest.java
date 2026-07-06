@@ -53,6 +53,7 @@ class ClinicalDocumentPdfRendererTest {
             List.of(),
             null,
             null,
+            null,
             List.of(),
             LocalDate.of(2026, 7, 1),
             LocalDate.of(2026, 7, 5),
@@ -82,6 +83,7 @@ class ClinicalDocumentPdfRendererTest {
             List.of(),
             null,
             null,
+            null,
             List.of(
                 new ClinicalDocumentDetail.PrescriptionItemView(
                     "Dipirona 500mg", "1cp 6/6h", null)),
@@ -107,6 +109,7 @@ class ClinicalDocumentPdfRendererTest {
         false,
         "Investigação de fadiga",
         List.of(new ClinicalDocumentDetail.ExamItemView("Hemograma Completo", "40304361")),
+        null,
         null,
         null,
         List.of(),

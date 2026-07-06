@@ -32,5 +32,14 @@ public final class NotificationEventTypes {
   /** An appointment was rescheduled (business, opt-outable — SPEC-0009 BR10). */
   public static final String APPOINTMENT_RESCHEDULED = "appointment.rescheduled";
 
+  /** It is the beneficiary's turn in the telemedicine queue (business — SPEC-0010 BR8). */
+  public static final String TELE_TURN_REACHED = "tele.turn-reached";
+
+  /** A telemedicine session was closed with its summary (business — SPEC-0010 BR9). */
+  public static final String TELE_SESSION_CLOSED = "tele.session-closed";
+
+  /** A clinical document was issued into Minha Saúde (business — SPEC-0011 §Events). */
+  public static final String CLINICAL_DOCUMENT_ISSUED = "clinical-document.issued";
+
   private NotificationEventTypes() {}
 }

@@ -54,6 +54,12 @@ class TeleApiIT extends AbstractIntegrationTest {
         .andExpect(
             jsonPath("$.symptoms[?(@.code=='CEFALEIA')].name")
                 .value(Matchers.hasItem("Dor de cabeça")))
+        // SPEC-0010 BR3: the emergency flag the FE's 24h-ER alert reads (V21 seeds the signals).
+        .andExpect(
+            jsonPath("$.symptoms[?(@.code=='DOR_TORACICA')].emergency")
+                .value(Matchers.hasItem(true)))
+        .andExpect(
+            jsonPath("$.symptoms[?(@.code=='CEFALEIA')].emergency").value(Matchers.hasItem(false)))
         .andExpect(jsonPath("$.term.version").value("1.0"))
         .andExpect(jsonPath("$.term.body").isNotEmpty());
   }

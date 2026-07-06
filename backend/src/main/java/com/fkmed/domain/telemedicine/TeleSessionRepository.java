@@ -23,6 +23,12 @@ public interface TeleSessionRepository extends JpaRepository<TeleSession, UUID> 
       UUID appointmentId, Collection<TeleSessionState> states);
 
   /**
+   * The next walk-in session waiting in the queue (oldest first) — the operator's "attend next".
+   */
+  Optional<TeleSession> findFirstByTypeAndStateOrderByQueueEnteredAtAsc(
+      TeleSessionType type, TeleSessionState state);
+
+  /**
    * How many walk-in sessions are queued ahead of the given entry instant (queue position, BR5).
    */
   long countByTypeAndStateAndQueueEnteredAtBefore(

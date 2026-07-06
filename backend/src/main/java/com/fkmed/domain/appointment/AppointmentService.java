@@ -64,6 +64,22 @@ public class AppointmentService {
     return careUnits.findServingScope(type, code).stream().map(CareUnitView::from).toList();
   }
 
+  /**
+   * The id of the seeded virtual Telemedicina unit (SPEC-0010 BR14, DL-0018): scheduled
+   * teleconsultation booking/availability resolve it server-side from the {@code telemedicine=true}
+   * scope, so the caller never sends a {@code unitId}. A booking against it is recorded as {@code
+   * TELEMEDICINA} (see {@link #modalityOf}).
+   *
+   * @throws IllegalStateException when no virtual unit is seeded — a deployment/seed defect.
+   */
+  @Transactional(readOnly = true)
+  public UUID telemedicineUnitId() {
+    return careUnits
+        .findFirstByVirtualTrue()
+        .map(CareUnit::getId)
+        .orElseThrow(() -> new IllegalStateException("no virtual Telemedicina unit is seeded"));
+  }
+
   /** The exam catalog, alphabetical by name — the exam wizard's first step (BR4). */
   @Transactional(readOnly = true)
   public List<ExamTypeView> examCatalog() {
@@ -281,10 +297,13 @@ public class AppointmentService {
   /**
    * Meus Agendamentos across all beneficiaries the caller may act for (BR13), optionally narrowed
    * to one of them: {@code upcoming} soonest-first and {@code history} most-recent-first, with
-   * {@code REALIZADO} derived for past active items (BR12).
+   * {@code REALIZADO} derived for past active items (BR12). When {@code telemedicineOnly} is set,
+   * only {@code TELEMEDICINA} commitments are returned — the SPEC-0010 BR1/BR14 "Meus Agendamentos
+   * (filtered by Telemedicina)" scope the tele feature reads with {@code telemedicine=true}.
    */
   @Transactional(readOnly = true)
-  public AppointmentListResponse list(String callerCard, UUID beneficiaryFilter) {
+  public AppointmentListResponse list(
+      String callerCard, UUID beneficiaryFilter, boolean telemedicineOnly) {
     Map<UUID, String> namesById =
         beneficiaryAccess.accessibleFor(callerCard).stream()
             .collect(
@@ -296,9 +315,13 @@ public class AppointmentService {
     }
 
     List<Appointment> found =
-        beneficiaryFilter != null
-            ? appointments.findByBeneficiaryIdOrderByScheduledAtDesc(beneficiaryFilter)
-            : appointments.findByBeneficiaryIdInOrderByScheduledAtDesc(namesById.keySet());
+        (beneficiaryFilter != null
+                ? appointments.findByBeneficiaryIdOrderByScheduledAtDesc(beneficiaryFilter)
+                : appointments.findByBeneficiaryIdInOrderByScheduledAtDesc(namesById.keySet()))
+            .stream()
+                .filter(
+                    a -> !telemedicineOnly || a.getModality() == AppointmentModality.TELEMEDICINA)
+                .toList();
 
     Instant now = clock.instant();
     Map<UUID, String> unitNames = unitNamesFor(found);

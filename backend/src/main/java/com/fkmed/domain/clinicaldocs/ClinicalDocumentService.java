@@ -184,6 +184,7 @@ public class ClinicalDocumentService {
                     new ClinicalDocumentDetail.ExamItemView(item.getExamName(), item.getTussCode()))
             .toList(),
         document.getTargetSpecialtyCode(),
+        document.getTargetSpecialtyName(),
         document.getReferralReason(),
         document.getPrescriptionItems().stream()
             .map(

@@ -20,6 +20,7 @@ public record IssueClinicalDocumentCommand(
     String clinicalIndication,
     List<ExamItemInput> examItems,
     String targetSpecialtyCode,
+    String targetSpecialtyName,
     String referralReason,
     List<PrescriptionItemInput> medications,
     LocalDate sickNotePeriodStart,
@@ -49,16 +50,22 @@ public record IssueClinicalDocumentCommand(
         null,
         null,
         null,
+        null,
         null);
   }
 
-  /** A referral document: the target specialty (registry code) and the reason. */
+  /**
+   * A referral document: the target specialty as its {@code domain.network} registry code (so the
+   * SPEC-0009 wizard pre-selection matches an offered specialty) plus its display name snapshotted
+   * at issue (BR8 immutability), and the reason.
+   */
   public static IssueClinicalDocumentCommand referral(
       UUID beneficiaryId,
       String professionalName,
       String crm,
       DocumentOrigin origin,
       String targetSpecialtyCode,
+      String targetSpecialtyName,
       String referralReason) {
     return new IssueClinicalDocumentCommand(
         ClinicalDocumentType.REFERRAL,
@@ -69,6 +76,7 @@ public record IssueClinicalDocumentCommand(
         null,
         null,
         targetSpecialtyCode,
+        targetSpecialtyName,
         referralReason,
         null,
         null,
@@ -90,6 +98,7 @@ public record IssueClinicalDocumentCommand(
         professionalName,
         crm,
         origin,
+        null,
         null,
         null,
         null,
@@ -120,6 +129,7 @@ public record IssueClinicalDocumentCommand(
         professionalName,
         crm,
         origin,
+        null,
         null,
         null,
         null,

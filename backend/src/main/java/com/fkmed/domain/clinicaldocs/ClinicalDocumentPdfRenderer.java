@@ -105,9 +105,8 @@ final class ClinicalDocumentPdfRenderer {
     addSection(body, "Indicação Clínica");
     body.add(new Paragraph(detail.clinicalIndication(), VALUE_FONT));
     addSection(body, "Exames Solicitados");
-    for (ClinicalDocumentDetail.ExamItemView item : nonNull(detail.examItems())) {
-      body.add(
-          new Paragraph("• " + item.examName() + " (TUSS " + item.tussCode() + ")", VALUE_FONT));
+    for (ClinicalDocumentDetail.ExamItemView item : nonNull(detail.exams())) {
+      body.add(new Paragraph("• " + item.name() + " (TUSS " + item.tuss() + ")", VALUE_FONT));
     }
     return body;
   }
@@ -115,7 +114,10 @@ final class ClinicalDocumentPdfRenderer {
   private static Paragraph referralBody(ClinicalDocumentDetail detail) {
     Paragraph body = new Paragraph();
     addSection(body, "Especialidade");
-    body.add(new Paragraph(detail.targetSpecialty(), VALUE_FONT));
+    body.add(
+        new Paragraph(
+            detail.specialtyName() != null ? detail.specialtyName() : detail.specialtyCode(),
+            VALUE_FONT));
     addSection(body, "Motivo do Encaminhamento");
     body.add(new Paragraph(detail.reason(), VALUE_FONT));
     return body;

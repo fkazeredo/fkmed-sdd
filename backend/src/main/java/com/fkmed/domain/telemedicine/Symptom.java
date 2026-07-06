@@ -21,6 +21,13 @@ public class Symptom {
   @Column(nullable = false)
   private String name;
 
+  /**
+   * Whether selecting this symptom is an emergency signal that raises the 24h-ER alert (SPEC-0010
+   * BR3). Seeded by Flyway V21; read by the triage screen to drive the alert.
+   */
+  @Column(nullable = false)
+  private boolean emergency;
+
   /** JPA only. */
   protected Symptom() {}
 }

@@ -18,4 +18,7 @@ public interface ClinicalDocumentRepository extends JpaRepository<ClinicalDocume
   List<ClinicalDocument>
       findByBeneficiaryIdInAndIssuedAtGreaterThanEqualAndIssuedAtLessThanOrderByIssuedAtDesc(
           Collection<UUID> beneficiaryIds, Instant from, Instant toExclusive);
+
+  /** Documents issued in a telemedicine session, oldest first — the room's closure summary. */
+  List<ClinicalDocument> findByOriginSessionIdOrderByIssuedAtAsc(UUID sessionId);
 }

@@ -263,9 +263,9 @@ class ClinicalDocumentApiIT extends AbstractIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.type").value("EXAM_ORDER"))
         .andExpect(jsonPath("$.clinicalIndication").value("Investigação de fadiga"))
-        .andExpect(jsonPath("$.examItems.length()").value(2))
-        .andExpect(jsonPath("$.examItems[0].examName").value("Hemograma Completo"))
-        .andExpect(jsonPath("$.examItems[0].tussCode").value("40304361"));
+        .andExpect(jsonPath("$.exams.length()").value(2))
+        .andExpect(jsonPath("$.exams[0].name").value("Hemograma Completo"))
+        .andExpect(jsonPath("$.exams[0].tuss").value("40304361"));
   }
 
   @Test
@@ -274,7 +274,8 @@ class ClinicalDocumentApiIT extends AbstractIntegrationTest {
         .perform(get("/api/clinical-documents/{id}", REFERRAL).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.type").value("REFERRAL"))
-        .andExpect(jsonPath("$.targetSpecialty").value("CARDIOLOGIA"))
+        .andExpect(jsonPath("$.specialtyCode").value("CARDIOLOGIA"))
+        .andExpect(jsonPath("$.specialtyName").value("Cardiologia"))
         .andExpect(jsonPath("$.reason").value("Palpitações recorrentes"));
   }
 
@@ -446,15 +447,16 @@ class ClinicalDocumentApiIT extends AbstractIntegrationTest {
     jdbc.update(
         "insert into clinical_document"
             + " (id, type, beneficiary_id, professional_name, crm, issued_at, valid_until,"
-            + " origin_session_id, target_specialty_code, referral_reason)"
+            + " origin_session_id, target_specialty_code, target_specialty_name, referral_reason)"
             + " values (?::uuid, 'REFERRAL', ?::uuid, 'Dra. Camila Andrade', 'CRM 55214 RJ',"
-            + " ?, ?, ?::uuid, ?, ?)",
+            + " ?, ?, ?::uuid, ?, ?, ?)",
         id,
         beneficiaryId,
         instantAt(issuedDate),
         issuedDate.plusDays(validityDays),
         ORIGIN_SESSION,
         targetSpecialtyCode,
+        "Cardiologia",
         reason);
   }
 

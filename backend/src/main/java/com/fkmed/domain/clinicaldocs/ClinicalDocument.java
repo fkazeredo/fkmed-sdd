@@ -70,6 +70,10 @@ public class ClinicalDocument {
   @Column(name = "target_specialty_code")
   private String targetSpecialtyCode;
 
+  /** Referral only (BR6): the specialty's display name, snapshotted at issue (BR8 immutability). */
+  @Column(name = "target_specialty_name")
+  private String targetSpecialtyName;
+
   /** Referral only (BR6). */
   @Column(name = "referral_reason")
   private String referralReason;
@@ -162,8 +166,10 @@ public class ClinicalDocument {
 
   private void applyReferral(IssueClinicalDocumentCommand command) {
     requireText(command.targetSpecialtyCode(), "targetSpecialtyCode");
+    requireText(command.targetSpecialtyName(), "targetSpecialtyName");
     requireText(command.referralReason(), "referralReason");
     this.targetSpecialtyCode = command.targetSpecialtyCode();
+    this.targetSpecialtyName = command.targetSpecialtyName();
     this.referralReason = command.referralReason();
   }
 
