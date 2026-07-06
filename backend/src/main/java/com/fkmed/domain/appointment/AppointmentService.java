@@ -64,6 +64,14 @@ public class AppointmentService {
     return careUnits.findServingScope(type, code).stream().map(CareUnitView::from).toList();
   }
 
+  /** The exam catalog, alphabetical by name — the exam wizard's first step (BR4). */
+  @Transactional(readOnly = true)
+  public List<ExamTypeView> examCatalog() {
+    return examTypes.findAll(org.springframework.data.domain.Sort.by("name")).stream()
+        .map(ExamTypeView::from)
+        .toList();
+  }
+
   /**
    * The availability calendar for a (unit, scope): the days within today..+30 with slots respecting
    * the 2-hour antecedence, each carrying its remaining capacity (BR5, DL-0013). Full slots are

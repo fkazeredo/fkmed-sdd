@@ -40,6 +40,7 @@ Rel(FkmedApplication.FkmedApplication.identity, FkmedApplication.FkmedApplicatio
 Rel(FkmedApplication.FkmedApplication.identity, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.identity, FkmedApplication.FkmedApplication.plan, "uses", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.network, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
+Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.appointment, "listens to", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.identity, "listens to", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.identity, "uses", $techn="", $tags="", $link="")

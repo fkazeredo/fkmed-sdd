@@ -91,6 +91,17 @@ class AppointmentApiIT extends AbstractIntegrationTest {
   }
 
   @Test
+  void exams_returnsTheSeededCatalog() throws Exception {
+    mockMvc
+        .perform(get("/api/appointments/exams").with(authAs(MARIA_EMAIL)))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath("$[?(@.code=='HEMOGRAMA')].name")
+                .value(org.hamcrest.Matchers.hasItem("Hemograma")))
+        .andExpect(jsonPath("$[?(@.code=='TOMOGRAFIA')]").exists());
+  }
+
+  @Test
   void units_forCardiology_includeTheSeededOwnUnits() throws Exception {
     mockMvc
         .perform(

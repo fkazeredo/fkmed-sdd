@@ -10,6 +10,7 @@ import com.fkmed.domain.appointment.AvailabilityResponse;
 import com.fkmed.domain.appointment.BookAppointmentCommand;
 import com.fkmed.domain.appointment.BookingConfirmation;
 import com.fkmed.domain.appointment.CareUnitView;
+import com.fkmed.domain.appointment.ExamTypeView;
 import com.fkmed.domain.identity.AccountCredentials;
 import com.fkmed.domain.identity.IdentityAccounts;
 import com.fkmed.infra.security.UserContextProvider;
@@ -50,6 +51,12 @@ public class AppointmentController {
   private final AppointmentService appointments;
   private final UserContextProvider userContext;
   private final IdentityAccounts accounts;
+
+  /** The exam catalog for the exam wizard (BR4), mirroring {@code GET /api/network/specialties}. */
+  @GetMapping("/exams")
+  List<ExamTypeView> exams() {
+    return appointments.examCatalog();
+  }
 
   /** Units serving a specialty or an exam (BR3/BR4). */
   @GetMapping("/units")

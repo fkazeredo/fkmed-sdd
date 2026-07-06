@@ -1137,6 +1137,27 @@
         }
       }
     },
+    "/api/appointments/exams" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "exams",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ExamTypeView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/availability" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -2056,6 +2077,17 @@
             "type" : "string"
           },
           "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ExamTypeView" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
             "type" : "string"
           }
         }

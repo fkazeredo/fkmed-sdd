@@ -53,4 +53,14 @@ public class IdentityAccounts {
   public Optional<UUID> accountIdForBeneficiary(UUID beneficiaryId) {
     return accounts.findByBeneficiaryId(beneficiaryId).map(UserAccount::getId);
   }
+
+  /**
+   * The login e-mail of the account linked to the given beneficiary, if one exists. Lets the
+   * notification module deliver a beneficiary-scoped event (SPEC-0009 appointment events) to the
+   * owning account's e-mail without leaking the {@code UserAccount} entity — the sibling of {@link
+   * #accountIdForBeneficiary}, added because the appointment events carry no e-mail and are frozen.
+   */
+  public Optional<String> contactEmailForBeneficiary(UUID beneficiaryId) {
+    return accounts.findByBeneficiaryId(beneficiaryId).map(UserAccount::getEmail);
+  }
 }
