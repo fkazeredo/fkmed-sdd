@@ -1,0 +1,102 @@
+@if (denied()) {
+  <app-finance-denied />
+} @else {
+  <section class="mx-auto max-w-2xl p-4" aria-labelledby="boleto-detail-title" data-testid="boleto-detail-page">
+    <h1 id="boleto-detail-title" class="mb-4 text-2xl font-semibold text-teal-800">
+      {{ 'financas.boleto.title' | translate }}
+    </h1>
+
+    @if (loading()) {
+      <p class="p-4 text-slate-500" data-testid="boleto-loading">{{ 'common.loading' | translate }}</p>
+    } @else if (notFound()) {
+      <p class="rounded-lg bg-white p-6 text-slate-600 shadow" data-testid="boleto-nao-encontrado">
+        {{ 'financas.boleto.naoEncontrado' | translate }}
+      </p>
+    } @else if (errorKey()) {
+      <div class="rounded-lg bg-white p-6 shadow" data-testid="boleto-error">
+        <p class="mb-3 text-slate-600">{{ errorKey()! | translate }}</p>
+        <button type="button" (click)="load()" class="rounded bg-teal-700 px-4 py-2 text-white">
+          {{ 'common.retry' | translate }}
+        </button>
+      </div>
+    } @else if (invoice(); as invoice) {
+      <div class="rounded-xl bg-white p-5 shadow">
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-2">
+          <dt class="text-slate-500">{{ 'financas.boleto.competencia' | translate }}</dt>
+          <dd class="text-right font-medium">{{ invoice.competencia }}</dd>
+          <dt class="text-slate-500">{{ 'financas.boleto.vencimento' | translate }}</dt>
+          <dd class="text-right font-medium">{{ formatBrDate(invoice.dueDate) }}</dd>
+          <dt class="text-slate-500">{{ 'financas.boleto.valor' | translate }}</dt>
+          <dd class="text-right font-medium">{{ formatBrl(invoice.amount) }}</dd>
+          <dt class="text-slate-500">{{ 'financas.boleto.situacao' | translate }}</dt>
+          <dd class="text-right font-medium">{{ 'financas.status.' + invoice.status | translate }}</dd>
+        </dl>
+
+        @if (invoice.status === 'OVERDUE' && invoice.updatedAmount; as updated) {
+          <div class="mt-4 rounded-lg bg-red-50 p-3 text-sm" data-testid="boleto-atualizado">
+            <p class="mb-1 font-medium text-red-700">{{ 'financas.atualizado.orientacao' | translate }}</p>
+            <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-700">
+              <dt>{{ 'financas.atualizado.original' | translate }}</dt>
+              <dd class="text-right">{{ formatBrl(updated.original) }}</dd>
+              <dt>{{ 'financas.atualizado.multa' | translate }}</dt>
+              <dd class="text-right">{{ formatBrl(updated.fine) }}</dd>
+              <dt>{{ 'financas.atualizado.juros' | translate }}</dt>
+              <dd class="text-right">{{ formatBrl(updated.interest) }}</dd>
+              <dt class="font-semibold">{{ 'financas.atualizado.total' | translate }}</dt>
+              <dd class="text-right font-semibold">{{ formatBrl(updated.total) }}</dd>
+            </dl>
+          </div>
+        }
+
+        <div class="mt-4">
+          <p class="text-sm text-slate-500">{{ 'financas.boleto.linhaDigitavel' | translate }}</p>
+          <p class="break-all font-mono text-sm" data-testid="boleto-linha">{{ invoice.digitableLine }}</p>
+        </div>
+
+        <div class="mt-4 flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            (click)="copyLine()"
+            class="rounded-lg bg-teal-700 px-4 py-2 text-white hover:bg-teal-800"
+            data-testid="boleto-copiar-linha"
+          >
+            {{ 'financas.boleto.copiarLinha' | translate }}
+          </button>
+          <button
+            type="button"
+            (click)="copyPix()"
+            class="rounded-lg border border-teal-700 px-4 py-2 text-teal-800 hover:bg-teal-50"
+            data-testid="boleto-copiar-pix"
+          >
+            {{ 'financas.boleto.copiarPix' | translate }}
+          </button>
+          <button
+            type="button"
+            (click)="downloadPdf()"
+            [disabled]="downloading()"
+            class="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            data-testid="boleto-baixar-pdf"
+          >
+            {{ 'financas.boleto.baixarPdf' | translate }}
+          </button>
+        </div>
+
+        @if (copiedLine()) {
+          <p class="mt-2 text-sm text-emerald-600" data-testid="boleto-linha-copiada">
+            {{ 'financas.boleto.linhaCopiada' | translate }}
+          </p>
+        }
+        @if (copiedPix()) {
+          <p class="mt-2 text-sm text-emerald-600" data-testid="boleto-pix-copiado">
+            {{ 'financas.boleto.pixCopiado' | translate }}
+          </p>
+        }
+        @if (pdfErrorKey()) {
+          <p class="mt-2 text-sm text-red-600" data-testid="boleto-pdf-erro">{{ pdfErrorKey()! | translate }}</p>
+        }
+
+        <p class="mt-4 text-xs text-slate-400">{{ 'financas.boleto.semPagamentoOnline' | translate }}</p>
+      </div>
+    }
+  </section>
+}

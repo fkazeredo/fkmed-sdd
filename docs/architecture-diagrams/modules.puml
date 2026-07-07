@@ -17,6 +17,7 @@ top to bottom direction
 
 System_Boundary("FkmedApplication_boundary", "FkmedApplication", $tags="") {
   Container_Boundary("FkmedApplication.FkmedApplication_boundary", "FkmedApplication", $tags="") {
+    Component(FkmedApplication.FkmedApplication.identity, "identity", $techn="Module", $descr="", $tags="", $link="")
     Component(FkmedApplication.FkmedApplication.card, "card", $techn="Module", $descr="", $tags="", $link="")
     Component(FkmedApplication.FkmedApplication.clinicaldocs, "clinicaldocs", $techn="Module", $descr="", $tags="", $link="")
     Component(FkmedApplication.FkmedApplication.guides, "guides", $techn="Module", $descr="", $tags="", $link="")
@@ -27,7 +28,7 @@ System_Boundary("FkmedApplication_boundary", "FkmedApplication", $tags="") {
     Component(FkmedApplication.FkmedApplication.network, "network", $techn="Module", $descr="", $tags="", $link="")
     Component(FkmedApplication.FkmedApplication.plan, "plan", $techn="Module", $descr="", $tags="", $link="")
     Component(FkmedApplication.FkmedApplication.appointment, "appointment", $techn="Module", $descr="", $tags="", $link="")
-    Component(FkmedApplication.FkmedApplication.identity, "identity", $techn="Module", $descr="", $tags="", $link="")
+    Component(FkmedApplication.FkmedApplication.finance, "finance", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
@@ -43,6 +44,8 @@ Rel(FkmedApplication.FkmedApplication.clinicaldocs, FkmedApplication.FkmedApplic
 Rel(FkmedApplication.FkmedApplication.clinicaldocs, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.clinicaldocs, FkmedApplication.FkmedApplication.identity, "uses", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.clinicaldocs, FkmedApplication.FkmedApplication.plan, "uses", $techn="", $tags="", $link="")
+Rel(FkmedApplication.FkmedApplication.finance, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
+Rel(FkmedApplication.FkmedApplication.finance, FkmedApplication.FkmedApplication.plan, "uses", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.guides, FkmedApplication.FkmedApplication.audit, "uses", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.guides, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.guides, FkmedApplication.FkmedApplication.identity, "uses", $techn="", $tags="", $link="")
@@ -54,6 +57,7 @@ Rel(FkmedApplication.FkmedApplication.network, FkmedApplication.FkmedApplication
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.appointment, "listens to", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.clinicaldocs, "listens to", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.errorkernel, "depends on", $techn="", $tags="", $link="")
+Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.finance, "listens to", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.guides, "listens to", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.identity, "listens to", $techn="", $tags="", $link="")
 Rel(FkmedApplication.FkmedApplication.notification, FkmedApplication.FkmedApplication.identity, "uses", $techn="", $tags="", $link="")

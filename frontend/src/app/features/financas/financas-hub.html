@@ -1,0 +1,122 @@
+@if (denied()) {
+  <app-finance-denied />
+} @else {
+  <section class="mx-auto max-w-4xl p-4" aria-labelledby="financas-hub-title" data-testid="financas-hub-page">
+    <h1 id="financas-hub-title" class="mb-4 text-2xl font-semibold text-teal-800">
+      {{ 'financas.hub.title' | translate }}
+    </h1>
+
+    <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      @for (link of links; track link.key) {
+        <a
+          [routerLink]="link.routerLink"
+          class="flex flex-col items-start gap-2 rounded-xl bg-white p-4 shadow hover:bg-slate-50"
+          [attr.data-testid]="'financas-hub-' + link.key"
+        >
+          <i [class]="link.icon + ' text-2xl text-teal-700'" aria-hidden="true"></i>
+          <span class="font-medium text-teal-800">{{ link.labelKey | translate }}</span>
+        </a>
+      }
+    </div>
+
+    <div class="mb-4 flex gap-2" role="tablist" [attr.aria-label]="'financas.hub.title' | translate">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === 'OPEN'"
+        (click)="selectTab('OPEN')"
+        class="rounded-t-lg px-4 py-2 font-medium"
+        [class]="tab() === 'OPEN' ? 'bg-white text-teal-800 shadow' : 'text-slate-500'"
+        data-testid="financas-tab-aberto"
+      >
+        {{ 'financas.tab.aberto' | translate }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === 'PAID'"
+        (click)="selectTab('PAID')"
+        class="rounded-t-lg px-4 py-2 font-medium"
+        [class]="tab() === 'PAID' ? 'bg-white text-teal-800 shadow' : 'text-slate-500'"
+        data-testid="financas-tab-pagos"
+      >
+        {{ 'financas.tab.pagos' | translate }}
+      </button>
+    </div>
+
+    @if (loading()) {
+      <p class="p-4 text-slate-500" data-testid="financas-loading">{{ 'common.loading' | translate }}</p>
+    } @else if (errorKey()) {
+      <div class="rounded-lg bg-white p-6 shadow" data-testid="financas-error">
+        <p class="mb-3 text-slate-600">{{ errorKey()! | translate }}</p>
+        <button type="button" (click)="retry()" class="rounded bg-teal-700 px-4 py-2 text-white">
+          {{ 'common.retry' | translate }}
+        </button>
+      </div>
+    } @else if (invoices().length === 0) {
+      <p class="rounded-lg bg-white p-6 text-slate-500 shadow" data-testid="financas-empty">
+        {{ 'financas.lista.vazio' | translate }}
+      </p>
+    } @else {
+      <ul class="flex flex-col gap-3" data-testid="financas-lista">
+        @for (invoice of invoices(); track invoice.id) {
+          <li
+            class="rounded-xl bg-white p-4 shadow"
+            [class.border-l-4]="invoice.status === 'OVERDUE'"
+            [class.border-red-500]="invoice.status === 'OVERDUE'"
+            [attr.data-testid]="'financas-boleto-' + invoice.id"
+          >
+            <a [routerLink]="['/financas/boleto', invoice.id]" class="flex items-center justify-between gap-4">
+              <div>
+                <p class="font-semibold text-teal-800">{{ invoice.competencia }}</p>
+                <p class="text-sm text-slate-500">
+                  {{ 'financas.boleto.vencimento' | translate }}: {{ formatBrDate(invoice.dueDate) }}
+                </p>
+                @if (invoice.status === 'PAID' && invoice.paidAt) {
+                  <p class="text-sm text-emerald-600" data-testid="financas-pago-em">
+                    {{ 'financas.boleto.pagoEm' | translate }}: {{ formatBrDate(invoice.paidAt) }}
+                  </p>
+                }
+              </div>
+              <div class="text-right">
+                <span
+                  class="rounded-full px-2 py-1 text-xs font-medium"
+                  [class]="
+                    invoice.status === 'OVERDUE'
+                      ? 'bg-red-100 text-red-700'
+                      : invoice.status === 'PAID'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-700'
+                  "
+                  [attr.data-testid]="'financas-status-' + invoice.id"
+                >
+                  {{ 'financas.status.' + invoice.status | translate }}
+                </span>
+                <p class="mt-1 font-semibold">{{ formatBrl(invoice.amount) }}</p>
+              </div>
+            </a>
+
+            @if (invoice.status === 'OVERDUE' && invoice.updatedAmount; as updated) {
+              <div class="mt-3 rounded-lg bg-red-50 p-3 text-sm" data-testid="financas-atualizado">
+                <p class="mb-1 font-medium text-red-700">{{ 'financas.atualizado.orientacao' | translate }}</p>
+                <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-700">
+                  <dt>{{ 'financas.atualizado.original' | translate }}</dt>
+                  <dd class="text-right">{{ formatBrl(updated.original) }}</dd>
+                  <dt>{{ 'financas.atualizado.multa' | translate }}</dt>
+                  <dd class="text-right">{{ formatBrl(updated.fine) }}</dd>
+                  <dt>
+                    {{ 'financas.atualizado.juros' | translate }}
+                    ({{ updated.daysOverdue }} {{ 'financas.atualizado.dias' | translate }})
+                  </dt>
+                  <dd class="text-right">{{ formatBrl(updated.interest) }}</dd>
+                  <dt class="font-semibold">{{ 'financas.atualizado.total' | translate }}</dt>
+                  <dd class="text-right font-semibold">{{ formatBrl(updated.total) }}</dd>
+                </dl>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+}

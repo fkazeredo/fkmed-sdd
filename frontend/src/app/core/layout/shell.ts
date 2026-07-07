@@ -30,7 +30,7 @@ import { NotificationBell } from './notification-bell';
 })
 export class Shell implements OnInit {
   protected readonly auth = inject(AuthService);
-  private readonly context = inject(BeneficiaryContextService);
+  protected readonly context = inject(BeneficiaryContextService);
   private readonly notifications = inject(NotificationsStateService);
 
   ngOnInit(): void {

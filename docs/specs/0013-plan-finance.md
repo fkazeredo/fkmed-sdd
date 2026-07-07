@@ -1,6 +1,6 @@
 # 0013 - Plan Finance
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -33,7 +33,12 @@ plans — the validator and its warning are a regulatory-grade UX requirement. L
   when unpaid and due date before today; otherwise **open**. Tabs: **Em aberto** (ordered
   by due date ascending, overdue highlighted with the guidance "Atualize seu boleto pelos
   canais de atendimento") and **Pagos** (competência descending). Competência displayed as
-  "Mês/AAAA".
+  "Mês/AAAA". An **overdue** invoice MUST additionally show the **valor atualizado** computed
+  on the ORIGINAL amount from due date to today (OQ1, owner-decided 2026-07-06): **multa de 2%**
+  (fixed) + **juros de mora de 1% ao mês pro rata die** (0,0333%/dia × dias em atraso),
+  broken out (valor original · multa · juros · total atualizado). Deterministic, no external
+  index; the portal still does NOT offer online payment (BR8) — the guidance to the channels
+  stays. Open/paid invoices show only the original amount.
 - **BR3** — Invoice detail MUST offer: **Copiar linha digitável** (exactly the 47 digits,
   with confirmation), **PIX copia-e-cola** (copies the invoice's PIX code, with
   confirmation — code exposure only, no online payment) and **Baixar 2ª via (PDF)** with
@@ -151,8 +156,9 @@ PDF downloads per type. Digitable lines and PIX codes never logged in full.
 
 ## Open Questions
 
-- **OQ1** — Interest/penalty amounts on overdue invoices · shown or channel-only ·
-  proposed default: **not shown** (guidance to channels), per the reference product.
+- **OQ1 — RESOLVED** (owner, AskUserQuestion 2026-07-06): interest/penalty on overdue
+  invoices **ARE shown** — **multa 2%** + **juros de mora 1% ao mês pro rata die** on the
+  original amount, from due date to today (deterministic, no external index). Folded into BR2.
 
 ## Out of Scope
 
