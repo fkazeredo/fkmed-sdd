@@ -66,5 +66,11 @@ public final class AuditEventTypes {
    */
   public static final String DEPENDENT_TOKEN_GENERATED = "guides.dependent-token-generated";
 
+  /**
+   * A beneficiary registered a Libras service request (SPEC-0014 BR4/§Observability). Recorded for
+   * every request, regardless of authorship (unlike {@link #DEPENDENT_TOKEN_GENERATED}).
+   */
+  public static final String SUPPORT_LIBRAS_REQUESTED = "support.libras-requested";
+
   private AuditEventTypes() {}
 }
