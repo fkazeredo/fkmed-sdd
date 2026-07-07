@@ -1,0 +1,50 @@
+<section class="mx-auto max-w-3xl space-y-6 p-4" aria-labelledby="faq-title" data-testid="faq-page">
+  <h1 id="faq-title" class="text-xl font-semibold text-teal-800">{{ 'atendimento.faq.title' | translate }}</h1>
+
+  <input
+    type="search"
+    class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+    [placeholder]="'atendimento.faq.buscarPlaceholder' | translate"
+    [value]="query()"
+    (input)="onQueryInput($any($event.target).value)"
+    data-testid="faq-busca"
+  />
+
+  <div class="flex flex-wrap gap-2" data-testid="faq-categorias">
+    @for (option of categories; track option.code) {
+      <button
+        type="button"
+        class="rounded-full px-3 py-1 text-sm"
+        [class.bg-teal-700]="category() === option.code"
+        [class.text-white]="category() === option.code"
+        [class.bg-slate-100]="category() !== option.code"
+        [class.text-slate-700]="category() !== option.code"
+        (click)="selectCategory(option.code)"
+        [attr.data-testid]="'faq-categoria-' + (option.code ?? 'TODAS')"
+      >
+        {{ option.labelKey | translate }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="text-sm text-slate-500">{{ 'common.loading' | translate }}</p>
+  } @else if (errorKey()) {
+    <p class="text-sm text-red-700">{{ errorKey() | translate }}</p>
+  } @else if (entries().length === 0) {
+    <p class="text-sm text-slate-500" data-testid="faq-vazio">
+      {{ 'atendimento.faq.semResultado' | translate: { termo: query() } }}
+    </p>
+  } @else {
+    <p-accordion [value]="openId()" (valueChange)="onOpenChange($event)" data-testid="faq-lista">
+      @for (entry of entries(); track entry.id) {
+        <p-accordion-panel [value]="entry.id" [attr.data-testid]="'faq-item-' + entry.id">
+          <p-accordion-header>{{ entry.question }}</p-accordion-header>
+          <p-accordion-content>
+            <p class="text-sm text-slate-600">{{ entry.answer }}</p>
+          </p-accordion-content>
+        </p-accordion-panel>
+      }
+    </p-accordion>
+  }
+</section>

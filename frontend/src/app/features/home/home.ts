@@ -8,6 +8,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AccordionModule } from 'primeng/accordion';
 import { CardModule } from 'primeng/card';
@@ -72,15 +73,17 @@ const BANNER_ROTATION_MS = 6000;
  * The Home screen (SPEC-0005): the daily entry point after login — the active beneficiary's
  * card (BR1/BR2), the fixed 9-shortcut quick-access carousel (BR3/BR4/BR5), operator banners
  * (BR6) and notices (BR7). Phased delivery (owner decision, 2026-07-04, recorded in the spec):
- * every shortcut/banner whose destination module is not yet built renders disabled with an "em
- * breve" hint instead of navigating to a non-existent route (BR4, extended to banner buttons);
- * Reconhecimento Facial and the avatar are the two exceptions that open an informational dialog
- * instead of being disabled — neither has ever had a destination in this phase (mobile-only /
- * Profile is SPEC-0006).
+ * every shortcut whose destination module is not yet built renders disabled with an "em breve"
+ * hint instead of navigating to a non-existent route (BR4); Reconhecimento Facial and the avatar
+ * are the two exceptions that open an informational dialog instead of being disabled — neither
+ * has ever had a destination in this phase (mobile-only / Profile is SPEC-0006). Banner CTAs
+ * navigate to the operator-managed {@code destination} (path + optional {@code #fragment}) —
+ * SPEC-0014 lands the fraud banner's `/atendimento#antifraude` target, closing the phased-delivery
+ * gap BR6 had for banners specifically.
  */
 @Component({
   selector: 'app-home',
-  imports: [TranslatePipe, CardModule, CarouselModule, AccordionModule, DialogModule],
+  imports: [RouterLink, TranslatePipe, CardModule, CarouselModule, AccordionModule, DialogModule],
   templateUrl: './home.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -217,6 +220,18 @@ export class Home implements OnInit, OnDestroy {
     if (typeof event.page === 'number') {
       this.bannerPage.set(event.page);
     }
+  }
+
+  /** SPEC-0014 AC2: a banner's route path, split off its optional `#fragment` (e.g. the fraud
+   * banner's `/atendimento#antifraude`). */
+  bannerPath(destination: string): string {
+    return destination.split('#')[0];
+  }
+
+  /** The fragment half of a banner's destination, or `undefined` when it has none. */
+  bannerFragment(destination: string): string | undefined {
+    const [, fragment] = destination.split('#');
+    return fragment || undefined;
   }
 
   pauseBannerRotation(): void {

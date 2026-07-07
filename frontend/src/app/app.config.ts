@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { provideHttpClient, withInterceptors, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import Aura from '@primeuix/themes/aura';
 import { provideOAuthClient } from 'angular-oauth2-oidc';
 import { providePrimeNG } from 'primeng/config';
@@ -21,7 +21,8 @@ import { provideI18n } from './core/i18n/provide-i18n';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    // SPEC-0014 AC2: the Home fraud banner deep-links to /atendimento#antifraude.
+    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled' })),
     // withInterceptorsFromDi: angular-oauth2-oidc registers its Bearer interceptor via DI.
     // withInterceptors: our own functional interceptor (BR12 session-expiry, core/auth).
     provideHttpClient(withInterceptorsFromDi(), withInterceptors([sessionExpiryInterceptor])),
