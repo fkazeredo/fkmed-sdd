@@ -1,6 +1,6 @@
 # 0014 - Service Channels and FAQ
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -73,11 +73,17 @@ operator's team outside the POC).
 
 ## Persistence Changes
 
-Migration (number at implementation): `support_channel` (type
-`CENTRAL|WHATSAPP|OUVIDORIA|ANS`, label, value phone/URL, hours, display_order);
-`faq_entry` (category code — registry —, question ≤ 200, answer, display_order, active);
-`libras_request` (beneficiary_id, requested_at, situation). Seeds per BR1/BR6 with
-fictitious placeholder numbers.
+Migration `V25__support_channels_and_faq.sql`: `support_channel` (type
+`CENTRAL|WHATSAPP|OUVIDORIA|ANS` — a `*Codes` constants holder per DECISIONS-BASELINE §0019, not a
+registry table: the 4 types are fixed by the product's contact surface —, label, optional sublabel
+for a type with more than one row, e.g. Central 24h's "Capitais"/"Demais localidades", value
+phone/URL, optional hours, display_order); `support_antifraud` (a single content row — title,
+message — DL-0023: the antifraud section's 3 best-practice bullets and the validator link are
+static frontend copy, not persisted); `faq_entry` (category — a `*Codes` constants holder, same
+§0019 criterion, 6 fixed categories —, question ≤ 200, answer, display_order, active);
+`libras_request` (beneficiary_id, requested_at, situation — `REGISTERED|ATTENDED`, a genuine enum:
+a lifecycle state machine per §0019). Seeds per BR1/BR6 with fictitious placeholder numbers/hours
+(OQ1 — DL-0024).
 
 ## Validation Rules
 
@@ -120,9 +126,9 @@ for the Libras request (beneficiary, timestamp).
 
 ## Open Questions
 
-- **OQ1** — Definitive channel numbers and service hours · placeholder data until defined ·
-  proposed default: fictitious placeholders in the seed, swapped by content migration when
-  the owner provides the real ones.
+- **OQ1** — *(resolved, DL-0024)* Definitive channel numbers and service hours · owner-decided:
+  fictitious placeholders in the V25 seed, swapped by a future content migration when the owner
+  provides the real ones. Does not block the slice.
 
 ## Out of Scope
 

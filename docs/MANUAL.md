@@ -2,7 +2,7 @@
 
 > Artefato vivo em **pt-BR** (idioma do produto). Atualizado via `/manual` ao fechar toda
 > fatia com mudança visível ao usuário — a fatia só está "pronta" quando este manual
-> reflete a mudança. Versão do produto: **0.6.0** (pré-release; tag pendente do owner).
+> reflete a mudança. Versão do produto: **0.11.0** (pré-release; tag pendente do owner).
 
 ## Sobre o portal
 
@@ -237,10 +237,28 @@ período e por beneficiário, somando o **total do período**. Em **Imposto de R
 informe anual (12 meses + total) dos anos com pagamento, e em **Quitação** a **declaração anual de
 quitação de débitos (Lei 12.007)** é oferecida para os anos totalmente pagos.
 
+### 16. Atendimento (canais, antifraude e FAQ)
+
+**Atendimento** reúne todos os canais oficiais de contato com a operadora: **Central de
+Atendimento 24h** (números para capitais e demais localidades, toque para ligar), **WhatsApp
+oficial** (abre a conversa em uma nova aba), **Ouvidoria** e **ANS**, cada um com seu horário
+quando aplicável. A seção **Alerta de golpe!** explica que a operadora nunca solicita dados ou
+pagamentos por WhatsApp e reforça as boas práticas — nunca compartilhar senha/token, validar o
+boleto antes de pagar (com atalho para o validador de Finanças) e usar somente os canais desta
+página; é para essa seção que o banner de alerta da tela Início leva diretamente.
+
+Em **Perguntas frequentes** você busca por palavra-chave (em tempo real, sem diferenciar
+maiúsculas/acentos) e filtra por categoria — Reembolso, Carteirinha, Agendamento, Telemedicina,
+Boletos ou Rede; cada pergunta abre em um acordeão que fecha a anterior automaticamente. Em
+**Central de Libras** você confere o horário de atendimento em Libras e clica em **"Solicitar
+atendimento em Libras"**: dentro do horário, a equipe inicia a videochamada em instantes; fora do
+horário, a solicitação é registrada e você é avisado para o próximo período de atendimento.
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-07 | 0.11.0 | Plano e finanças (fecha a Fase 5): Atendimento — canais oficiais (Central 24h, WhatsApp, Ouvidoria, ANS), seção antifraude (destino do banner de alerta da Início) e FAQ pesquisável por categoria; Central de Libras com registro do pedido e confirmação por horário |
 | 2026-07-06 | 0.10.0 | Plano e finanças: Finanças (titular) — boletos (abas em aberto/pagos, valor atualizado com multa+juros no vencido, copiar linha/PIX, 2ª via PDF com marca PAGO), validador antifraude, extrato de coparticipação, informe de IR e declaração de quitação Lei 12.007 |
 | 2026-07-06 | 0.9.0 | Plano e finanças (início): Guias e Token — acompanhamento das guias de autorização (lista, filtros, detalhe com senha/validade ou motivo de negativa, notificação de mudança) e geração do token de atendimento de 6 dígitos (validade 10 min, único válido, copiar, renovar) |
 | 2026-07-06 | 0.8.0 | Cuidado digital: Telemedicina (Pronto Atendimento com fila ao vivo, sala e encerramento; teleconsulta agendada) e Minha Saúde (documentos clínicos com filtros, detalhe, PDF e "agendar" a partir de encaminhamento) — fecha a Fase 4 |

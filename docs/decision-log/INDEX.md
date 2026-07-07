@@ -37,3 +37,5 @@ old one.
 | [0020](DL-0020-cid-displayed-on-sick-notes.md) | 2026-07-06 | 4 / clinical-docs | 0011 | High | Cheap | CID IS displayed on sick notes (owner-decided) |
 | [0021](DL-0021-minimal-operator-sim-tele-slice.md) | 2026-07-06 | 4 / telemedicine | 0018, 0010 | High | Cheap | Only the telemedicine+documents slice of SPEC-0018 lands in Phase 4 (owner-decided) |
 | [0022](DL-0022-sse-queue-transport-design.md) | 2026-07-06 | 4 / telemedicine | 0010 | Medium | Cheap | SSE queue transport — periodic server re-emit |
+| [0023](DL-0023-antifraud-content-persistence-split.md) | 2026-07-07 | 5 / 5.3 atendimento | 0014 | Medium | Cheap | Antifraud section: persisted title/message, static frontend guidance |
+| [0024](DL-0024-libras-hours-placeholder-and-placement.md) | 2026-07-07 | 5 / 5.3 atendimento | 0014 | Medium | Cheap | Central de Libras operating hours — placeholder value + domain-constant placement (OQ1) |

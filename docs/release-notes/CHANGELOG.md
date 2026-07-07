@@ -8,6 +8,44 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.11.0] — 2026-07-07
+
+Phase 5 slice 5.3 — "Atendimento" (SPEC-0014 Service Channels and FAQ). Third and closing slice of
+Phase 5 ("Plano e finanças").
+
+### Added
+
+- **Atendimento** (SPEC-0014): the official contact channels in one place — **Central de
+  Atendimento 24h** (capitais + demais localidades, tap-to-call), **WhatsApp oficial** (opens the
+  official number's chat in a new tab), **Ouvidoria** and **ANS**. The **antifraude** section
+  ("Alerta de golpe!") — the direct-anchor destination of the Home fraud banner (SPEC-0005 BR9),
+  now wired up: every Home banner CTA navigates to its operator-managed destination, closing the
+  Phase-1 phased-delivery gap for banners. A searchable **FAQ** (real-time, case/accent-insensitive,
+  6 categories, single-open accordion, ≥ 12 seeded questions incl. ≥ 3 Reembolso) and **Central de
+  Libras** — "Solicitar atendimento em Libras" registers the request and confirms an imminent
+  videocall within hours or the next operating period outside them.
+
+### Fixed
+
+- The Home fraud banner's destination (`/atendimento#antifraude`) and the "Valide seu boleto"
+  banner's destination (corrected from a never-existing `/financeiro#validar-boleto` to the real
+  `/financas/validar`, V26) — both were unreachable before this slice wired up banner navigation.
+- A pre-existing cross-test isolation gap in `AppointmentApiIT` (Phase 3): its `tearDown()` never
+  cleaned its own `care_unit`/`unit_agenda`/`schedule_slot` fixtures, so a leftover slot could land
+  on a Sunday (depending on the calendar day the suite runs) and corrupt `AppointmentSeedIT`'s
+  Mon-Sat assertion when run in the same shared-Postgres suite. Fixed by cleaning in `@AfterEach`
+  too, matching every other integration test's convention.
+
+### Technical
+
+- New Modulith module **`domain.support`** (14th, ADR-0021), migration **V25** (`support_channel`,
+  `support_antifraud`, `faq_entry`, `libras_request`) + **V26** (banner-destination data fix).
+  Libras requests are family-scope-checked (`BeneficiaryAccess`) and always audited
+  (`support.libras-requested`); FAQ zero-result searches and Libras requests are counted
+  (§Observability). DL-0023 (antifraud content persistence split), DL-0024 (Libras hours
+  placeholder + domain-constant placement, OQ1). Backend 733 tests (full `verify`, incl. the
+  AppointmentApiIT isolation fix) + frontend 520 tests + E2E 31 (fresh seed) — all green.
+
 ## [0.10.0] — 2026-07-06
 
 Phase 5 slice 5.2 — "Plano › Finanças" (SPEC-0013 Plan Finance, + the finance actions of SPEC-0018
