@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev,devdata} # devdata = heavy provider seed (db/dev)
       DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-fkmed}
       DB_USERNAME: ${POSTGRES_USER:-fkmed}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-fkmed}

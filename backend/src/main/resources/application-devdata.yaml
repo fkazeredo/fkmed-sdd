@@ -1,0 +1,9 @@
+# devdata profile — layers the HEAVY provider-network seed (thousands of fictitious providers
+# across the 27 state capitals, SPEC-0008) on top of `dev` for local /dev-env exploration.
+# Adds a second Flyway location (db/dev) that CI's flyway:validate does NOT scan
+# (backend/pom.xml points only at src/main/resources/db/migration) and that prod/tests/E2E never
+# activate (docs/architecture/persistence.md — "local dev fake data MUST NOT mix with production
+# migrations"). Never combine with `prod`.
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/dev

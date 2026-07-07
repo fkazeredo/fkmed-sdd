@@ -36,7 +36,9 @@ class PlanCoverageLookup {
     if (cardNumber == null || cardNumber.isBlank()) {
       return Optional.empty();
     }
+    // Not `rows.stream().findFirst()`: a NACIONAL plan legitimately maps to a null coverage_uf
+    // (DL-0014), and `Stream.findFirst()` throws NPE on a stream whose sole element is null.
     List<String> rows = jdbc.query(QUERY, (rs, rowNum) -> rs.getString("coverage_uf"), cardNumber);
-    return rows.stream().findFirst().map(PlanCoverage::new);
+    return rows.isEmpty() ? Optional.empty() : Optional.of(new PlanCoverage(rows.get(0)));
   }
 }

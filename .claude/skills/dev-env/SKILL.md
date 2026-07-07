@@ -51,3 +51,10 @@ step 4.
   `.env.example`). Port taken ⇒ say which process holds it before doing anything.
 - Never use the E2E stack (`compose.e2e.yaml`, isolated ports) for manual dev testing — it is
   ephemeral and isolated on purpose.
+- **Heavy provider-network seed**: the `app` service runs with `SPRING_PROFILES_ACTIVE:
+  dev,devdata` by default, which loads `db/dev/R__seed_dev_provider_network.sql` on top of the
+  normal migrations — ~10,000 fictitious providers/doctors across the 27 state capitals, real
+  neighborhoods, ~40 specialties (SPEC-0008). It also widens MARIA's plan to `coverage=NACIONAL`
+  so the whole base is browsable in Rede. This never runs in E2E/tests/prod (see
+  `application-devdata.yaml`); regenerate the SQL with
+  `node backend/tools/devseed/generate-provider-seed.mjs` if the seed needs to change.
