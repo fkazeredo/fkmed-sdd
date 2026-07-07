@@ -1,0 +1,45 @@
+@if (denied()) {
+  <app-finance-denied />
+} @else {
+  <section class="mx-auto max-w-2xl p-4" aria-labelledby="quitacao-title" data-testid="quitacao-page">
+    <h1 id="quitacao-title" class="mb-2 text-2xl font-semibold text-teal-800">
+      {{ 'financas.quitacao.title' | translate }}
+    </h1>
+    <p class="mb-4 text-slate-600">{{ 'financas.quitacao.descricao' | translate }}</p>
+
+    @if (loading()) {
+      <p class="p-4 text-slate-500" data-testid="quitacao-loading">{{ 'common.loading' | translate }}</p>
+    } @else if (errorKey()) {
+      <div class="rounded-lg bg-white p-6 shadow" data-testid="quitacao-error">
+        <p class="mb-3 text-slate-600">{{ errorKey()! | translate }}</p>
+        <button type="button" (click)="load()" class="rounded bg-teal-700 px-4 py-2 text-white">
+          {{ 'common.retry' | translate }}
+        </button>
+      </div>
+    } @else if (years().length === 0) {
+      <p class="rounded-lg bg-white p-6 text-slate-500 shadow" data-testid="quitacao-vazio">
+        {{ 'financas.quitacao.vazio' | translate }}
+      </p>
+    } @else {
+      <ul class="flex flex-col gap-3" data-testid="quitacao-lista">
+        @for (item of years(); track item.year) {
+          <li class="flex items-center justify-between rounded-xl bg-white p-4 shadow">
+            <span class="font-semibold text-teal-800">{{ 'financas.quitacao.anoBase' | translate }} {{ item.year }}</span>
+            <button
+              type="button"
+              (click)="download(item.year)"
+              [disabled]="downloadingYear() !== null"
+              class="rounded-lg bg-teal-700 px-4 py-2 text-white hover:bg-teal-800 disabled:opacity-50"
+              [attr.data-testid]="'quitacao-baixar-' + item.year"
+            >
+              {{ 'financas.quitacao.baixar' | translate }}
+            </button>
+          </li>
+        }
+      </ul>
+      @if (pdfErrorKey()) {
+        <p class="mt-2 text-sm text-red-600" data-testid="quitacao-pdf-erro">{{ pdfErrorKey()! | translate }}</p>
+      }
+    }
+  </section>
+}

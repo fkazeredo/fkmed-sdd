@@ -41,5 +41,8 @@ public final class NotificationEventTypes {
   /** A clinical document was issued into Minha Saúde (business — SPEC-0011 §Events). */
   public static final String CLINICAL_DOCUMENT_ISSUED = "clinical-document.issued";
 
+  /** A new invoice was issued for the contract titular (business — SPEC-0013 §Events). */
+  public static final String FINANCE_INVOICE_ISSUED = "finance.invoice-issued";
+
   private NotificationEventTypes() {}
 }

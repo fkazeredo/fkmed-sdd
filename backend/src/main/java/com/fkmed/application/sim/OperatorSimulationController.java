@@ -130,4 +130,42 @@ public class OperatorSimulationController {
     UUID operator = operatorAccess.requireOperator();
     return sim.markGuideExecuted(id, operator, HttpRequestMetadata.current());
   }
+
+  /** Issues a new OPEN invoice for a contract titular (SPEC-0013 §Operator-sim). */
+  @PostMapping("/finance/invoices")
+  @ResponseStatus(HttpStatus.CREATED)
+  SimInvoiceResult createInvoice(@Valid @RequestBody SimCreateInvoiceRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.issueInvoice(
+        request.titularBeneficiaryId(),
+        request.competenciaDate(),
+        request.dueDate(),
+        request.amount(),
+        request.digitableLine(),
+        request.pixCode(),
+        operator,
+        HttpRequestMetadata.current());
+  }
+
+  /** Records the payment of an invoice, idempotently (SPEC-0018 BR6). */
+  @PostMapping("/finance/invoices/{id}/pay")
+  void payInvoice(@PathVariable UUID id) {
+    UUID operator = operatorAccess.requireOperator();
+    sim.payInvoice(id, operator, HttpRequestMetadata.current());
+  }
+
+  /** Records a copay charge for a family member's usage (SPEC-0013 §Operator-sim). */
+  @PostMapping("/finance/copay")
+  @ResponseStatus(HttpStatus.CREATED)
+  SimCopayResult createCopay(@Valid @RequestBody SimCreateCopayRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.recordCopay(
+        request.entryDate(),
+        request.procedure(),
+        request.provider(),
+        request.beneficiaryId(),
+        request.amount(),
+        operator,
+        HttpRequestMetadata.current());
+  }
 }

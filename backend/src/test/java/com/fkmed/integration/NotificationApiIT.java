@@ -149,8 +149,9 @@ class NotificationApiIT extends AbstractIntegrationTest {
     mockMvc
         .perform(get("/api/notifications/preferences").with(mariaJwt()))
         .andExpect(status().isOk())
-        // 6 types (V10) + 2 appointment types (V17) + 3 tele/document types (V20, Phase-4 Wave 2).
-        .andExpect(jsonPath("$.preferences.length()").value(11))
+        // 6 types (V10) + 2 appointment types (V17) + 3 tele/document types (V20, Phase-4 Wave 2)
+        // + 1 finance type (V24, SPEC-0013).
+        .andExpect(jsonPath("$.preferences.length()").value(12))
         .andExpect(
             jsonPath("$.preferences[?(@.type=='account.password-changed')].mandatory").value(true))
         .andExpect(

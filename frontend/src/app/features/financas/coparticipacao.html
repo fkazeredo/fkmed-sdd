@@ -1,0 +1,130 @@
+@if (denied()) {
+  <app-finance-denied />
+} @else {
+  <section class="mx-auto max-w-4xl p-4" aria-labelledby="copay-title" data-testid="coparticipacao-page">
+    <h1 id="copay-title" class="mb-4 text-2xl font-semibold text-teal-800">
+      {{ 'financas.coparticipacao.title' | translate }}
+    </h1>
+
+    <div class="mb-4 flex flex-wrap items-end gap-4 rounded-xl bg-white p-4 shadow">
+      <div>
+        <label for="copay-period" class="mb-1 block text-sm font-medium text-slate-700">
+          {{ 'financas.coparticipacao.periodo' | translate }}
+        </label>
+        <select
+          id="copay-period"
+          class="rounded-lg border border-slate-300 px-3 py-2"
+          [value]="period()"
+          (change)="onPeriodChange($any($event.target).value)"
+          data-testid="copay-periodo"
+        >
+          <option value="CURRENT_MONTH">{{ 'financas.coparticipacao.periodo.mesAtual' | translate }}</option>
+          <option value="LAST_3M">{{ 'financas.coparticipacao.periodo.ultimos3' | translate }}</option>
+          <option value="CUSTOM">{{ 'financas.coparticipacao.periodo.personalizado' | translate }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="copay-beneficiary" class="mb-1 block text-sm font-medium text-slate-700">
+          {{ 'financas.coparticipacao.beneficiario' | translate }}
+        </label>
+        <select
+          id="copay-beneficiary"
+          class="rounded-lg border border-slate-300 px-3 py-2"
+          [value]="beneficiaryId()"
+          (change)="onBeneficiaryChange($any($event.target).value)"
+          data-testid="copay-beneficiario"
+        >
+          <option [value]="ALL">{{ 'financas.coparticipacao.beneficiario.todos' | translate }}</option>
+          @for (member of family(); track member.beneficiaryId) {
+            <option [value]="member.beneficiaryId">{{ member.firstName }}</option>
+          }
+        </select>
+      </div>
+
+      @if (period() === 'CUSTOM') {
+        <div class="flex items-end gap-2" data-testid="copay-custom">
+          <div>
+            <label for="copay-from" class="mb-1 block text-sm font-medium text-slate-700">
+              {{ 'financas.coparticipacao.de' | translate }}
+            </label>
+            <input
+              id="copay-from"
+              type="date"
+              class="rounded-lg border border-slate-300 px-3 py-2"
+              [value]="customFrom()"
+              (change)="customFrom.set($any($event.target).value)"
+              data-testid="copay-de"
+            />
+          </div>
+          <div>
+            <label for="copay-to" class="mb-1 block text-sm font-medium text-slate-700">
+              {{ 'financas.coparticipacao.ate' | translate }}
+            </label>
+            <input
+              id="copay-to"
+              type="date"
+              class="rounded-lg border border-slate-300 px-3 py-2"
+              [value]="customTo()"
+              (change)="customTo.set($any($event.target).value)"
+              data-testid="copay-ate"
+            />
+          </div>
+          <button
+            type="button"
+            (click)="applyCustomRange()"
+            class="rounded-lg bg-teal-700 px-4 py-2 text-white hover:bg-teal-800"
+            data-testid="copay-aplicar"
+          >
+            {{ 'financas.coparticipacao.aplicar' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="p-4 text-slate-500" data-testid="copay-loading">{{ 'common.loading' | translate }}</p>
+    } @else if (errorKey()) {
+      <p class="rounded-lg bg-white p-6 text-slate-600 shadow" data-testid="copay-error">
+        {{ errorKey()! | translate }}
+      </p>
+    } @else if (statement(); as statement) {
+      @if (statement.entries.length === 0) {
+        <p class="rounded-lg bg-white p-6 text-slate-500 shadow" data-testid="copay-vazio">
+          {{ 'financas.coparticipacao.vazio' | translate }}
+        </p>
+      } @else {
+        <div class="overflow-x-auto rounded-xl bg-white shadow">
+          <table class="w-full text-left text-sm" data-testid="copay-tabela">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-4 py-2">{{ 'financas.coparticipacao.data' | translate }}</th>
+                <th class="px-4 py-2">{{ 'financas.coparticipacao.procedimento' | translate }}</th>
+                <th class="px-4 py-2">{{ 'financas.coparticipacao.prestador' | translate }}</th>
+                <th class="px-4 py-2">{{ 'financas.coparticipacao.beneficiario' | translate }}</th>
+                <th class="px-4 py-2 text-right">{{ 'financas.coparticipacao.valor' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of statement.entries; track $index) {
+                <tr class="border-t border-slate-100">
+                  <td class="px-4 py-2">{{ formatBrDate(entry.date) }}</td>
+                  <td class="px-4 py-2">{{ entry.procedure }}</td>
+                  <td class="px-4 py-2">{{ entry.provider }}</td>
+                  <td class="px-4 py-2">{{ entry.beneficiaryName }}</td>
+                  <td class="px-4 py-2 text-right">{{ formatBrl(entry.amount) }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="border-t border-slate-200 font-semibold">
+                <td class="px-4 py-2" colspan="4">{{ 'financas.coparticipacao.total' | translate }}</td>
+                <td class="px-4 py-2 text-right" data-testid="copay-total">{{ formatBrl(statement.total) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+    }
+  </section>
+}

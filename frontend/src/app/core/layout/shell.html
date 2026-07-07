@@ -98,6 +98,20 @@
             {{ 'nav.guias' | translate }}
           </a>
         </li>
+        <!-- SPEC-0013 BR1: Finanças is exclusive to the titular — the nav entry is hidden when the
+             active beneficiary is a dependent (direct access still shows the friendly denial). -->
+        @if (context.active()?.role === 'TITULAR') {
+          <li>
+            <a
+              routerLink="/financas"
+              routerLinkActive="font-semibold text-teal-800"
+              class="block rounded px-3 py-2 hover:bg-slate-100"
+              data-testid="nav-financas"
+            >
+              {{ 'nav.financas' | translate }}
+            </a>
+          </li>
+        }
         <li>
           <a
             routerLink="/seguranca"

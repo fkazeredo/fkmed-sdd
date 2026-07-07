@@ -23,5 +23,7 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 | [0014](0014-telemedicine-module.md) | Module map revision — `domain.telemedicine` (Pronto Atendimento queue + tele sessions, SPEC-0010) | Proposed |
 | [0015](0015-telemedicine-room-state-driven.md) | Telemedicine room is state-driven (no real audio/video) in the POC (SPEC-0010 OQ1) | Proposed |
 | [0016](0016-sse-queue-transport.md) | Server-Sent Events (SSE) for the telemedicine queue's near-real-time state (SPEC-0010 BR6) | Proposed |
-| [0017](0017-operator-simulation-tele-slice.md) | Operator-simulation seam — the telemedicine+documents slice of SPEC-0018 (Phase 4) | Proposed |
+| [0017](0017-operator-simulation-tele-slice.md) | Operator-simulation seam — the telemedicine+documents slice of SPEC-0018 (Phase 4) | Proposed (extended by 0020) |
 | [0018](0018-guides-module.md) | Module map revision — `domain.guides` (authorization guides + attendance token, SPEC-0012) | Proposed |
+| [0019](0019-finance-module.md) | Module map revision — `domain.finance` (Plano › Finanças, SPEC-0013) | Proposed |
+| [0020](0020-operator-simulation-full-api.md) | Operator Simulation full API — guides + finance actions (extends ADR-0017, SPEC-0018) | Proposed |

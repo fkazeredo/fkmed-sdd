@@ -39,6 +39,12 @@ import { AppointmentView, AvailabilityDay } from '../../features/agendamento/app
 import { MinhaSaudeHub } from '../../features/minha-saude/minha-saude-hub';
 import { DocumentList } from '../../features/minha-saude/document-list';
 import { DocumentDetail } from '../../features/minha-saude/document-detail';
+import { FinancasHub } from '../../features/financas/financas-hub';
+import { BoletoDetail } from '../../features/financas/boleto-detail';
+import { ValidarBoleto } from '../../features/financas/validar-boleto';
+import { Coparticipacao } from '../../features/financas/coparticipacao';
+import { ImpostoRenda } from '../../features/financas/imposto-renda';
+import { Quitacao } from '../../features/financas/quitacao';
 import { APP_VERSION } from '../config/app-version';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
@@ -87,6 +93,12 @@ describe('i18n completeness (pt-BR)', () => {
         MinhaSaudeHub,
         DocumentList,
         DocumentDetail,
+        FinancasHub,
+        BoletoDetail,
+        ValidarBoleto,
+        Coparticipacao,
+        ImpostoRenda,
+        Quitacao,
       ],
       providers: [
         provideRouter([]),
@@ -939,6 +951,112 @@ describe('i18n completeness (pt-BR)', () => {
     expect(
       Array.from(handler.missing),
       'SPEC-0011 Minha Saúde UI keys missing from the pt-BR bundle',
+    ).toHaveLength(0);
+  });
+
+  it('renders every SPEC-0013 Finanças screen without a missing translation', async () => {
+    const handler = TestBed.inject(MissingTranslationHandler) as ReportMissingTranslationHandler;
+    const http = TestBed.inject(HttpTestingController);
+    const context = TestBed.inject(BeneficiaryContextService);
+    context.accessible.set([
+      { beneficiaryId: 'maria-id', firstName: 'MARIA', role: 'TITULAR' },
+      { beneficiaryId: 'pedro-id', firstName: 'PEDRO', role: 'DEPENDENT' },
+    ]);
+    context.active.set({ beneficiaryId: 'maria-id', firstName: 'MARIA', role: 'TITULAR' });
+
+    // Hub: open tab (overdue with the valor-atualizado breakdown + an open one), then the paid tab.
+    const hub = TestBed.createComponent(FinancasHub);
+    await hub.whenStable();
+    http.expectOne((r) => r.url === '/api/finance/invoices' && r.params.get('tab') === 'OPEN').flush([
+      {
+        id: 'ov-1', competencia: 'Maio/2026', dueDate: '2026-05-31', amount: 489.9, status: 'OVERDUE',
+        updatedAmount: { original: 489.9, fine: 9.8, interest: 0.98, daysOverdue: 6, total: 500.68 },
+      },
+      { id: 'op-1', competencia: 'Julho/2026', dueDate: '2026-07-16', amount: 489.9, status: 'OPEN' },
+    ]);
+    hub.detectChanges();
+    (hub.nativeElement.querySelector('[data-testid="financas-tab-pagos"]') as HTMLElement).click();
+    await hub.whenStable();
+    http.expectOne((r) => r.params.get('tab') === 'PAID').flush([
+      { id: 'pa-1', competencia: 'Setembro/2025', dueDate: '2025-09-10', amount: 452.75, status: 'PAID', paidAt: '2025-09-08' },
+    ]);
+    hub.detectChanges();
+
+    // Boleto detail: full body (copy line/PIX + confirmations + PDF error) then the not-found state.
+    const detail = TestBed.createComponent(BoletoDetail);
+    detail.detectChanges();
+    detail.componentInstance['loading'].set(false);
+    detail.componentInstance['invoice'].set({
+      id: 'ov-1', competencia: 'Maio/2026', dueDate: '2026-05-31', amount: 489.9, status: 'OVERDUE',
+      updatedAmount: { original: 489.9, fine: 9.8, interest: 0.98, daysOverdue: 6, total: 500.68 },
+      digitableLine: '00190500954014481606906809350888888000000000004',
+      pixCode: '00020126-pix', barcodePayload: '00195088888800190500954014481606906809350888',
+    });
+    detail.componentInstance['copiedLine'].set(true);
+    detail.componentInstance['copiedPix'].set(true);
+    detail.componentInstance['pdfErrorKey'].set('financas.erro.pdf');
+    detail.detectChanges();
+    detail.componentInstance['invoice'].set(null);
+    detail.componentInstance['notFound'].set(true);
+    detail.detectChanges();
+
+    // Validator: format error, then AUTHENTIC, then NOT_RECOGNIZED.
+    const validar = TestBed.createComponent(ValidarBoleto);
+    validar.detectChanges();
+    validar.componentInstance['formatError'].set(true);
+    validar.detectChanges();
+    validar.componentInstance['formatError'].set(false);
+    validar.componentInstance['result'].set({ result: 'AUTHENTIC', competencia: 'Julho/2026', dueDate: '2026-07-16', amount: 489.9 });
+    validar.detectChanges();
+    validar.componentInstance['result'].set({ result: 'NOT_RECOGNIZED' });
+    validar.detectChanges();
+
+    // Copay: table + total (current month), the empty state (beneficiary filter), then the CUSTOM
+    // range controls.
+    const copay = TestBed.createComponent(Coparticipacao);
+    await copay.whenStable();
+    http.expectOne((r) => r.url === '/api/finance/copay').flush({
+      entries: [{ date: '2026-07-01', procedure: 'Consulta', provider: 'Clínica A', beneficiaryName: 'MARIA', amount: 35 }],
+      total: 35,
+    });
+    copay.detectChanges();
+    copay.componentInstance.onBeneficiaryChange('pedro-id');
+    await copay.whenStable();
+    http.expectOne((r) => r.url === '/api/finance/copay').flush({ entries: [], total: 0 });
+    copay.detectChanges();
+    copay.componentInstance.onPeriodChange('CUSTOM');
+    copay.detectChanges();
+
+    // IR: a base year, then the empty state on a second instance.
+    const ir = TestBed.createComponent(ImpostoRenda);
+    await ir.whenStable();
+    http.expectOne('/api/finance/tax-statements').flush([{ year: 2025 }]);
+    ir.componentInstance['pdfErrorKey'].set('financas.erro.pdf');
+    ir.detectChanges();
+    const irEmpty = TestBed.createComponent(ImpostoRenda);
+    await irEmpty.whenStable();
+    http.expectOne('/api/finance/tax-statements').flush([]);
+    irEmpty.detectChanges();
+
+    // Settlement: a fully-paid year, then the guidance/empty state.
+    const quitacao = TestBed.createComponent(Quitacao);
+    await quitacao.whenStable();
+    http.expectOne('/api/finance/settlement-declarations').flush([{ year: 2025 }]);
+    quitacao.detectChanges();
+    const quitacaoEmpty = TestBed.createComponent(Quitacao);
+    await quitacaoEmpty.whenStable();
+    http.expectOne('/api/finance/settlement-declarations').flush([]);
+    quitacaoEmpty.detectChanges();
+
+    // The friendly denial (BR1): a dependent active beneficiary.
+    context.active.set({ beneficiaryId: 'pedro-id', firstName: 'PEDRO', role: 'DEPENDENT' });
+    const denied = TestBed.createComponent(FinancasHub);
+    await denied.whenStable();
+    denied.detectChanges();
+
+    expect(
+      Array.from(handler.missing),
+      'SPEC-0013 Finanças UI keys missing from the pt-BR bundle',
     ).toHaveLength(0);
   });
 });
