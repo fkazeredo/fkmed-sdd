@@ -1,82 +1,82 @@
-# TUTORIAL — the per-slice method (the 7-step loop)
+# TUTORIAL - the Lean SDD slice loop
 
-How every slice of work is built in this project. The skills `/slice` and `/dod` operate this
-loop; this document is the canonical reference they read.
+How every slice of work is built in this project. The skills `/slice` and `/dod` operate
+this loop; this document is the canonical reference they read.
 
 ## 1. Authority model
 
-The **owner** decides product: approves specs and plans, answers Open Questions, merges PRs,
-requests releases. **Claude Code** executes: proposes, implements, tests, documents — and
-**asks whenever information is missing** (it never invents business rules). Authority order
-on any conflict: owner request > feature spec > project ADRs > `docs/DECISIONS-BASELINE.md` >
-`docs/architecture/` > existing code.
+The **owner** decides product: approves specs and plans, answers Open Questions, merges PRs
+and requests releases. **Claude Code** executes: proposes, implements, tests, documents and
+asks whenever information is missing.
 
-## 2. One-time setup
+Authority order on any conflict:
 
-The project starts from `docs/BOOTSTRAP.md` (stack, gates, CI, walking skeleton). After that,
-all work happens in slices, each on a `feature/*` branch, each ending in a PR to `develop`.
-
-## 3. The 7-step loop (every slice)
-
-```
-0 QUESTIONS → 1 PLAN → 2 BUILD → 3 DEV TESTS + GATES → 4 QA HOMOLOGAÇÃO
-→ 5 QA FULL BATTERY → 6 DoD + PR
+```text
+owner request > feature spec > project ADRs > docs/DECISIONS-BASELINE.md
+> docs/architecture/ > existing code
 ```
 
-**0 — QUESTIONS.** Read the spec in full. Any Open Question affecting this slice's behavior
-is resolved WITH the owner before anything else (or, under explicitly authorized autonomy,
-decided and recorded via `/dl` — see `docs/RUN-PHASE.md`). The answer is written back into
-the spec (`Open Questions` → `Business Rules`).
+Existing code is evidence, not authority.
 
-**1 — PLAN.** Plan mode, in the format of `docs/architecture/workflow.md` §Large tasks: goal,
-specs, affected modules, files, migrations, tests, docs, risks, implementation order,
-validation commands, open questions. The owner approves before any code.
+## 2. Operating model
 
-**2 — BUILD.** The developer builds freely: backend first (domain, migration, API — the real
-OpenAPI snapshot), then frontend against the REAL contract, never an imagined one. **TDD is
-OPTIONAL** — write a test first when it is genuinely more productive (a tricky state
-machine); no failing-test ritual is required. No speculative structure (Rule Zero); resist
-gold-plating.
+The main Claude conversation is the default executor. Agents are not used as extra
+developers:
 
-**3 — DEV TESTS + GATES.** At the end, BEFORE handing to QA — not optional: write the tests
-of every layer touched (domain unit, Testcontainers IT, API contract, vitest, i18n parity;
-E2E **green locally** when a user journey changed) and run the full gates of the touched
-stacks (`./mvnw verify`; `npm run lint && npm test && npm run build`). Red ⇒ fix the code,
-never the gate.
+- `architect`: helps create specs, ADRs and slice plans.
+- `reviewer`: reviews a diff or PR with fresh eyes.
+- `qa`: validates risky slices against the spec.
 
-**4 — QA HOMOLOGAÇÃO.** QA validates the delivery against the SPEC (BRs/ACs walked on a
-running stack + exploratory: negatives, boundaries, idempotency). Finding ⇒ rework with the
-SAME developer (fix + committed regression test); too complex (design/spec gap) or a 2nd
-REPROVADO ⇒ back to the architect to replan.
+Normal work happens on the current `feature/*` branch. Worktrees are exceptions for risky
+spikes, isolated QA or explicit parallel experiments.
 
-**5 — QA FULL BATTERY.** Only after homologação closes: backend verify + frontend gates
-(always), E2E (user journey), PIT (money/critical domain). **ANY failure ⇒ back to the
-ARCHITECT** to replan/review/solve/re-delegate — never straight to the developer.
+## 3. The 7-step loop
 
-**6 — DoD + PR.** Run `/dod`, which reuses green evidence from the same commit (QA Stage 2)
-instead of re-running it, and enforces:
+```text
+0 QUESTIONS -> 1 PLAN -> 2 TEST ANCHOR -> 3 IMPLEMENT -> 4 GATES
+-> 5 REVIEW/QA IF RISK -> 6 DoD + PR
+```
 
-- [ ] `cd backend && ./mvnw verify` green (Spotless, Checkstyle, JaCoCo floors, ArchUnit,
-      Modulith + diagram snapshot, OpenAPI snapshot, i18n/HTTP-mapping completeness).
-- [ ] `cd frontend && npm run lint && npm test && npm run build` green.
-- [ ] E2E green when the slice touches a user journey (isolated stack only).
-- [ ] Spec updated if the requirement changed during the slice.
-- [ ] Bug fixed ⇒ regression test failing-before/passing-after at EVERY reachable layer.
-- [ ] Flyway migration for any schema change (never edit an applied one).
-- [ ] i18n messages for any user-facing text, in the product's locale(s), with parity.
-- [ ] User manual updated (`/manual`) if anything user-visible changed.
-- [ ] Version bumped (`/release`) if code changed; docs-only slices never bump.
-- [ ] Conventional Commits; push feature branch; PR to `develop`. Never merge/tag.
+**0 - QUESTIONS.** Read the spec in full. Any Open Question affecting this slice's behavior
+is resolved with the owner before code, or decided under explicit authorized autonomy and
+recorded via `/dl`.
 
-## 4. The regression micro-loop (bugs)
+**1 - PLAN.** Keep it short and useful: goal, scope, acceptance criteria, implementation
+order, test anchor, validation commands, docs to update and risks. Ask for approval when
+product behavior, scope or risk changes.
 
-Any defect found (shipped, review finding, or caught while building): (1) write the test that
-REPRODUCES it — red; (2) fix — green; (3) repeat the test at every other layer the defect can
-reach (domain/integration/API/frontend/E2E); (4) only then close. A fix without its regression
-test does not merge.
+**2 - TEST ANCHOR.** Establish the first credible proof for the slice: a failing regression,
+unit/integration/API/frontend/E2E test, API call, command, screenshot or manual check. It
+does not need to be religious RED-first, but the slice needs evidence before confidence.
+
+**3 - IMPLEMENT.** Build the smallest vertical slice that satisfies the spec. Follow existing
+patterns, update living docs when requirements change, and ask when behavior is ambiguous.
+
+**4 - GATES.** Run focused tests first, then the relevant stack gates. Backend:
+`cd backend && ./mvnw verify`. Frontend: `cd frontend && npm run lint && npm test && npm run build`.
+E2E is required when a user journey changes. Red gates are fixed in code or architecture,
+never by weakening the gate.
+
+**5 - REVIEW/QA IF RISK.** Use `reviewer` for a fresh technical read when the diff is large,
+risky or self-directed. Use `qa` for money, LGPD, authorization, audit/retention, clinical
+documents, jobs, concurrency, external integrations or broad journeys.
+
+**6 - DoD + PR.** Run `/dod`: verify AC evidence, walk the Definition of Done, update
+spec/ADR/manual/status when applicable, push the branch and open a PR to `develop`. The owner
+merges.
+
+## 4. Regression micro-loop
+
+Any defect found - shipped, review finding, QA finding or caught while building - gets:
+
+1. a reproducer/test that fails before the fix;
+2. the fix;
+3. the same test green;
+4. coverage at every reachable layer, or an explicit reason why a layer is not applicable.
+
+A fix without its regression evidence does not close.
 
 ## 5. One-page summary
 
-Spec first, questions before code, plan approved by the owner, failing test before
-implementation, minimum to green, refactor under green, gates never weakened, manual and
-version in lockstep, PR to develop, owner merges. Repeat.
+Spec first. Questions before code. Small vertical slice. Test anchor. Implement. Gates.
+Reviewer/QA only when risk justifies. Living docs updated. PR to `develop`. Owner merges.

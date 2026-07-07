@@ -17,8 +17,9 @@ Wait until the E2E backend responds healthy before capturing.
 cd frontend && node e2e/tools/capture-manual-screenshots.mjs
 ```
 
-The script: performs a real OIDC login as `dev`/`dev12345`, viewport 1440×900, light theme,
-and writes the screens (login, routed screens, shortcuts dialog, Ctrl+K palette) into
+The script performs real OIDC logins with the dev-only accounts documented in `SECURITY.md`
+(primarily `maria@fkmed.local` / `maria12345`, and operator-sim only when the captured flow
+needs it), viewport 1440×900, light theme, and writes the screens into
 `docs/manual/img/`.
 
 ## Validation (mandatory — do not skip)

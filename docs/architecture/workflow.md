@@ -1,7 +1,24 @@
-# Workflow: Specs, ADRs, Plans and Documentation
+# Workflow: Lean SDD
 
-> Read when: writing/updating specs or ADRs, planning a large task, creating a new project,
-> or updating README/runbooks.
+> Read when: writing/updating specs or ADRs, opening a slice, closing a slice, reviewing a
+> PR, or changing project documentation.
+
+## Core model
+
+FKMed uses **Lean SDD**:
+
+```text
+spec/design -> small vertical slice -> test anchor -> implementation -> gates -> review/QA if risk -> PR
+```
+
+The main Claude conversation is the default executor. Agents are used only when they reduce
+cognitive load or increase confidence:
+
+- `architect`: spec design, ADRs, domain/architecture reasoning and slice decomposition.
+- `reviewer`: fresh technical review of a diff/PR.
+- `qa`: risk-based validation for sensitive or broad slices.
+
+There is no default developer subagent and no default worktree orchestration.
 
 ## Specs (`docs/specs`)
 
@@ -10,136 +27,174 @@ integrations, messaging, domain events, real-time behavior, AI/model behavior, p
 changes, API contracts, security-sensitive flows, important frontend behavior, background
 jobs, caching, error handling strategy and architectural refactors.
 
-A good spec **MUST** include: goal, scope, business context, business rules, input/output
+A good spec must include: goal, scope, business context, business rules, input/output
 examples, API contracts and events when applicable, persistence changes, validation rules,
 error behavior, observability requirements, required tests, acceptance criteria and open
-questions. Use `docs/specs/0000-specs-template.md` (or the `/spec` command).
+questions. Use `docs/specs/0000-specs-template.md` or `/spec`.
 
-Specs **MUST** use direct, testable language:
+Specs must use direct, testable language:
 
-```txt
+```text
 Good: The system MUST reject cancellation when the order status is INVOICED.
       The API MUST return 409 with error code order.cannot-be-cancelled.
 Bad:  Handle cancellation properly. Improve validation.
 ```
 
+The `architect` agent is the preferred assistant for creating or improving specs. It may
+ask questions, draft the spec and recommend slices, but implementation starts only on the
+owner's explicit order.
+
 ## ADRs (`docs/adr`)
 
-Create an ADR when a decision: affects architecture; introduces/removes a major dependency;
+Create an ADR when a decision affects architecture; introduces/removes a major dependency;
 changes module boundaries; defines persistence/messaging/integration strategy; affects
 deployment or scalability; introduces caching or eventual consistency; changes security
 approach; creates meaningful trade-offs; or would be expensive to reverse.
-Use `docs/adr/0000-adr-template.md` (or the `/adr` command).
+
+Use `docs/adr/0000-adr-template.md` or `/adr`.
 
 ## Decision log (`docs/decision-log`) and changelogs
 
-Decisions taken **autonomously** (gaps and Open Questions resolved without the owner in the
-room) are recorded as append-only `DL-NNNN-title.md` files with confidence and
-reversibility ratings, indexed in `INDEX.md` — see `docs/RUN-PHASE.md` for the exact format.
-Release notes live as a consolidated changelog (`docs/release-notes/CHANGELOG.md`, one face
-per product locale if multilingual); per-slice test results are recorded in the execution
-log (`docs/ROADMAP-STATUS.md`).
+Decisions taken autonomously are recorded as append-only `DL-NNNN-title.md` files with
+confidence and reversibility ratings, indexed in `INDEX.md`; see `docs/RUN-PHASE.md`.
 
-## Large tasks
+Release notes live in `docs/release-notes/CHANGELOG.md`. Per-slice execution summaries live
+in `docs/ROADMAP-STATUS.md`.
 
-Use Claude Code plan mode. The plan **MUST** include: goal, relevant specs, affected modules,
-backend/frontend files, migrations, tests, documentation, architectural risks, implementation
-order, validation commands, open questions and **acceptance criteria** — numbered (AC-1…),
-testable, mapped to the spec's BRs/examples, each with its verification method. At the end of
-the slice (`/dod`) every AC is re-verified with evidence and a detailed why.
+## Slice size
 
-## Team orchestration & agent discipline
+A slice should normally have:
 
-When the architect delegates to sub-agents (devs, QA), the orchestration rules that keep the
-process from bottlenecking live in `.claude/agents/architect.md` (owner-facing summary in
-`docs/GUIA-TIME-CLAUDE.md`). In short:
+- one user/business outcome;
+- one feature branch;
+- one PR to `develop`;
+- one test anchor;
+- one concise status update when closed.
 
-- **One `developer` end to end is the default; parallelism prefers isolation.** A normal
-  slice is built by a single `developer` (backend first, frontend against the REAL contract;
-  TDD optional, tests + touched-stack gates at the END, before QA). N developers run in
-  parallel only for real, separable demand — the predilection is scopes that don't collide
-  (disjoint modules/paths, no shared contract surface); **small overlap is acceptable
-  because the architect owns the integration**: `git merge --no-ff` per sub-branch on the
-  slice branch, conflicts resolved by the architect, targeted check per merge, the full
-  battery once after the last integration. Parallel work requires frozen contract seams,
-  owned/forbidden paths and a merge order in the plan; a deviation from a frozen seam is an
-  impediment back to the architect, never a silent drift. A genuinely small slice is done
-  inline (Rule Zero).
-- **Execution modes & proportional gates** (canonical text in `.claude/agents/architect.md`
-  §Execution modes) — **Slice Mode is the default**; a **whole phase** runs when the owner
-  explicitly asks for one (accepted without pushback, organized internally in waves). Parallel
-  work requires the plan to fix the frozen contract, owned/forbidden paths, the
-  **single-writer surfaces** (OpenAPI snapshot, migration numbering, shell/routes, global
-  i18n, `ModularityTest`, shared error mapping, workflows) and the merge order. Gates are
-  **proportional**: the developer tests at the END (TDD optional) and runs the touched
-  stacks' full gates once at handback; the architect runs the full battery once after the
-  final integration; QA runs once on the integrated branch in **two stages** — homologação
-  against the SPEC first (findings → the same developer; too complex → the architect), then
-  the full battery, where **any failure returns to the architect** to replan; `/dod` reuses
-  green evidence from the same commit instead of re-running it. The E2E suite is **green
-  locally before any push/PR** — CI is never its first run (owner order, the Phase-4
-  lesson). Effort defaults to `high` everywhere; `opus`/`xhigh` are escalations for
-  genuinely hard/critical work, never a session default.
-- **Worktree orchestration** — each agent works in **its own worktree**, never the main repo
-  or another's. The **architect owns the lifecycle**: free the target branch and keep the
-  main worktree on `develop` before spawning (a branch held elsewhere makes the agent's
-  checkout fail); **physically remove finished worktrees** after (not just `git worktree
-  prune` — on Windows `rm -rf .claude/worktrees/<id>` in Git Bash when path length blocks
-  `git worktree remove`), delete merged/scratch branches, and leave no file junk on the
-  owner's machine; rescue any misplaced work via `git stash -u` without losing it.
-- **Visibility** — a milestone-ping cadence (implementation underway → dev tests/gates green
-  → homologação/battery → completion), every message stamped with the real date+time in the
-  owner's timezone (`TZ=America/Sao_Paulo`), for developers, QA and flow work; the architect
-  surfaces observable state, never invented progress; periodic stall checks.
-- **Impediments escalate, never route around** — any blocker not the agent's to fix (failed
-  checkout, unavailable tool/service, ambiguous/conflicting spec, a gate that looks wrong,
-  scope bigger than the order) is **reported to the architect and waits**; agents never fake
-  a result, weaken a gate, invent a rule, or work outside their scope/worktree to force a
-  pass. A reported impediment comes to the architect to resolve (escalation ladder rung 0).
-- **Out-of-scope findings** QA raises don't fail the slice but are **not dropped** — they come
-  to the architect to analyze and disposition (spec item, future slice, replan, or noted).
+Prefer vertical slices: migration -> domain -> API -> screen, when the work is product
+code. Backend-only or frontend-only work is acceptable only when the result is inherently
+technical, preparatory, or explicitly requested.
 
-## Slice reports (`docs/reports`)
+Avoid whole-phase execution as the default. If the owner asks for a whole phase, decompose it
+into small internal slices and keep the execution sequential unless true parallel isolation
+is worth the coordination cost.
 
-Two per-slice reports, written by the architect (naming and gitignore rule in
-`docs/reports/README.md`):
+## Opening a slice
 
-- **Plan report** (`docs/reports/plans/`, NOT versioned): the approved plan with its
-  acceptance criteria — written at `/slice`.
-- **Conclusion report** (`docs/reports/final/`, versioned, committed in the slice PR): the
-  AC table with evidence and whys + a workflow retrospective (handoff timeline, reworks,
-  bottlenecks, lessons learned) — written at `/dod`, in pt-BR.
+Use `/slice` or follow the same structure:
+
+1. Read the spec in full.
+2. Resolve blocking Open Questions with the owner, or record an authorized autonomous
+   decision via `/dl`.
+3. Read the relevant architecture docs from `CLAUDE.md`'s Routing Map.
+4. Create or confirm a `feature/<slice-slug>` branch from `develop`.
+5. Write a short plan:
+   - goal;
+   - spec(s);
+   - scope/out of scope;
+   - acceptance criteria;
+   - implementation order;
+   - test anchor;
+   - validation commands;
+   - docs to update;
+   - risks/open questions.
+6. Get owner approval when the plan changes product behavior, scope or risk.
+
+Persisting a plan file is optional. Prefer the conversation checklist unless the slice is
+large enough that a local plan file is useful.
+
+## Test anchor
+
+Before or early in implementation, establish at least one anchor that proves the slice:
+
+- unit/integration/API/frontend/E2E test;
+- failing regression reproducer for a bug;
+- API call or command with expected output;
+- screenshot/manual path for UI-only behavior.
+
+This is not a religious RED-first rule. It is a confidence rule: do not build a meaningful
+slice with no way to prove it.
+
+## Implementation
+
+The main Claude executor implements the slice on the current feature branch:
+
+- follow the existing architecture and local patterns;
+- prefer backend contract reality over imagined frontend contracts;
+- update specs/ADRs/manual/changelog only when the slice changes them;
+- keep commits conventional and scoped;
+- ask the owner when behavior is ambiguous.
+
+Worktrees are exceptions for risky spikes, long investigations, isolated QA, or explicitly
+approved parallel experiments. They are not part of the normal workflow.
+
+## Gates
+
+Run the cheapest commands that provide real confidence, then broaden as risk grows:
+
+```bash
+cd backend && ./mvnw verify
+cd frontend && npm run lint && npm test && npm run build
+cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down
+```
+
+Rules:
+
+- Start with focused tests when possible; run stack gates before closing.
+- E2E is required when a user journey changes.
+- PIT/mutation is reserved for money or critical domain logic when useful.
+- Red gate means fix the code or architecture, never weaken the gate.
+- Reuse green evidence from the same commit instead of rerunning identical expensive gates.
+
+## Reviewer and QA
+
+Use `reviewer` when the diff is large, shared, risky or self-directed enough to benefit from
+fresh eyes. Reviewer is read-only by default and should lead with findings.
+
+Use `qa` for money, LGPD, authorization, audit/retention, clinical documents, jobs,
+concurrency, external integrations or broad cross-stack user journeys. QA validates against
+the spec and reports evidence; it does not fix production code by default.
+
+## Closing a slice
+
+Use `/dod` or follow the same structure:
+
+1. Confirm acceptance criteria and test anchor evidence.
+2. Run/cite the relevant gates.
+3. Check the Definition of Done in `CLAUDE.md`.
+4. Update spec/ADR/manual/changelog/ROADMAP-STATUS when applicable.
+5. Run reviewer/QA if the risk triggers them or the owner asks.
+6. Push the feature branch and open a PR to `develop`.
+7. Do not merge, tag or force-push.
+
+`docs/reports/final/` is optional for complex retrospectives only. It is not a mandatory
+per-slice artifact.
 
 ## Repository context awareness
 
-Before a relevant change, inspect: project structure, `CLAUDE.md`, `docs/architecture/`, relevant
-specs and ADRs, existing modules, package conventions, tests, API patterns, error handling,
-i18n strategy, migrations, frontend patterns, scripts. **MUST NOT** introduce a parallel
-architecture when an equivalent mechanism exists — search for existing equivalents
-(`ApiErrorResponse`, `UserContextProvider`, `FileStorage`, ...) before creating new ones.
+Before a relevant change, inspect project structure, `CLAUDE.md`, relevant architecture
+docs, specs and ADRs, existing modules, package conventions, tests, API patterns, error
+handling, i18n strategy, migrations, frontend patterns and scripts.
+
+Do not introduce a parallel architecture when an equivalent mechanism exists; search for
+existing equivalents before creating new ones.
 
 ## README and runbooks
 
 README is an operational entry point: purpose, stack, structure, setup, env vars, how to run
-backend/frontend/tests/migrations, common commands, links to `CLAUDE.md`/`docs/architecture/`/
-specs/ADRs, troubleshooting. Not an encyclopedia — link out.
+backend/frontend/tests/migrations, common commands, links to `CLAUDE.md`, architecture docs,
+specs and ADRs, troubleshooting. Not an encyclopedia; link out.
 
-Runbooks **SHOULD** exist when operational risk is relevant: deployment, rollback, migration
+Runbooks should exist when operational risk is relevant: deployment, rollback, migration
 failure, integration outage, queue backlog, DLQ reprocessing, job failure, cache
-inconsistency, WebSocket degradation, AI provider unavailable, high error rate/latency,
+inconsistency, WebSocket degradation, AI provider unavailable, high error rate/latency, or
 database unavailable.
 
 ## New project creation
 
 Start from an initial product/spec context and generate a minimal functional structure that
-runs, tests and follows the architecture. **MUST NOT** create a huge empty architecture with
-unused modules, fake bounded contexts or placeholder classes.
+runs, tests and follows the architecture. Do not create a huge empty architecture with unused
+modules, fake bounded contexts or placeholder classes.
 
-Sequence: read/create initial spec → identify initial domains → generate minimal runnable
-backend/frontend → documentation entry points → local dev setup (`docker-compose`,
-`.env.example`) → basic tests → initial CI when appropriate. The first feature **MUST** be
-guided by a spec.
-
-Slices land via a **branch + Pull Request** to `develop`; `main`/`develop` are protected and change
-only via reviewed PR — agents push the feature branch and open the PR but **never merge to protected
-branches** (see `CONTRIBUTING.md`).
+The first feature must be guided by a spec. Slices land through a branch and Pull Request to
+`develop`; protected branches change only via reviewed PR.
