@@ -33,9 +33,10 @@ step 4.
    - Health **through the proxy**: `curl http://localhost:4200/api/system/health` → `UP`
      (proves frontend↔backend talk to each other).
    - Frontend index → HTTP 200.
-5. **Dev logins**: the canonical list lives in the seeder — locate `DevUserSeeder.java` via
-   Glob (`backend/src/main/java/**/DevUserSeeder.java`) and present the real table of users
-   and roles (shared dev password: `dev12345`; the `dev` super-user has all roles). Do not
+5. **Dev logins**: present only the enumerated dev-only credentials documented in
+   `SECURITY.md` and the Flyway seed comments. Current canonical accounts include
+   `maria@fkmed.local` / `maria12345` for beneficiary journeys and
+   `operador-sim@fkmed.local` / `operador12345` for operator-simulation endpoints. Do not
    invent users.
 6. **`--obs`** (optional): a full `docker compose up -d` also brings the observability stack —
    Grafana at `http://localhost:3000` (`admin`/`admin` in dev), Prometheus `:9090`, Loki.

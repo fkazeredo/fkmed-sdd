@@ -1,27 +1,28 @@
-# Slice reports
+# Workflow reports
 
-Per-slice working reports written by the architect (owner rule). Two kinds:
+This folder stores workflow evidence when it is useful. Historical reports remain as the
+record of how earlier FKMed slices were executed; do not rewrite them.
 
-| Folder | Written at | Content | Versioned? |
-|---|---|---|---|
-| `plans/` | `/slice` (after the owner approves the plan) | The approved slice plan, including the numbered acceptance criteria (AC-1…) | **No** — gitignored (`docs/reports/plans/` in `.gitignore`) |
-| `final/` | `/dod` (before the push/PR) | Conclusion report in pt-BR: AC table (evidence + detailed whys) + workflow retrospective (handoff timeline, reworks and reasons, bottlenecks, lessons learned) + the standard final-report content | **Yes** — committed on the slice branch, part of the PR |
+Lean SDD no longer requires a versioned conclusion report for every slice.
+
+## Folders
+
+| Folder | Use | Versioned? |
+|---|---|---|
+| `plans/` | Optional local working plans for large slices. Prefer the conversation checklist for normal slices. | No - gitignored |
+| `final/` | Optional retrospectives for complex/risky slices, incidents, or owner-requested evidence packages. Existing files are historical evidence. | Yes, when intentionally created |
 
 ## Naming
 
-```
+```text
 plans/YYYY-MM-DD-<slice-slug>-plan.md
 final/YYYY-MM-DD-<slice-slug>-final.md
 ```
 
-`<slice-slug>` is the same kebab slug used in the `feature/<slice-slug>` branch.
-
 ## Rules
 
-- Only conclusion reports reach git — plan reports are local working artifacts and never
-  pushed (owner decision). Do not "rescue" a plan report into a commit.
-- The conclusion report is committed **before** `git push` + `gh pr create`, so the PR
-  carries it.
-- Process references: `docs/architecture/workflow.md` §Slice reports,
-  `.claude/agents/architect.md` §Persisted reports, `.claude/skills/slice/SKILL.md`,
-  `.claude/skills/dod/SKILL.md`.
+- Do not create reports by default. Use them when they reduce future confusion.
+- Do not rewrite historical reports to fit the new process.
+- A normal slice closes through `/dod`, `docs/ROADMAP-STATUS.md`, gates and a PR.
+- A complex retrospective should include acceptance evidence, what went wrong/right,
+  rework, commands, decisions and next workflow adjustments.

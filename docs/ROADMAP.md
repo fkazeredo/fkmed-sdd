@@ -2,12 +2,12 @@
 
 ## Delivery norm (owner decision — binding)
 
-Every implementation plan is **end-to-end**: each slice is vertical (migration → domain →
-API → screen) and **each phase closes with a working front+back user journey of real
-value**. No backend-only, screens-only or docs-only deliveries of product code. A slice is
-built by ONE `developer` end to end; parallel developers only for well-isolated scopes
-(small overlap is acceptable — the architect integrates) — the PR is born only with the
-complete journey working. Phase closure criteria:
+Every implementation plan is **end-to-end**: each product slice is vertical (migration →
+domain → API → screen when applicable) and **each phase closes with a working front+back user
+journey of real value**. No backend-only, screens-only or docs-only deliveries of product
+code unless the work is inherently technical or explicitly requested. A slice is built by the
+main Claude executor by default; agents are used for spec/design, review or risk-based QA,
+not as parallel developers. Phase closure criteria:
 journey running on the dev environment + all gates green + `docs/MANUAL.md` updated + PR
 opened to `develop`.
 
@@ -30,7 +30,7 @@ account e-mails directly through the identity flows; 0004 then centralizes the m
 ## Standing rules
 
 - A slice starts only via `/slice` over an **Approved** spec with no blocking Open
-  Questions; it closes only via `/dod` (gates + manual + changelog + PR).
+  Questions; it closes only via `/dod` (evidence + gates + docs/status + PR).
 - The owner merges every PR (agents never merge/tag/force-push — DECISIONS-BASELINE §0023).
 - ADRs expected during phase 0: Modulith module map; dev e-mail delivery (e.g. MailHog);
   upload file storage.

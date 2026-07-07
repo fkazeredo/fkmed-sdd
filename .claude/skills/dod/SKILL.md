@@ -1,122 +1,100 @@
 ---
 description: >
-  Closes the slice: runs all gates (backend verify, frontend lint/test/build, E2E when
-  applicable), walks the Definition of Done from CLAUDE.md and the TUTORIAL, verifies the
-  plan's acceptance criteria with evidence and whys, requires manual/changelog/version up to
-  date, records the ROADMAP-STATUS line, writes the versioned conclusion report
-  (docs/reports/final: ACs + workflow retrospective) and finishes with the feature-branch
-  push + PR to develop (DECISIONS-BASELINE §0023). Use when the slice looks ready or when
-  asked to close the slice / run the DoD. Keywords: DoD, definition of done, fechar fatia,
-  gates, open PR.
+  Closes a Lean SDD slice: verifies acceptance criteria and test-anchor evidence, runs or
+  cites relevant gates, walks the Definition of Done, updates living docs/status, optionally
+  invokes Reviewer/QA by risk, then pushes the feature branch and opens a PR to develop.
+  Keywords: DoD, definition of done, fechar fatia, gates, open PR.
 argument-hint: "[slice-name]"
 ---
 
-# /dod — close the slice
+# /dod - close a Lean SDD slice
 
-All communication is in **pt-BR**. Announce the expected duration of slow blocks (verify
-~minutes, E2E ~minutes) BEFORE running them. **Never hide a failed command.**
+All communication is in **pt-BR**. Announce slow commands before running them. Never hide a
+failed command or skipped check.
 
-## 1. Gates (in order, no skipping — but never re-run green evidence)
+## 1. Acceptance and evidence
+
+Recover the slice plan from the conversation or local plan file. For each acceptance
+criterion, state:
+
+| AC | Evidence | Why it passes |
+|---|---|---|
+
+The evidence can be an automated test, command output, API call, E2E result, screenshot or
+manual check. An AC without evidence does not close.
+
+Confirm the **test anchor** named at `/slice` was created/run or explain why a stronger
+equivalent replaced it.
+
+## 2. Gates
+
+Run or cite green evidence from the same commit:
 
 ```bash
-cd backend && ./mvnw verify        # Spotless, Checkstyle, JaCoCo, ArchUnit, Modulith+diagram,
-                                   # OpenAPI snapshot drift, jqwik
+cd backend && ./mvnw verify
 cd frontend && npm run lint && npm test && npm run build
 ```
 
-- **Reuse green evidence (proportional gates, owner rule):** a gate that already ran **green
-  on this exact commit** (QA's Stage-2 full battery — the typical source — or the
-  architect's post-integration run) is **cited as
-  evidence, not re-run** — name the run and its result. Re-run only the gates whose inputs
-  changed since the last green run (any new commit ⇒ the affected stack's gate runs again).
-  The Phase-4 pattern of dev→integration→QA→DoD each re-running the same full battery on the
-  same tree is exactly what this rule kills.
-- **E2E** when the slice touches a user flow: `cd frontend && npm run e2e:up && npm run e2e`
-  (+ `npm run e2e:down` at the end) — **green LOCALLY before the push/PR, always** (owner
-  order, 2026-07-06): the CI must never be the first place the E2E suite runs. Phase 4
-  shipped an E2E suite that had never passed locally and paid 6 defects + 3 CI triage rounds.
-- **A red gate ⇒ fix the CODE, never the gate** (invariant 5). Do not proceed to the PR with
-  any red gate.
+- Start with focused tests, then stack gates.
+- E2E is required when a user journey changes:
 
-## 2. Definition of Done (read from the living sources — no local copy)
+  ```bash
+  cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down
+  ```
 
-Walk it item by item, reporting in pt-BR:
+- PIT/mutation is reserved for money or critical domain logic when useful.
+- A red gate means fix the code or architecture; never weaken the gate.
+- Reuse green evidence from the same commit instead of rerunning identical expensive gates.
 
-- `CLAUDE.md` §Definition of Done (the full list).
-- `docs/TUTORIAL.md` §3, step-6 checklist.
+## 3. Definition of Done
 
-Checks that tend to slip — verify explicitly:
+Walk `CLAUDE.md` Definition of Done:
 
-- Bug fixed in the slice ⇒ **regression test at EVERY reachable layer** (invariant 8); a
-  skipped layer requires an explicit stated reason.
-- New user-facing text ⇒ i18n in every product locale bundle (full parity + fallback).
-- Multilingual product: all language faces of touched artifacts in sync (MANUAL, README,
-  CHANGELOG) — none may lag.
-- Requirement changed during the slice ⇒ spec updated.
-- No orphan TODO/FIXME, no commented-out code, no incomplete implementation (invariant 6).
+- Spec updated if requirement changed.
+- Tests created/updated; bug fix has regression coverage.
+- Migration added for schema changes; applied migrations not edited.
+- OpenAPI snapshot/docs updated when contracts changed.
+- i18n updated for user-facing text and error codes.
+- ADR created/updated when architecture changed.
+- `docs/MANUAL.md` updated when user-visible behavior changed.
+- `docs/ROADMAP-STATUS.md` updated for a meaningful closed slice.
+- Commands and skipped checks reported honestly.
 
-## 3. Acceptance criteria — evidence and whys (owner rule)
+## 4. Reviewer / QA decision
 
-Recover the slice plan's **Critérios de aceite** (`docs/reports/plans/…-plan.md`; if the
-file is gone, the plan as approved in the conversation). For EACH AC, produce a row:
+Before PR, decide explicitly:
 
-| AC | Evidência (teste/comando/saída) | Por quê passou (detalhado) |
+- `reviewer` needed? Use for large/risky/self-directed diffs or shared architecture.
+- `qa` needed? Use for money, LGPD, authorization, audit/retention, clinical documents,
+  jobs, concurrency, integrations or broad user journeys.
 
-- The "why" is not "o teste passou": name the exact test/command, what it exercises, and the
-  reasoning that connects the observed result to the criterion.
-- **An AC without evidence, or failing ⇒ the DoD does not close** — back to the escalation
-  ladder (`architect.md` §Flow), never silently dropped or reworded to pass.
+If skipped, say why. If run, summarize findings and fixes.
 
-## 4. Satellites
+## 5. Optional retrospective report
 
-- **Code changed** ⇒ version bumped? If not: `/release`. **Docs-only** ⇒ no bump (state it).
-- **User-visible change** ⇒ manual up to date? If not: `/manual`.
-- **Execution-log line** in `docs/ROADMAP-STATUS.md`, following the convention declared in
-  the file's own header (America/Sao_Paulo date, outcome, tests, version, DLs).
+Do **not** create a versioned conclusion report by default.
 
-## 5. Conclusion report — persisted and versioned (owner rule)
+Create `docs/reports/final/YYYY-MM-DD-<slice-slug>-final.md` only when the owner asks for a
+retrospective or the slice was complex enough that preserving the workflow evidence is
+useful. Historical reports remain evidence and should not be rewritten.
 
-Write `docs/reports/final/YYYY-MM-DD-<slice-slug>-final.md` (pt-BR) with:
+## 6. Git closing
 
-1. **Critérios de aceite** — the full AC table from step 3 (evidence + detailed whys).
-2. **Retrospectiva do fluxo** — timeline of the handoffs (who did what, on which branch,
-   with which model/effort), rework rounds and their reasons, **gargalos** (where time was
-   lost: waiting, reworks, CI cycles, env issues) and **lições aprendidas** (what to change
-   in the next slice).
-3. The standard final-report content (files, behavior, specs/ADRs, tests, migrations,
-   contracts, commands, risks, pending items).
+- Conventional commits, one purpose per commit.
+- `git push -u origin feature/<slice>`.
+- `gh pr create --base develop`.
+- Never merge the PR, tag or force-push unless the owner explicitly asks for an allowed
+  operation.
+- PR checks red afterwards? Use `/ci-triage` before changing code.
 
-**Commit this file on the slice branch BEFORE the push/PR** — it is versioned and belongs to
-the PR (unlike the plan report, which is gitignored; `docs/reports/README.md`).
+## 7. Final chat report
 
-## 6. Git closing (DECISIONS-BASELINE §0023)
+Report in pt-BR:
 
-- **Verify the handback before closing (architect.md §Worktree orchestration):** the work
-  you are closing is actually on `origin` (the reported commit SHA), the **main worktree
-  stayed clean** (no agent work leaked into it), and no worktree with unpushed/uncommitted
-  work is about to be pruned. Don't close on a "done" you haven't confirmed.
-- **Conventional Commits** (small, one purpose per commit).
-- Parallel work already integrated: every developer sub-branch (`feature/<slice>--<scope>`) merged
-  into the slice branch (`git merge --no-ff`, run ON the slice branch) with green gates
-  after each integration — a PR never carries an unmerged sub-branch.
-- `git push -u origin feature/<slice>` and `gh pr create --base develop` — this is the normal
-  end of the slice. **NEVER** merge the PR, tag or force-push (`settings.json` enforces it;
-  do not work around a denial — explain and ask the owner).
-- PR checks red afterwards? ⇒ the **architect** analyzes first via `/ci-triage` (escalation
-  ladder, `architect.md` §Flow) — never dispatch a dev before the analysis; a second red
-  cycle after a fix keeps the task with the architect.
-- Before the PR, run the **architect's review checklist** over the diff (see
-  `.claude/agents/architect.md` §Review function) — with a fresh-eyes pass when the work was
-  self-directed. Recommended, not mandatory.
-- **Clean up after closing (owner rule — architect.md §Worktree orchestration).** Once the
-  branch is pushed and the PR is open (work is safe on `origin`), remove the slice's dev/QA
-  **worktrees physically** — `git worktree remove`, or `rm -rf .claude/worktrees/<id>` in Git
-  Bash when Windows path length blocks it — then `git worktree prune`; delete merged local
-  branches and any scratch/temp branches or watcher scripts. Verify `ls .claude/worktrees/`
-  shows only active worktrees. Leave nothing you created on the owner's machine.
-
-## 7. Final report (chat)
-
-In the `CLAUDE.md` §"Final response after implementation" format: files, behavior,
-specs/ADRs, tests, migrations, contracts, commands run, verification, risks, pending items —
-plus the AC table and the retrospective from the conclusion report (step 5), in pt-BR.
+- files changed;
+- behavior implemented;
+- specs/ADRs/manual/status updated;
+- tests and gates run;
+- migrations/contracts/i18n impact;
+- reviewer/QA outcome if used;
+- risks and pending items.

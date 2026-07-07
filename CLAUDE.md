@@ -1,114 +1,118 @@
-# CLAUDE.md — Operating Rules (Constitution)
+# CLAUDE.md - Operating Rules (Constitution)
 
-This file is always loaded. It contains only the rules that apply to EVERY task.
-Detailed guidelines live in `docs/architecture/` and are loaded on demand (see Routing Map).
-Inherited architecture decisions live in `docs/DECISIONS-BASELINE.md` (pre-accepted rules).
+This file is always loaded. It contains the rules that apply to every task.
+Detailed guidelines live in `docs/architecture/` and are loaded on demand through the
+Routing Map below. Inherited architecture decisions live in `docs/DECISIONS-BASELINE.md`.
 
 > Bootstrapping a brand-new project from this foundation? Read `docs/BOOTSTRAP.md` first.
+
+## Lean SDD operating mode
+
+1. **Single executor first.** The main Claude conversation is the default executor for a
+   slice: understand the spec, plan briefly, implement, test, update docs and close. Do not
+   spawn a developer subagent for normal work.
+2. **Agents are quality instruments, not extra developers.**
+   - `architect`: spec design, ADRs, domain/architecture reasoning and slice decomposition.
+   - `reviewer`: fresh technical review of a diff or PR.
+   - `qa`: risk-based validation for sensitive or broad slices.
+3. **Worktrees are exceptions.** Use a separate worktree only for a risky spike, long
+   investigation, isolated QA run, or truly independent parallel experiment approved by the
+   owner. The normal path is the current feature branch.
+4. **Small vertical slices win.** A slice should produce one observable result and one PR.
+   A phase is planning context, not the default execution unit.
+5. **Evidence before confidence.** Every meaningful slice needs a test anchor before or
+   early in the work: automated test when practical, reproducible command, API call,
+   screenshot/manual check, or focused regression reproducer.
 
 ## Non-negotiable invariants
 
 1. **Rule Zero: avoid overengineering.** Architecture must reduce complexity. Patterns,
    layers, abstractions, queues, caches and interfaces exist only when they solve a real
-   problem. A simple CRUD stays simple. When in doubt, choose the simplest solution that
-   satisfies the spec and tests.
-2. **Authority order (conflict resolution):**
-   current owner/user request > feature spec > project ADRs > `docs/DECISIONS-BASELINE.md` >
-   `docs/architecture/` docs > existing code. Existing code is evidence, not authority. Peer
-   preference, fashion and undocumented convention are NOT sources of truth. Never silently
-   invent behavior to resolve conflicts — surface the divergence and ask.
+   problem. A simple CRUD stays simple.
+2. **Authority order:** current owner/user request > feature spec > project ADRs >
+   `docs/DECISIONS-BASELINE.md` > `docs/architecture/` docs > existing code. Existing code
+   is evidence, not authority. Never silently invent behavior to resolve conflicts; surface
+   the divergence and ask.
 3. **Never invent business rules.** If missing information affects behavior, contracts,
-   data, security or architecture: ASK the owner before implementing. Record unresolved
-   questions under `Open Questions` in the relevant spec. Asking is ALWAYS the default;
-   deciding autonomously (recorded via `/dl`) requires the owner's explicit authorization.
+   data, security or architecture: ask the owner before implementing. Record unresolved
+   questions under `Open Questions` in the relevant spec. Deciding autonomously requires the
+   owner's explicit authorization and a decision-log entry.
 4. **Spec-driven development.** Before relevant work: read the applicable spec in
-   `docs/specs`; update it if the requirement changed; create one (via `/spec`) if none
-   exists. Specs are living artifacts — updated in the same PR as the code they govern.
-5. **Tooling is authoritative.** ArchUnit tests, Spring Modulith verify, Spotless, Checkstyle,
-   coverage floors, contract snapshots and CI gates encode the architecture rules. Never
-   weaken, skip or delete them to make code pass. If a rule seems wrong, propose a change and
-   an ADR — do not bypass.
-6. **No loose ends.** No TODOs/FIXMEs without an issue/spec/ADR reference, no commented-out
-   code, no incomplete implementations, no `@Data`/`@Setter` on JPA entities (Lombok
-   `@Getter`/`@RequiredArgsConstructor`/`@Slf4j` are welcome for boilerplate), no `*Impl`
-   naming, constructor injection only.
+   `docs/specs`; update it if the requirement changed; create one with the architect or
+   `/spec` if none exists. Specs are living artifacts updated in the same PR as the code
+   they govern.
+5. **Tooling is authoritative.** ArchUnit tests, Spring Modulith verify, Spotless,
+   Checkstyle, coverage floors, contract snapshots and CI gates encode the architecture
+   rules. Never weaken, skip or delete them to make code pass. If a rule seems wrong,
+   propose a change and an ADR.
+6. **No loose ends.** No TODOs/FIXMEs without an issue/spec/ADR reference, no
+   commented-out code, no incomplete implementations, no `@Data`/`@Setter` on JPA entities
+   (Lombok `@Getter`/`@RequiredArgsConstructor`/`@Slf4j` are welcome for boilerplate), no
+   `*Impl` naming, constructor injection only.
 7. **Reference data is registry data, not an enum** (DECISIONS-BASELINE §0019). A new
-   business enum is only acceptable when it is a **state machine** (`*Status`/lifecycle),
-   **technical** (failure classes, circuit-breaker states) or **fixed by law**. Everything
-   else is a registry code (`String` validated by the registry's validator port, seeded by
-   migration, branching via `*Codes` constants). When keeping an enum, document the keep
-   criterion in the Javadoc.
-8. **Quality is non-negotiable: every bug found requires a serious regression test.** Any
-   defect — shipped bug, review finding, or anything caught while building/verifying — MUST
-   get a regression test that **fails before the fix and passes after**, in **every layer the
-   defect can reach** (domain/unit, integration/Testcontainers, API contract, frontend unit,
-   E2E). One layer is not enough when the defect spans more; skipping an applicable layer
-   requires an explicit stated reason. Details: `docs/architecture/testing.md`.
-9. **Git & secret safety** (DECISIONS-BASELINE §0023). Work happens on a `feature/*`/
-   `bugfix/*` branch with local commits. **When the slice is complete and green (tested)**,
-   the agent **pushes the feature branch and opens a PR targeting `develop`** — the normal
-   end of a slice. The agent **NEVER merges to `develop` or `main`** and **never
-   force-pushes**; it creates a **tag only on the owner's explicit request**. Merging a PR
-   and cutting a release are **human, reviewed** actions (`main` changes only via a release
-   PR). Enforced by `.claude/settings.json`. **Never commit a secret, key, certificate or
-   `.env`** — gitleaks (CI + pre-commit) blocks them; the only in-repo credentials are
-   enumerated dev-only defaults (allowlisted in `.gitleaks.toml`, blocked in prod by a
-   fail-fast startup validator).
+   business enum is only acceptable when it is a state machine (`*Status`/lifecycle),
+   technical, or fixed by law. Everything else is a registry code (`String` validated by the
+   registry validator port, seeded by migration, branching via `*Codes` constants). When
+   keeping an enum, document the keep criterion in Javadoc.
+8. **Every bug found requires a serious regression test.** Any defect - shipped bug,
+   review finding, or defect caught while building/verifying - must get a regression test
+   that fails before the fix and passes after, at every reachable layer. Skipping an
+   applicable layer requires an explicit stated reason. Details:
+   `docs/architecture/testing.md`.
+9. **Git & secret safety** (DECISIONS-BASELINE §0023). Work happens on a `feature/*` or
+   `bugfix/*` branch with local commits. When the slice is complete and green, push the
+   branch and open a PR targeting `develop`. The agent never merges to `develop` or `main`,
+   never force-pushes, and creates tags only on the owner's explicit request. Never commit a
+   secret, key, certificate or `.env`.
 
 ## Language policy
 
-- **en-US is the default for ALL artifacts**: specs, ADRs, decision log, docs, templates,
-  commits, code identifiers. No mixing.
-- A document is written in another language **only when the owner names it explicitly**
+- **en-US is the default for artifacts**: specs, ADRs, decision log, docs, templates,
+  commits and code identifiers.
+- A document is written in another language only when the owner names it explicitly
   (current exception: `docs/GUIA-TIME-CLAUDE.md`, pt-BR).
-- **Chat with the owner is in pt-BR** (questions, reports, findings, verdicts).
-- End-user-facing language(s) (UI i18n, user manual) are a per-product decision made at
-  bootstrap (see `docs/BOOTSTRAP.md`); default en-US. If the product is multilingual, all
-  language faces of a document move **in the same slice** — none may lag.
+- **Chat with the owner is in pt-BR**.
+- End-user-facing language(s) are a product decision made at bootstrap. If the product is
+  multilingual, all language faces of a document move in the same slice.
 
-## Definition of Done (every meaningful change)
+## Definition of Done
 
 - Code matches the spec; spec updated if the requirement changed.
-- Tests created/updated. Bug fix ⇒ regression test (fails before, passes after); if
-  impossible, explain why.
+- Tests created/updated. Bug fix implies regression test; if impossible, explain why.
 - Flyway migration when schema changes. OpenAPI snapshot/docs updated when contracts change.
-- i18n messages added for any user-facing text (in the product's locale(s)). Global error
-  handling respected.
-- ADR created/updated when architecture changes (inherited rules are revised only via a new
-  ADR citing the baseline number).
-- User manual (`docs/MANUAL.md`) updated with the slice's user-facing capabilities — run
-  `/manual` at the end of every such slice.
+- i18n messages added for user-facing text in the product locale(s). Global error handling
+  respected.
+- ADR created/updated when architecture changes.
+- User manual (`docs/MANUAL.md`) updated with user-facing capabilities; run `/manual` when
+  applicable.
+- `docs/ROADMAP-STATUS.md` receives one concise line for a closed meaningful slice.
 - Build and tests executed when possible. Never hide failed commands or skipped checks.
 
 ## Final response after implementation
 
-Report: files changed, behavior implemented, specs/ADRs updated, tests, migrations,
+Report in pt-BR: files changed, behavior implemented, specs/ADRs updated, tests, migrations,
 contract impacts, commands executed, verification result, risks and pending items.
-Slice work also persists two reports: the approved plan (with acceptance criteria) in
-`docs/reports/plans/` (not versioned) and the conclusion report (AC evidence + workflow
-retrospective, pt-BR) in `docs/reports/final/` (versioned) — see `docs/reports/README.md`.
 
-## Communication during autonomous execution (owner rule)
+Do not create a versioned conclusion report by default. Use `docs/reports/final/` only when
+the owner asks for a retrospective or the slice was complex enough that preserving the
+workflow evidence is useful.
 
-Whenever running in autonomous/auto-accept mode:
+## Communication during execution
 
-- **Checklist always visible and current** (TodoWrite): one `in_progress` item at a time;
-  mark `completed` immediately; the list reflects the real plan.
-- **Announce BEFORE each work block** what you are about to do (1-3 lines), and **report
-  AFTER** what was actually done and the verification result.
-- **Findings, deviations and failures are reported immediately**, never only at the end:
-  a bug found, a red test, an autonomous decision taken (with its DL), a scope change.
-- **All owner-facing communication in pt-BR** (code, identifiers and commits follow the
-  project conventions — en-US).
+- Keep a visible, current checklist for non-trivial work.
+- Announce before meaningful work blocks and report after verification.
+- Report findings, deviations and failures immediately, not only at the end.
+- Owner-facing communication is pt-BR; code, identifiers and commits follow project
+  conventions.
 
-## Routing Map — read BEFORE touching the area
+## Routing Map - read before touching the area
 
 | If the task involves... | Read first |
 |---|---|
 | Any non-trivial design decision | `docs/architecture/core-principles.md` |
 | Requirement out of scope/undecided; stubbing a future seam | `docs/architecture/simulation-and-mocking.md` |
-| Specs, ADRs, plans, large tasks | `docs/architecture/workflow.md` |
-| Inherited architecture rules (the pre-accepted baseline) | `docs/DECISIONS-BASELINE.md` |
+| Specs, ADRs, slice planning, workflow | `docs/architecture/workflow.md` |
+| Inherited architecture rules | `docs/DECISIONS-BASELINE.md` |
 | Backend code, services, entities, DTOs, errors, dates, naming | `docs/architecture/backend.md` |
 | Module boundaries, cross-module calls, REST/JSON contracts, OpenAPI | `docs/architecture/modules-and-apis.md` |
 | Events, queues, jobs, schedulers, idempotency, external APIs, files, notifications | `docs/architecture/messaging-and-integrations.md` |
@@ -118,31 +122,29 @@ Whenever running in autonomous/auto-accept mode:
 | Angular code, components, forms, state, UI | `docs/architecture/frontend-angular.md` |
 | Writing or changing tests | `docs/architecture/testing.md` |
 | Build, dependencies, Git, CI/CD, Docker, deploy, feature flags | `docs/architecture/delivery.md` |
-| Project rituals (spec/ADR/DL scaffolds, slice open/close, release, manual, dev env, CI triage) | the skills in `.claude/skills/` — `/spec` `/adr` `/dl` `/slice` `/dod` `/release` `/manual` `/dev-env` `/ci-triage` `/new-project` |
-| Delegating work to the agent team (architect, developer ×N, QA) | the agents in `.claude/agents/` — the architect is the owner's single interlocutor; flow documented in `architect.md` |
+| Project rituals | `.claude/skills/` - especially `/spec`, `/slice`, `/dod`, `/manual`, `/ci-triage` |
+| Spec/ADR/design help | `.claude/agents/architect.md` |
+| Fresh review of a diff or PR | `.claude/agents/reviewer.md` |
+| Risk-based validation | `.claude/agents/qa.md` |
 | Bootstrapping this foundation into a brand-new project | `docs/BOOTSTRAP.md` |
 
 ## Project commands
 
 Use official project commands; inspect `README.md`, `pom.xml`, `package.json` before
-inventing any. No system Maven — always use the wrapper from `backend/`:
+inventing any. No system Maven - always use the wrapper from `backend/`:
 
 ```bash
-cd backend && ./mvnw verify           # backend build + tests (ArchUnit; needs Docker up)
-cd backend && ./mvnw spotless:apply   # format
-cd frontend && npm run lint && npm test && npm run build   # frontend
+cd backend && ./mvnw verify
+cd backend && ./mvnw spotless:apply
+cd frontend && npm run lint && npm test && npm run build
 ```
 
-Destructive and remote operations are governed by `.claude/settings.json` (invariant 9):
-pushing a **feature branch**, `gh pr create` (PR → `develop`) and **local merges of
-`feature/*` sub-branches into the slice branch** (architect integration of parallel dev work
-— never while on develop/main) are **allowed**; `git tag` **asks**; merging **into
-develop/main**, `gh pr merge`, `gh release create` and force-push are **denied**. Do not
-work around a denied command; explain and ask the owner.
+Destructive and remote operations are governed by `.claude/settings.json`: pushing a feature
+branch and opening a PR to `develop` are allowed; merging PRs, merging into protected
+branches, releases, tags without explicit request and force-pushes are not agent actions.
 
-## Command — User manual [`/manual`]
+## Command - User manual [`/manual`]
 
-The user manual is a **living artifact**: every slice with user-visible changes is only
-"done" when `docs/MANUAL.md` (in the product's locale(s)) reflects the change, in the same
-slice. Execution details (structure, label checks against real i18n, screenshot regeneration,
-parity verification) live in the skill: run **`/manual`** at the end of every such slice.
+The user manual is a living artifact: every slice with user-visible changes is only done
+when `docs/MANUAL.md` reflects the change in the same slice. Execution details live in the
+skill: run `/manual` at the end of such slices.

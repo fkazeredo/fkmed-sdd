@@ -19,9 +19,10 @@ The model (DECISIONS-BASELINE §0018/§0020):
   in production (TLS reverse proxy).
 - **Multi-instance ready:** signing key persisted (`OIDC_JWK_PRIVATE_KEY`, stable `kid`), AS
   client/authorization state and form-login session in JDBC (DECISIONS-BASELINE §0020) — no sticky sessions.
-- **Roles (fixed catalogue):** `DIRECTOR`, `FINANCE`, `OPERATIONS`, `IT`, `POLICY_ADMIN`,
-  `VIEWER`, carried in the JWT roles claim. Dev/E2E profiles seed one user per role plus a
-  super-user `dev` (password `dev12345`) — **never in production**.
+- **Dev-only accounts are enumerated, fictitious and blocked in production:** the canonical
+  list lives in `SECURITY.md` and Flyway seed comments (for example
+  `maria@fkmed.local` / `maria12345` and `operador-sim@fkmed.local` /
+  `operador12345`). Do not invent extra seeded users in docs or tests.
 
 ## Endpoint authorization — default-deny matrix
 

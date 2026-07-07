@@ -4,8 +4,6 @@
   "permissions": {
     "allow": [
       "Bash(git push:*)",
-      "Bash(git merge feature/*)",
-      "Bash(git merge --no-ff feature/*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr diff:*)",
