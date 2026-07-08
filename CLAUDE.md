@@ -111,7 +111,9 @@ around the same shared truth: this file, specs, ADRs and architecture docs.
 - User manual (`docs/MANUAL.md`) updated with user-facing capabilities; run `/manual` when
   applicable.
 - `docs/ROADMAP-STATUS.md` receives one concise line for a closed meaningful slice.
-- Build and tests executed when possible. Never hide failed commands or skipped checks.
+- Build and tests run **once at final delivery** — the full battery together (spec tests +
+  general homologation), never incrementally per change. Never hide failed commands or skipped
+  checks.
 
 ## Final response after implementation
 
