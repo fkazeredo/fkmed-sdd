@@ -72,5 +72,11 @@ public final class AuditEventTypes {
    */
   public static final String SUPPORT_LIBRAS_REQUESTED = "support.libras-requested";
 
+  /**
+   * A beneficiary submitted a reimbursement request (SPEC-0015 BR15). Details include only
+   * non-sensitive request metadata; provider and bank data must never be recorded here.
+   */
+  public static final String REIMBURSEMENT_SUBMITTED = "reimbursement.submitted";
+
   private AuditEventTypes() {}
 }

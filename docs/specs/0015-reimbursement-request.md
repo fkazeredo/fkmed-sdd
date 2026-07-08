@@ -1,6 +1,6 @@
 # 0015 - Reimbursement Request
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -78,17 +78,23 @@ system.
   regulatory ceiling of **30 calendar days** after complete documentation, and the action
   "Acompanhar solicitação".
 - **BR13** — Submission MUST create the request as `EM_ANALISE`, record the first
-  immutable timeline event and notify (SPEC-0004). Accidental resubmission of the same
-  form (double click/retry) MUST NOT create a duplicate.
+  immutable timeline event, run the SPEC-0016 automatic analysis in the same use case and
+  notify (SPEC-0004). Under DL-0030 a complete request immediately advances to
+  `PROCESSAMENTO`, so the API response exposes the current status after analysis. Accidental
+  resubmission of the same form (double click/retry) MUST NOT create a duplicate.
 - **BR14** — Each step validates before advancing, with messages next to the fields; the
   final submission revalidates everything server-side.
 - **BR15** — Authorship and target follow SPEC-0003: titular for self and dependents,
   dependent only for self; always audited.
+- **BR16 (ASSUMED, DL-0025)** — Slice 6.1 supports one expense per protocol. Adding multiple
+  expenses before submission is not part of the POC.
+- **BR17 (ASSUMED, DL-0025)** — The POC uses `plan_multiple = 1.0` for every reimbursement-table
+  category. `OUTROS` is seeded at the Consulta rate until the owner defines a distinct value.
 
 ## Input/Output Examples
 
 - `POST /api/reimbursements` (complete consultation of R$ 150,00, idempotency key K) →
-  `201 {"protocol":"RE-20260704-0001","status":"EM_ANALISE",
+  `201 {"protocol":"RE-20260704-0001","status":"PROCESSAMENTO",
   "expectedPaymentDate":"2026-07-13"}`; immediate retry with key K → `201` same protocol.
 - Care date 14 months ago → `422 {"code":"reimbursement.deadline-expired"}` (error case).
 - 4 sessions summing R$ 380,00 with total R$ 400,00 → `422
@@ -175,8 +181,9 @@ logged.
 - **AC4** (BR7) — Given 4 sessions summing R$ 380,00 for a total of R$ 400,00, then
   advancing is blocked for value inconsistency (error case).
 - **AC5** (BR12, BR13) — Given the complete wizard for a R$ 150,00 consultation, when I
-  submit, then I receive the `RE-…` protocol, expected date, status `EM_ANALISE`, the
-  initial timeline event and the notifications (e-mail + in-app).
+  submit, then I receive the `RE-…` protocol, expected date, current status
+  `PROCESSAMENTO`, the initial `EM_ANALISE` timeline event, the automatic-analysis timeline
+  event and the notifications (e-mail + in-app).
 - **AC6** (BR13) — Given a double click on "Enviar solicitação", then exactly one request
   is created.
 - **AC7** (BR4, BR11, BR15) — Given PEDRO (dependent) requesting, then the beneficiary is
@@ -186,11 +193,8 @@ logged.
 
 ## Open Questions
 
-- **OQ1** — Multiple expenses under a single protocol ("adicionar outra despesa" before
-  submitting) · changes data model · proposed default: **not in the POC** (version 2).
-- **OQ2** — Reimbursement multiple per plan category (premium plans reimburse more) ·
-  affects the calculation parameterization · proposed default: POC uses **1.0**, kept as a
-  plan parameter.
+None. Former OQ1/OQ2 are resolved as assumed rules in BR16/BR17 (DL-0025). Full Phase 6
+submission semantics are recorded in DL-0030.
 
 ## Out of Scope
 

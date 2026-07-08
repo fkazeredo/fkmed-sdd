@@ -1,6 +1,6 @@
 # 0017 - Reimbursement Preview
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -118,8 +118,7 @@ on creation/conclusion (protocol, type).
 
 ## Open Questions
 
-- **OQ1** — Do concluded previews expire (e.g. estimate valid for 30 days)? · affects copy
-  and list badges · proposed default: **no expiry** — informational estimate only.
+None. Former OQ1 is resolved by DL-0031: concluded previews do not expire in the POC.
 
 ## Out of Scope
 

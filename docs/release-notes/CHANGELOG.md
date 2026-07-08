@@ -8,6 +8,34 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 *(nothing yet)*
 
+## [0.12.0] — 2026-07-08
+
+Phase 6 — "Reembolso" (SPEC-0015 Reimbursement Request, SPEC-0016 Analysis and Tracking,
+SPEC-0017 Preview, + reimbursement actions of SPEC-0018 Operator Simulation). Closes the Phase 6
+scope after backend/frontend/E2E gates and focused reimbursement mutation testing.
+
+### Added
+
+- **Reembolso**: beneficiary-facing hub with plan-eligibility gate, adhesion term, request
+  submission with uploads and idempotency, automatic analysis to `PROCESSAMENTO`, history/detail
+  with timeline, pendency resolution, bank correction after payment failure, paid-only statement and
+  glosa/denial reasons.
+- **Previa de reembolso**: immediate Consulta estimate from the plan table with mandatory
+  disclaimer, analyzed previews for other expense types with budget + medical order/report uploads,
+  list/detail and notification on conclusion.
+- **Operator-sim reimbursement actions**: `/api/sim/reimbursements/{id}/approve|deny|pendency|pay`
+  and `/api/sim/reimbursement-previews/{id}/conclude`, under the same dev-only, OPERATOR_SIM-only,
+  audited seam as guides/finance/telemedicine.
+
+### Technical
+
+- New Modulith module **`domain.reimbursement`** (ADR-0022), migration **V27** with registries,
+  reimbursement table, adhesion term, request/session/document/timeline tables, preview tables,
+  canonical reimbursement history seeds and a no-reimbursement E2E fixture. `domain.upload`
+  centralizes JPG/PNG/PDF magic-byte detection after the third upload consumer (DL-0027).
+- Open Questions resolved by DL-0030/DL-0031: complete submissions return current status
+  `PROCESSAMENTO`, no post-`PAGO` pendency in the POC and previews do not expire.
+
 ## [0.11.0] — 2026-07-07
 
 Phase 5 slice 5.3 — "Atendimento" (SPEC-0014 Service Channels and FAQ). Third and closing slice of

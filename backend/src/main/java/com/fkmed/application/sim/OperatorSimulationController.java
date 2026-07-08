@@ -168,4 +168,46 @@ public class OperatorSimulationController {
         operator,
         HttpRequestMetadata.current());
   }
+
+  /** Approves a reimbursement after engine calculation (SPEC-0018 BR5). */
+  @PostMapping("/reimbursements/{id}/approve")
+  SimReimbursementResult approveReimbursement(@PathVariable UUID id) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.approveReimbursement(id, operator, HttpRequestMetadata.current());
+  }
+
+  /** Denies a reimbursement with a visible reason (SPEC-0016 BR9, SPEC-0018 BR5). */
+  @PostMapping("/reimbursements/{id}/deny")
+  SimReimbursementResult denyReimbursement(
+      @PathVariable UUID id, @Valid @RequestBody SimDenyReimbursementRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.denyReimbursement(id, request.reason(), operator, HttpRequestMetadata.current());
+  }
+
+  /** Opens a documentation pendency (SPEC-0016 BR6, SPEC-0018 BR5). */
+  @PostMapping("/reimbursements/{id}/pendency")
+  SimReimbursementResult openReimbursementPendency(
+      @PathVariable UUID id, @Valid @RequestBody SimOpenReimbursementPendencyRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.openReimbursementPendency(
+        id, request.description(), operator, HttpRequestMetadata.current());
+  }
+
+  /** Executes reimbursement payment, idempotently for already-paid requests (SPEC-0018 BR6). */
+  @PostMapping("/reimbursements/{id}/pay")
+  SimReimbursementResult payReimbursement(
+      @PathVariable UUID id, @Valid @RequestBody SimPayReimbursementRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.payReimbursement(
+        id, request.success(), request.failureReason(), operator, HttpRequestMetadata.current());
+  }
+
+  /** Concludes an analyzed reimbursement preview (SPEC-0017, SPEC-0018 BR5). */
+  @PostMapping("/reimbursement-previews/{id}/conclude")
+  SimPreviewResult concludePreview(
+      @PathVariable UUID id, @Valid @RequestBody SimConcludePreviewRequest request) {
+    UUID operator = operatorAccess.requireOperator();
+    return sim.concludePreview(
+        id, request.estimatedValue(), operator, HttpRequestMetadata.current());
+  }
 }

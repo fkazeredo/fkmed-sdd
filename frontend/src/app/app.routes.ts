@@ -258,6 +258,10 @@ export const routes: Routes = [
         path: 'financas/quitacao',
         loadComponent: () => import('./features/financas/quitacao').then((m) => m.Quitacao),
       },
+      {
+        path: 'reembolso',
+        loadComponent: () => import('./features/reembolso/reembolso-hub').then((m) => m.ReembolsoHub),
+      },
       // SPEC-0014 (Phase 5, closes it): Atendimento — channel cards + antifraude section (anchor
       // target of the Home fraud banner, AC2), FAQ (search + category, AC1/AC3) and Central de
       // Libras (AC4). Reachable via the shell nav (nav-atendimento).

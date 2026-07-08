@@ -1,0 +1,365 @@
+<section class="mx-auto max-w-6xl p-4" aria-labelledby="reembolso-title" data-testid="reembolso-hub-page">
+  <h1 id="reembolso-title" class="mb-4 text-2xl font-semibold text-teal-800">
+    {{ 'reembolso.title' | translate }}
+  </h1>
+
+  @if (loading()) {
+    <p class="rounded-lg bg-white p-6 text-slate-500 shadow">{{ 'common.loading' | translate }}</p>
+  } @else if (errorKey()) {
+    <div class="rounded-lg bg-white p-6 shadow">
+      <p class="mb-3 text-slate-600">{{ errorKey()! | translate }}</p>
+      <button type="button" class="rounded bg-teal-700 px-4 py-2 text-white" (click)="load()">
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
+  } @else if (!eligible()) {
+    <div class="rounded-lg bg-white p-6 shadow" data-testid="reembolso-sem-direito">
+      <p class="font-medium text-teal-800">{{ 'reembolso.semDireito.title' | translate }}</p>
+      <p class="mt-2 text-slate-600">{{ 'reembolso.semDireito.texto' | translate }}</p>
+    </div>
+  } @else {
+    <div class="mb-4 flex flex-wrap gap-2" role="tablist" [attr.aria-label]="'reembolso.title' | translate">
+      @for (item of tabs; track item) {
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="tab() === item"
+          (click)="selectTab(item)"
+          class="rounded-t-lg px-4 py-2 font-medium"
+          [class]="tab() === item ? 'bg-white text-teal-800 shadow' : 'text-slate-500'"
+          [attr.data-testid]="'reembolso-tab-' + item"
+        >
+          {{ 'reembolso.tab.' + item | translate }}
+        </button>
+      }
+    </div>
+
+    @if (submitErrorKey()) {
+      <p class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" data-testid="reembolso-error">
+        {{ submitErrorKey()! | translate }}
+      </p>
+    }
+    @if (uploadErrorKey()) {
+      <p class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700" data-testid="reembolso-upload-error">
+        {{ uploadErrorKey()! | translate }}
+      </p>
+    }
+
+    @if (tab() === 'solicitar') {
+      <div class="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+        <form class="rounded-lg bg-white p-4 shadow" (ngSubmit)="submit()" data-testid="reembolso-form">
+          <div class="grid gap-3 sm:grid-cols-2">
+            <label class="text-sm">
+              <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.beneficiario' | translate }}</span>
+              <select class="w-full rounded border p-2" [(ngModel)]="form.beneficiaryId" name="beneficiaryId">
+                @for (beneficiary of context.accessible(); track beneficiary.beneficiaryId) {
+                  <option [value]="beneficiary.beneficiaryId">{{ beneficiary.firstName }}</option>
+                }
+              </select>
+            </label>
+            <label class="text-sm">
+              <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.tipo' | translate }}</span>
+              <select class="w-full rounded border p-2" [(ngModel)]="form.expenseTypeCode" name="expenseTypeCode">
+                @for (type of catalog()?.expenseTypes ?? []; track type.code) {
+                  <option [value]="type.code">{{ type.name }}</option>
+                }
+              </select>
+            </label>
+            <label class="text-sm">
+              <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.data' | translate }}</span>
+              <input class="w-full rounded border p-2" type="date" [(ngModel)]="form.careDate" name="careDate" required />
+            </label>
+            <label class="text-sm">
+              <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.valor' | translate }}</span>
+              <input class="w-full rounded border p-2" type="number" min="0.01" step="0.01" [(ngModel)]="form.amount" name="amount" required />
+            </label>
+          </div>
+
+          @if (form.expenseTypeCode === 'TERAPIA' || form.expenseTypeCode === 'PSICOLOGIA') {
+            <div class="mt-4 rounded-lg bg-slate-50 p-3">
+              <div class="mb-2 flex items-center justify-between">
+                <p class="font-medium text-teal-800">{{ 'reembolso.sessoes.title' | translate }}</p>
+                <button type="button" class="rounded bg-teal-700 px-3 py-1 text-sm text-white" (click)="addSession()">
+                  {{ 'reembolso.sessoes.add' | translate }}
+                </button>
+              </div>
+              @for (session of form.sessions; track $index) {
+                <div class="mb-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                  <input class="rounded border p-2" type="date" [(ngModel)]="session.sessionDate" [name]="'sessionDate' + $index" />
+                  <input class="rounded border p-2" type="number" min="0.01" step="0.01" [(ngModel)]="session.amount" [name]="'sessionAmount' + $index" />
+                  <button type="button" class="rounded border px-3 text-sm" (click)="removeSession($index)">
+                    {{ 'reembolso.remover' | translate }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <label class="text-sm">
+              <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.prestador' | translate }}</span>
+              <input class="w-full rounded border p-2" [(ngModel)]="form.providerName" name="providerName" required />
+            </label>
+            <label class="text-sm">
+              <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.especialidade' | translate }}</span>
+              <input class="w-full rounded border p-2" [(ngModel)]="form.providerSpecialty" name="providerSpecialty" required />
+            </label>
+            <label class="text-sm">
+              <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.conselho' | translate }}</span>
+              <select class="w-full rounded border p-2" [(ngModel)]="form.providerCouncilCode" name="providerCouncilCode">
+                @for (council of catalog()?.councils ?? []; track council.code) {
+                  <option [value]="council.code">{{ council.code }}</option>
+                }
+              </select>
+            </label>
+            <div class="grid grid-cols-[1fr_0.6fr] gap-2">
+              <input class="rounded border p-2" placeholder="123456" [(ngModel)]="form.providerCouncilNumber" name="providerCouncilNumber" />
+              <input class="rounded border p-2" placeholder="UF" maxlength="2" [(ngModel)]="form.providerCouncilUf" name="providerCouncilUf" />
+            </div>
+            <label class="text-sm sm:col-span-2">
+              <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.documentoPrestador' | translate }}</span>
+              <input class="w-full rounded border p-2" [(ngModel)]="form.providerDocument" name="providerDocument" required />
+            </label>
+          </div>
+
+          <div class="mt-4 grid gap-3 sm:grid-cols-5">
+            <select class="rounded border p-2 sm:col-span-2" [(ngModel)]="form.bankCode" name="bankCode">
+              @for (bank of catalog()?.banks ?? []; track bank.code) {
+                <option [value]="bank.code">{{ bank.code }} - {{ bank.name }}</option>
+              }
+            </select>
+            <input class="rounded border p-2" placeholder="Ag." [(ngModel)]="form.bankAgency" name="bankAgency" />
+            <input class="rounded border p-2" placeholder="Conta" [(ngModel)]="form.bankAccount" name="bankAccount" />
+            <input class="rounded border p-2" placeholder="Díg." [(ngModel)]="form.bankAccountDigit" name="bankAccountDigit" />
+          </div>
+
+          <div class="mt-4 rounded-lg border p-3">
+            <p class="mb-2 font-medium text-teal-800">{{ 'reembolso.documentos.title' | translate }}</p>
+            <div class="flex flex-wrap gap-2">
+              <label class="rounded border px-3 py-2 text-sm">
+                {{ 'reembolso.documentos.recibo' | translate }}
+                <input class="hidden" type="file" (change)="addRequestFile($event, 'RECEIPT')" />
+              </label>
+              <label class="rounded border px-3 py-2 text-sm">
+                {{ 'reembolso.documentos.pedido' | translate }}
+                <input class="hidden" type="file" (change)="addRequestFile($event, 'MEDICAL_ORDER')" />
+              </label>
+              <label class="rounded border px-3 py-2 text-sm">
+                {{ 'reembolso.documentos.complementar' | translate }}
+                <input class="hidden" type="file" (change)="addRequestFile($event, 'COMPLEMENTARY')" />
+              </label>
+            </div>
+            <ul class="mt-2 text-sm text-slate-600">
+              @for (file of requestFiles(); track $index) {
+                <li class="flex justify-between gap-2">
+                  <span>{{ file.category }} · {{ file.file.name }}</span>
+                  <button type="button" class="text-red-700" (click)="removeFile(requestFiles, $index)">
+                    {{ 'reembolso.remover' | translate }}
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <label class="mt-4 flex items-start gap-2 text-sm text-slate-700">
+            <input type="checkbox" [(ngModel)]="form.acceptedTerm" name="acceptedTerm" />
+            <span>{{ 'reembolso.termo.aceite' | translate }}</span>
+          </label>
+
+          <button
+            type="submit"
+            class="mt-4 rounded bg-teal-700 px-4 py-2 font-medium text-white disabled:opacity-60"
+            [disabled]="submitting()"
+            data-testid="reembolso-submit"
+          >
+            {{ submitting() ? ('common.processando' | translate) : ('reembolso.enviar' | translate) }}
+          </button>
+        </form>
+
+        <aside class="rounded-lg bg-white p-4 shadow">
+          @if (success()) {
+            <div class="mb-4 rounded-lg bg-teal-50 p-3" data-testid="reembolso-protocolo">
+              <p class="font-semibold text-teal-800">{{ success()!.protocol }}</p>
+              <p class="text-sm text-slate-600">
+                {{ 'reembolso.sucesso.status' | translate }} {{ 'reembolso.status.' + success()!.status | translate }}
+              </p>
+              <p class="text-sm text-slate-600">
+                {{ 'reembolso.sucesso.previsao' | translate }} {{ formatBrDate(success()!.expectedPaymentDate) }}
+              </p>
+            </div>
+          }
+          <p class="mb-2 font-medium text-teal-800">{{ 'reembolso.termo.title' | translate }}</p>
+          <p class="max-h-80 overflow-auto text-sm leading-6 text-slate-600">{{ termBody() }}</p>
+        </aside>
+      </div>
+    }
+
+    @if (tab() === 'historico') {
+      <div class="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+        <ul class="flex flex-col gap-2" data-testid="reembolso-historico">
+          @for (item of history(); track item.id) {
+            <li>
+              <button type="button" class="w-full rounded-lg bg-white p-4 text-left shadow" (click)="selectDetail(item.id)">
+                <div class="flex justify-between gap-3">
+                  <span class="font-semibold text-teal-800">{{ item.protocol }}</span>
+                  <span class="rounded-full px-2 py-1 text-xs font-medium" [class]="statusBadge(item.status)">
+                    {{ 'reembolso.status.' + item.status | translate }}
+                  </span>
+                </div>
+                <p class="text-sm text-slate-500">{{ item.beneficiary }} · {{ item.expenseType }}</p>
+                <p class="text-sm">{{ formatBrl(item.amountRequested) }}</p>
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (detail(); as detailView) {
+          <article class="rounded-lg bg-white p-4 shadow" data-testid="reembolso-detalhe">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="text-xl font-semibold text-teal-800">{{ detailView.protocol }}</h2>
+              <span class="rounded-full px-2 py-1 text-xs font-medium" [class]="statusBadge(detailView.status)">
+                {{ 'reembolso.status.' + detailView.status | translate }}
+              </span>
+            </div>
+
+            @if (detailView.pendency) {
+              <div class="mb-4 rounded-lg bg-amber-50 p-3" data-testid="reembolso-pendencia-banner">
+                <p class="font-medium text-amber-800">{{ detailView.pendency.description }}</p>
+                <label class="mt-2 inline-block rounded border px-3 py-2 text-sm">
+                  {{ 'reembolso.pendencia.anexar' | translate }}
+                  <input class="hidden" type="file" (change)="addPendencyFile($event, 'MEDICAL_ORDER')" />
+                </label>
+                <button type="button" class="ml-2 rounded bg-teal-700 px-3 py-2 text-sm text-white" (click)="resolvePendency()">
+                  {{ 'reembolso.pendencia.enviar' | translate }}
+                </button>
+              </div>
+            }
+
+            @if (detailView.status === 'PAGAMENTO_NAO_EFETUADO') {
+              <div class="mb-4 rounded-lg bg-red-50 p-3" data-testid="reembolso-banco-banner">
+                <p class="font-medium text-red-800">{{ 'reembolso.banco.falha' | translate }}</p>
+                <button type="button" class="mt-2 rounded bg-teal-700 px-3 py-2 text-sm text-white" (click)="correctBank()">
+                  {{ 'reembolso.banco.corrigir' | translate }}
+                </button>
+              </div>
+            }
+
+            <dl class="grid gap-2 text-sm sm:grid-cols-2">
+              <dt class="text-slate-500">{{ 'reembolso.valor.solicitado' | translate }}</dt>
+              <dd>{{ formatBrl(detailView.amountRequested) }}</dd>
+              <dt class="text-slate-500">{{ 'reembolso.valor.reembolsado' | translate }}</dt>
+              <dd>{{ formatBrl(detailView.amountReimbursed) }}</dd>
+              @if (detailView.glosa) {
+                <dt class="text-slate-500">{{ 'reembolso.valor.glosa' | translate }}</dt>
+                <dd>{{ formatBrl(detailView.glosa.amount) }} · {{ detailView.glosa.reason }}</dd>
+              }
+              @if (detailView.denialReason) {
+                <dt class="text-slate-500">{{ 'reembolso.valor.motivo' | translate }}</dt>
+                <dd>{{ detailView.denialReason }}</dd>
+              }
+              <dt class="text-slate-500">{{ 'reembolso.banco.conta' | translate }}</dt>
+              <dd>{{ detailView.bank.bankCode }} · {{ detailView.bank.account }}</dd>
+            </dl>
+
+            <ol class="mt-4 border-l border-slate-200 pl-4">
+              @for (event of detailView.timeline; track event.occurredAt) {
+                <li class="mb-3">
+                  <p class="font-medium text-teal-800">{{ 'reembolso.status.' + event.status | translate }}</p>
+                  <p class="text-sm text-slate-500">{{ formatBrDate(event.occurredAt) }} · {{ event.description }}</p>
+                </li>
+              }
+            </ol>
+          </article>
+        }
+      </div>
+    }
+
+    @if (tab() === 'extrato') {
+      <section class="rounded-lg bg-white p-4 shadow" data-testid="reembolso-extrato">
+        <div class="mb-4 flex flex-wrap items-end gap-3">
+          <label class="text-sm">
+            <span class="block text-slate-500">{{ 'reembolso.extrato.de' | translate }}</span>
+            <input class="rounded border p-2" type="date" [(ngModel)]="statementFrom" name="statementFrom" />
+          </label>
+          <label class="text-sm">
+            <span class="block text-slate-500">{{ 'reembolso.extrato.ate' | translate }}</span>
+            <input class="rounded border p-2" type="date" [(ngModel)]="statementTo" name="statementTo" />
+          </label>
+          <button type="button" class="rounded bg-teal-700 px-4 py-2 text-white" (click)="loadStatement()">
+            {{ 'reembolso.extrato.filtrar' | translate }}
+          </button>
+        </div>
+        <ul class="divide-y">
+          @for (item of statement()?.items ?? []; track item.id) {
+            <li class="flex justify-between py-3">
+              <span>{{ item.protocol }} · {{ item.beneficiary }}</span>
+              <strong>{{ formatBrl(item.amountPaid) }}</strong>
+            </li>
+          }
+        </ul>
+        <p class="mt-4 text-right font-semibold">{{ 'reembolso.extrato.total' | translate }} {{ formatBrl(statement()?.total) }}</p>
+      </section>
+    }
+
+    @if (tab() === 'previas') {
+      <div class="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+        <form class="rounded-lg bg-white p-4 shadow" (ngSubmit)="createPreview()" data-testid="reembolso-previa-form">
+          <label class="mb-3 block text-sm">
+            <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.beneficiario' | translate }}</span>
+            <select class="w-full rounded border p-2" [(ngModel)]="preview.beneficiaryId" name="previewBeneficiary">
+              @for (beneficiary of context.accessible(); track beneficiary.beneficiaryId) {
+                <option [value]="beneficiary.beneficiaryId">{{ beneficiary.firstName }}</option>
+              }
+            </select>
+          </label>
+          <label class="mb-3 block text-sm">
+            <span class="mb-1 block text-slate-600">{{ 'reembolso.campo.tipo' | translate }}</span>
+            <select class="w-full rounded border p-2" [(ngModel)]="preview.expenseTypeCode" name="previewType">
+              @for (type of catalog()?.expenseTypes ?? []; track type.code) {
+                <option [value]="type.code">{{ type.name }}</option>
+              }
+            </select>
+          </label>
+          @if (preview.expenseTypeCode !== 'CONSULTA') {
+            <div class="mb-3 flex flex-wrap gap-2">
+              <label class="rounded border px-3 py-2 text-sm">
+                {{ 'reembolso.previa.orcamento' | translate }}
+                <input class="hidden" type="file" (change)="addPreviewFile($event, 'BUDGET')" />
+              </label>
+              <label class="rounded border px-3 py-2 text-sm">
+                {{ 'reembolso.previa.pedido' | translate }}
+                <input class="hidden" type="file" (change)="addPreviewFile($event, 'MEDICAL_ORDER')" />
+              </label>
+            </div>
+          }
+          <button type="submit" class="rounded bg-teal-700 px-4 py-2 text-white" data-testid="reembolso-previa-submit">
+            {{ 'reembolso.previa.enviar' | translate }}
+          </button>
+          @if (previewResult()) {
+            <div class="mt-4 rounded-lg bg-teal-50 p-3" data-testid="reembolso-previa-resultado">
+              <p class="font-semibold text-teal-800">{{ previewResult()!.protocol }}</p>
+              <p>{{ formatBrl(previewResult()!.estimatedValue) }}</p>
+              <p class="text-sm text-slate-600">{{ previewResult()!.disclaimer }}</p>
+            </div>
+          }
+        </form>
+        <ul class="flex flex-col gap-2">
+          @for (item of previews(); track item.id) {
+            <li class="rounded-lg bg-white p-4 shadow">
+              <div class="flex justify-between gap-3">
+                <strong class="text-teal-800">{{ item.protocol }}</strong>
+                <span class="rounded-full px-2 py-1 text-xs font-medium" [class]="statusBadge(item.situation)">
+                  {{ 'reembolso.previa.status.' + item.situation | translate }}
+                </span>
+              </div>
+              <p class="text-sm text-slate-500">{{ item.beneficiary }} · {{ item.expenseType }}</p>
+              @if (item.estimatedValue !== undefined) {
+                <p>{{ formatBrl(item.estimatedValue) }}</p>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  }
+</section>

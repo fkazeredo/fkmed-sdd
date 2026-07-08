@@ -20,6 +20,23 @@ public final class NotificationEventTypes {
   /** A reimbursement was paid (business, opt-outable). */
   public static final String REIMBURSEMENT_PAID = "reimbursement.paid";
 
+  /** A reimbursement request was submitted (business, opt-outable — SPEC-0015 §Events). */
+  public static final String REIMBURSEMENT_SUBMITTED = "reimbursement.submitted";
+
+  public static final String REIMBURSEMENT_PENDENCY_OPENED = "reimbursement.pendency-opened";
+
+  public static final String REIMBURSEMENT_PENDENCY_RESOLVED = "reimbursement.pendency-resolved";
+
+  public static final String REIMBURSEMENT_APPROVED = "reimbursement.approved";
+
+  public static final String REIMBURSEMENT_DENIED = "reimbursement.denied";
+
+  public static final String REIMBURSEMENT_PAYMENT_FAILED = "reimbursement.payment-failed";
+
+  public static final String REIMBURSEMENT_CANCELLED = "reimbursement.cancelled";
+
+  public static final String PREVIEW_CONCLUDED = "preview.concluded";
+
   /** A guide changed status (business, opt-outable). */
   public static final String GUIDE_STATUS_CHANGED = "guide.status-changed";
 

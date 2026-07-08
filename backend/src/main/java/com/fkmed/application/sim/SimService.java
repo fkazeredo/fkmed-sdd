@@ -21,6 +21,15 @@ import com.fkmed.domain.guides.GuideTransitionResult;
 import com.fkmed.domain.guides.GuideType;
 import com.fkmed.domain.network.NetworkSpecialties;
 import com.fkmed.domain.network.SpecialtyOption;
+import com.fkmed.domain.reimbursement.PreviewNotFoundException;
+import com.fkmed.domain.reimbursement.ReimbursementActionResult;
+import com.fkmed.domain.reimbursement.ReimbursementCorrectionNotAllowedException;
+import com.fkmed.domain.reimbursement.ReimbursementInvalidTransitionException;
+import com.fkmed.domain.reimbursement.ReimbursementNotFoundException;
+import com.fkmed.domain.reimbursement.ReimbursementPendencyNotOpenException;
+import com.fkmed.domain.reimbursement.ReimbursementPreviewResult;
+import com.fkmed.domain.reimbursement.ReimbursementPreviewService;
+import com.fkmed.domain.reimbursement.ReimbursementService;
 import com.fkmed.domain.telemedicine.TeleClosureSummary;
 import com.fkmed.domain.telemedicine.TeleService;
 import com.fkmed.domain.telemedicine.TeleSessionNotFoundException;
@@ -58,6 +67,8 @@ public class SimService {
   private final GuideService guides;
   private final Invoices invoices;
   private final Copays copays;
+  private final ReimbursementService reimbursements;
+  private final ReimbursementPreviewService previews;
   private final NetworkSpecialties specialties;
   private final AuditRecorder auditRecorder;
 
@@ -316,6 +327,53 @@ public class SimService {
     return new SimCopayResult(id);
   }
 
+  @Transactional
+  public SimReimbursementResult approveReimbursement(
+      UUID id, UUID operatorAccountId, AuditContext auditContext) {
+    ReimbursementActionResult result = guardReimbursement(() -> reimbursements.approve(id));
+    audit(operatorAccountId, null, auditContext, "reimbursement.approve", id);
+    return reimbursementResultOf(result);
+  }
+
+  @Transactional
+  public SimReimbursementResult denyReimbursement(
+      UUID id, String reason, UUID operatorAccountId, AuditContext auditContext) {
+    ReimbursementActionResult result = guardReimbursement(() -> reimbursements.deny(id, reason));
+    audit(operatorAccountId, null, auditContext, "reimbursement.deny", id);
+    return reimbursementResultOf(result);
+  }
+
+  @Transactional
+  public SimReimbursementResult openReimbursementPendency(
+      UUID id, String description, UUID operatorAccountId, AuditContext auditContext) {
+    ReimbursementActionResult result =
+        guardReimbursement(() -> reimbursements.openPendency(id, description));
+    audit(operatorAccountId, null, auditContext, "reimbursement.open-pendency", id);
+    return reimbursementResultOf(result);
+  }
+
+  @Transactional
+  public SimReimbursementResult payReimbursement(
+      UUID id,
+      boolean success,
+      String failureReason,
+      UUID operatorAccountId,
+      AuditContext auditContext) {
+    ReimbursementActionResult result =
+        guardReimbursement(() -> reimbursements.pay(id, success, failureReason));
+    audit(operatorAccountId, null, auditContext, "reimbursement.pay", id);
+    return reimbursementResultOf(result);
+  }
+
+  @Transactional
+  public SimPreviewResult concludePreview(
+      UUID id, BigDecimal estimatedValue, UUID operatorAccountId, AuditContext auditContext) {
+    ReimbursementPreviewResult result = guardPreview(() -> previews.conclude(id, estimatedValue));
+    audit(operatorAccountId, null, auditContext, "preview.conclude", id);
+    return new SimPreviewResult(
+        result.id(), result.protocol(), result.situation(), result.estimatedValue());
+  }
+
   /**
    * Translates the owning module's not-found/invalid-transition signals to the sim's stable
    * contract (BR4): {@link GuideNotFoundException} to {@code 404}, an {@link IllegalStateException}
@@ -331,8 +389,34 @@ public class SimService {
     }
   }
 
+  private ReimbursementActionResult guardReimbursement(
+      Supplier<ReimbursementActionResult> transition) {
+    try {
+      return transition.get();
+    } catch (ReimbursementNotFoundException notFound) {
+      throw new SimTargetNotFoundException();
+    } catch (ReimbursementInvalidTransitionException
+        | ReimbursementPendencyNotOpenException
+        | ReimbursementCorrectionNotAllowedException invalid) {
+      throw new SimInvalidTransitionException();
+    }
+  }
+
+  private ReimbursementPreviewResult guardPreview(Supplier<ReimbursementPreviewResult> transition) {
+    try {
+      return transition.get();
+    } catch (PreviewNotFoundException notFound) {
+      throw new SimTargetNotFoundException();
+    }
+  }
+
   private static SimGuideResult resultOf(GuideTransitionResult guide) {
     return new SimGuideResult(guide.id(), guide.number(), guide.status());
+  }
+
+  private static SimReimbursementResult reimbursementResultOf(ReimbursementActionResult result) {
+    return new SimReimbursementResult(
+        result.id(), result.protocol(), result.status(), result.expectedPaymentDate());
   }
 
   private String stateOf(UUID sessionId) {

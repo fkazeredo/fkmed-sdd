@@ -1,6 +1,6 @@
 # 0016 - Reimbursement Analysis and Tracking
 
-**Status:** Draft
+**Status:** Approved
 
 ## Goal
 
@@ -179,10 +179,8 @@ audit surface; bank data masked everywhere.
 
 ## Open Questions
 
-- **OQ1** — The adhesion term (SPEC-0015 BR3) says audits can demand originals **even
-  after approval**, but the BR1 state machine has no post-`PAGO` pendency transition —
-  drafts conflict · affects the state model · proposed default: keep BR1 as-is in the POC
-  (post-payment audits handled through channels, outside the system).
+None. Former OQ1 is resolved by DL-0031: the POC keeps the BR1 state machine as-is, with
+post-payment audits handled through channels outside the portal.
 
 ## Out of Scope
 

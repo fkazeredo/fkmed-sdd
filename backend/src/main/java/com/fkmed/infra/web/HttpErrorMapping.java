@@ -42,6 +42,26 @@ import com.fkmed.domain.plan.PhotoInvalidContentException;
 import com.fkmed.domain.plan.PhotoTooLargeException;
 import com.fkmed.domain.plan.PlanNotFoundException;
 import com.fkmed.domain.plan.UfInvalidException;
+import com.fkmed.domain.reimbursement.PreviewAttachmentsRequiredException;
+import com.fkmed.domain.reimbursement.PreviewNotFoundException;
+import com.fkmed.domain.reimbursement.ReimbursementAmountInvalidException;
+import com.fkmed.domain.reimbursement.ReimbursementBankAccountNotAllowedException;
+import com.fkmed.domain.reimbursement.ReimbursementCareDateInvalidException;
+import com.fkmed.domain.reimbursement.ReimbursementContactsMissingException;
+import com.fkmed.domain.reimbursement.ReimbursementCorrectionNotAllowedException;
+import com.fkmed.domain.reimbursement.ReimbursementDeadlineExpiredException;
+import com.fkmed.domain.reimbursement.ReimbursementDocumentInvalidContentException;
+import com.fkmed.domain.reimbursement.ReimbursementDocumentRequiredException;
+import com.fkmed.domain.reimbursement.ReimbursementDocumentTooLargeException;
+import com.fkmed.domain.reimbursement.ReimbursementIdempotencyKeyInvalidException;
+import com.fkmed.domain.reimbursement.ReimbursementInvalidTransitionException;
+import com.fkmed.domain.reimbursement.ReimbursementNotEligibleException;
+import com.fkmed.domain.reimbursement.ReimbursementNotFoundException;
+import com.fkmed.domain.reimbursement.ReimbursementPendencyNotOpenException;
+import com.fkmed.domain.reimbursement.ReimbursementProviderInvalidException;
+import com.fkmed.domain.reimbursement.ReimbursementSessionsSumMismatchException;
+import com.fkmed.domain.reimbursement.ReimbursementTermNotAcceptedException;
+import com.fkmed.domain.reimbursement.ReimbursementTotalSizeExceededException;
 import com.fkmed.domain.telemedicine.TeleComplaintInvalidException;
 import com.fkmed.domain.telemedicine.TeleJoinWindowClosedException;
 import com.fkmed.domain.telemedicine.TeleSessionNotFoundException;
@@ -131,7 +151,34 @@ public final class HttpErrorMapping {
           Map.entry(FinanceTitularOnlyException.class, HttpStatus.FORBIDDEN),
           Map.entry(LineInvalidFormatException.class, HttpStatus.UNPROCESSABLE_CONTENT),
           Map.entry(InvoiceNotFoundException.class, HttpStatus.NOT_FOUND),
-          Map.entry(YearNotSettledException.class, HttpStatus.CONFLICT));
+          Map.entry(YearNotSettledException.class, HttpStatus.CONFLICT),
+          // SPEC-0015 Error Behavior.
+          Map.entry(ReimbursementNotEligibleException.class, HttpStatus.FORBIDDEN),
+          Map.entry(ReimbursementContactsMissingException.class, HttpStatus.CONFLICT),
+          Map.entry(ReimbursementTermNotAcceptedException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(
+              ReimbursementIdempotencyKeyInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(ReimbursementDeadlineExpiredException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(ReimbursementCareDateInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(ReimbursementAmountInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(
+              ReimbursementSessionsSumMismatchException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(ReimbursementDocumentTooLargeException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(
+              ReimbursementTotalSizeExceededException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(
+              ReimbursementDocumentInvalidContentException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(ReimbursementDocumentRequiredException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(ReimbursementProviderInvalidException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(
+              ReimbursementBankAccountNotAllowedException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          // SPEC-0016/0017 Error Behavior.
+          Map.entry(ReimbursementPendencyNotOpenException.class, HttpStatus.CONFLICT),
+          Map.entry(ReimbursementCorrectionNotAllowedException.class, HttpStatus.CONFLICT),
+          Map.entry(ReimbursementInvalidTransitionException.class, HttpStatus.CONFLICT),
+          Map.entry(ReimbursementNotFoundException.class, HttpStatus.NOT_FOUND),
+          Map.entry(PreviewAttachmentsRequiredException.class, HttpStatus.UNPROCESSABLE_CONTENT),
+          Map.entry(PreviewNotFoundException.class, HttpStatus.NOT_FOUND));
 
   private HttpErrorMapping() {}
 

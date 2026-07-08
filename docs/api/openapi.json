@@ -3,7 +3,7 @@
   "info" : {
     "title" : "FKMed",
     "description" : "FKMed — health plan beneficiary portal API",
-    "version" : "0.11.0"
+    "version" : "0.12.0"
   },
   "servers" : [ {
     "url" : "http://localhost",
@@ -322,6 +322,181 @@
         }
       }
     },
+    "/api/sim/reimbursements/{id}/pendency" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "openReimbursementPendency",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SimOpenReimbursementPendencyRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimReimbursementResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sim/reimbursements/{id}/pay" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "payReimbursement",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SimPayReimbursementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimReimbursementResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sim/reimbursements/{id}/deny" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "denyReimbursement",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SimDenyReimbursementRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimReimbursementResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sim/reimbursements/{id}/approve" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "approveReimbursement",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimReimbursementResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sim/reimbursement-previews/{id}/conclude" : {
+      "post" : {
+        "tags" : [ "operator-simulation" ],
+        "operationId" : "concludePreview",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SimConcludePreviewRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SimPreviewResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sim/guides" : {
       "post" : {
         "tags" : [ "operator-simulation" ],
@@ -619,6 +794,260 @@
         }
       }
     },
+    "/api/reimbursements" : {
+      "get" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "history",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "status",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "PROCESSAMENTO", "PENDENTE_DOCUMENTACAO", "APROVADO", "PAGO", "PAGAMENTO_NAO_EFETUADO", "NEGADO", "CANCELADO" ]
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ReimbursementHistoryItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "submit",
+        "parameters" : [ {
+          "name" : "Idempotency-Key",
+          "in" : "header",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "request" : {
+                    "$ref" : "#/components/schemas/ReimbursementSubmitRequest"
+                  },
+                  "documents" : {
+                    "type" : "array",
+                    "items" : {
+                      "type" : "string",
+                      "format" : "binary"
+                    }
+                  }
+                },
+                "required" : [ "request" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReimbursementSubmissionResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reimbursements/{id}/pendency-documents" : {
+      "post" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "resolvePendency",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "request" : {
+                    "$ref" : "#/components/schemas/ReimbursementPendencyDocumentsRequest"
+                  },
+                  "documents" : {
+                    "type" : "array",
+                    "items" : {
+                      "type" : "string",
+                      "format" : "binary"
+                    }
+                  }
+                },
+                "required" : [ "request" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReimbursementActionResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reimbursements/{id}/bank-correction" : {
+      "post" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "correctBank",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReimbursementBankCorrectionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReimbursementActionResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reimbursement-previews" : {
+      "get" : {
+        "tags" : [ "reimbursement-preview-controller" ],
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ReimbursementPreviewListItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "reimbursement-preview-controller" ],
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "request" : {
+                    "$ref" : "#/components/schemas/ReimbursementPreviewRequest"
+                  },
+                  "documents" : {
+                    "type" : "array",
+                    "items" : {
+                      "type" : "string",
+                      "format" : "binary"
+                    }
+                  }
+                },
+                "required" : [ "request" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReimbursementPreviewResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notifications/{id}/read" : {
       "post" : {
         "tags" : [ "notification-controller" ],
@@ -843,7 +1272,7 @@
     "/api/appointments" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "list",
+        "operationId" : "list_1",
         "parameters" : [ {
           "name" : "beneficiaryId",
           "in" : "query",
@@ -1275,6 +1704,183 @@
         }
       }
     },
+    "/api/reimbursements/{id}" : {
+      "get" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "detail",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReimbursementDetailView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reimbursements/term" : {
+      "get" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "term",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdhesionTermView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reimbursements/statement" : {
+      "get" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "statement",
+        "parameters" : [ {
+          "name" : "beneficiaryId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReimbursementStatementView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reimbursements/eligibility" : {
+      "get" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "eligibility",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EligibilityView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reimbursements/documentation-guide" : {
+      "get" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "documentationGuide",
+        "parameters" : [ {
+          "name" : "type",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocumentationGuideView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reimbursements/catalog" : {
+      "get" : {
+        "tags" : [ "reimbursement-controller" ],
+        "operationId" : "catalog_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CatalogView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reimbursement-previews/{id}" : {
+      "get" : {
+        "tags" : [ "reimbursement-preview-controller" ],
+        "operationId" : "detail_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReimbursementPreviewResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/plan/my-plan" : {
       "get" : {
         "tags" : [ "plan-controller" ],
@@ -1296,7 +1902,7 @@
     "/api/notifications" : {
       "get" : {
         "tags" : [ "notification-controller" ],
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "parameters" : [ {
           "name" : "page",
           "in" : "query",
@@ -1626,7 +2232,7 @@
     "/api/guides" : {
       "get" : {
         "tags" : [ "guide-controller" ],
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "name" : "beneficiaryId",
           "in" : "query",
@@ -1672,7 +2278,7 @@
     "/api/guides/{id}" : {
       "get" : {
         "tags" : [ "guide-controller" ],
-        "operationId" : "detail",
+        "operationId" : "detail_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2009,7 +2615,7 @@
     "/api/clinical-documents" : {
       "get" : {
         "tags" : [ "clinical-document-controller" ],
-        "operationId" : "list_3",
+        "operationId" : "list_4",
         "parameters" : [ {
           "name" : "category",
           "in" : "query",
@@ -2067,7 +2673,7 @@
     "/api/clinical-documents/{id}" : {
       "get" : {
         "tags" : [ "clinical-document-controller" ],
-        "operationId" : "detail_1",
+        "operationId" : "detail_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2666,6 +3272,86 @@
         },
         "required" : [ "crm", "professionalName" ]
       },
+      "SimOpenReimbursementPendencyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "description" ]
+      },
+      "SimReimbursementResult" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "PROCESSAMENTO", "PENDENTE_DOCUMENTACAO", "APROVADO", "PAGO", "PAGAMENTO_NAO_EFETUADO", "NEGADO", "CANCELADO" ]
+          },
+          "expectedPaymentDate" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "SimPayReimbursementRequest" : {
+        "type" : "object",
+        "properties" : {
+          "outcome" : {
+            "type" : "string",
+            "enum" : [ "SUCCESS", "FAILURE" ]
+          },
+          "failureReason" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SimDenyReimbursementRequest" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "reason" ]
+      },
+      "SimConcludePreviewRequest" : {
+        "type" : "object",
+        "properties" : {
+          "estimatedValue" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "estimatedValue" ]
+      },
+      "SimPreviewResult" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "situation" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "CONCLUIDA" ]
+          },
+          "estimatedValue" : {
+            "type" : "number"
+          }
+        }
+      },
       "GuideItemRequest" : {
         "type" : "object",
         "properties" : {
@@ -2926,6 +3612,245 @@
           "documentId" : {
             "type" : "string",
             "format" : "uuid"
+          }
+        }
+      },
+      "ReimbursementDocumentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "category" : {
+            "type" : "string",
+            "enum" : [ "RECEIPT", "MEDICAL_ORDER", "COMPLEMENTARY", "BUDGET" ]
+          },
+          "fileName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "category" ]
+      },
+      "ReimbursementSessionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "sessionDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amount" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "amount", "sessionDate" ]
+      },
+      "ReimbursementSubmitRequest" : {
+        "type" : "object",
+        "properties" : {
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "expenseTypeCode" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "careDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amount" : {
+            "type" : "number"
+          },
+          "sessions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReimbursementSessionRequest"
+            }
+          },
+          "providerName" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "providerCouncilCode" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "providerCouncilNumber" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "providerCouncilUf" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "providerDocument" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "providerSpecialty" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bankCode" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bankAgency" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bankAccount" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bankAccountDigit" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bankAccountType" : {
+            "type" : "string",
+            "enum" : [ "CORRENTE", "POUPANCA" ]
+          },
+          "acceptedTermVersion" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "documents" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReimbursementDocumentRequest"
+            }
+          }
+        },
+        "required" : [ "acceptedTermVersion", "amount", "bankAccount", "bankAccountDigit", "bankAccountType", "bankAgency", "bankCode", "beneficiaryId", "careDate", "expenseTypeCode", "providerCouncilCode", "providerCouncilNumber", "providerCouncilUf", "providerDocument", "providerName", "providerSpecialty" ]
+      },
+      "ReimbursementSubmissionResult" : {
+        "type" : "object",
+        "properties" : {
+          "protocol" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "PROCESSAMENTO", "PENDENTE_DOCUMENTACAO", "APROVADO", "PAGO", "PAGAMENTO_NAO_EFETUADO", "NEGADO", "CANCELADO" ]
+          },
+          "expectedPaymentDate" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "ReimbursementPendencyDocumentsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "documents" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReimbursementDocumentRequest"
+            }
+          }
+        }
+      },
+      "ReimbursementActionResult" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "PROCESSAMENTO", "PENDENTE_DOCUMENTACAO", "APROVADO", "PAGO", "PAGAMENTO_NAO_EFETUADO", "NEGADO", "CANCELADO" ]
+          },
+          "expectedPaymentDate" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "ReimbursementBankCorrectionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "bankCode" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bankAgency" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bankAccount" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bankAccountDigit" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "bankAccountType" : {
+            "type" : "string",
+            "enum" : [ "CORRENTE", "POUPANCA" ]
+          }
+        },
+        "required" : [ "bankAccount", "bankAccountDigit", "bankAccountType", "bankAgency", "bankCode" ]
+      },
+      "ReimbursementPreviewRequest" : {
+        "type" : "object",
+        "properties" : {
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "expenseTypeCode" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "documents" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReimbursementDocumentRequest"
+            }
+          }
+        },
+        "required" : [ "beneficiaryId", "expenseTypeCode" ]
+      },
+      "ReimbursementPreviewResult" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "expenseType" : {
+            "type" : "string"
+          },
+          "beneficiary" : {
+            "type" : "string"
+          },
+          "situation" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "CONCLUIDA" ]
+          },
+          "estimatedValue" : {
+            "type" : "number"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "concludedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "base" : {
+            "type" : "string"
+          },
+          "disclaimer" : {
+            "type" : "string"
           }
         }
       },
@@ -3353,6 +4278,352 @@
           },
           "message" : {
             "type" : "string"
+          }
+        }
+      },
+      "ReimbursementHistoryItem" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "expenseType" : {
+            "type" : "string"
+          },
+          "beneficiary" : {
+            "type" : "string"
+          },
+          "requestedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "amountRequested" : {
+            "type" : "number"
+          },
+          "amountReimbursed" : {
+            "type" : "number"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "PROCESSAMENTO", "PENDENTE_DOCUMENTACAO", "APROVADO", "PAGO", "PAGAMENTO_NAO_EFETUADO", "NEGADO", "CANCELADO" ]
+          }
+        }
+      },
+      "BankView" : {
+        "type" : "object",
+        "properties" : {
+          "bankCode" : {
+            "type" : "string"
+          },
+          "agency" : {
+            "type" : "string"
+          },
+          "account" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "CORRENTE", "POUPANCA" ]
+          }
+        }
+      },
+      "DocumentView" : {
+        "type" : "object",
+        "properties" : {
+          "category" : {
+            "type" : "string",
+            "enum" : [ "RECEIPT", "MEDICAL_ORDER", "COMPLEMENTARY", "BUDGET" ]
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "fileSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "uploadedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "GlosaView" : {
+        "type" : "object",
+        "properties" : {
+          "amount" : {
+            "type" : "number"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PendencyView" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "deadlineAt" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "ProviderView" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "councilCode" : {
+            "type" : "string"
+          },
+          "councilNumber" : {
+            "type" : "string"
+          },
+          "councilUf" : {
+            "type" : "string"
+          },
+          "specialty" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ReimbursementDetailView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "expenseType" : {
+            "type" : "string"
+          },
+          "beneficiary" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "PROCESSAMENTO", "PENDENTE_DOCUMENTACAO", "APROVADO", "PAGO", "PAGAMENTO_NAO_EFETUADO", "NEGADO", "CANCELADO" ]
+          },
+          "careDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "requestedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "expectedPaymentDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amountRequested" : {
+            "type" : "number"
+          },
+          "amountReimbursed" : {
+            "type" : "number"
+          },
+          "glosa" : {
+            "$ref" : "#/components/schemas/GlosaView"
+          },
+          "denialReason" : {
+            "type" : "string"
+          },
+          "pendency" : {
+            "$ref" : "#/components/schemas/PendencyView"
+          },
+          "bank" : {
+            "$ref" : "#/components/schemas/BankView"
+          },
+          "provider" : {
+            "$ref" : "#/components/schemas/ProviderView"
+          },
+          "documents" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocumentView"
+            }
+          },
+          "timeline" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TimelineView"
+            }
+          },
+          "regulatoryNote" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TimelineView" : {
+        "type" : "object",
+        "properties" : {
+          "occurredAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "PROCESSAMENTO", "PENDENTE_DOCUMENTACAO", "APROVADO", "PAGO", "PAGAMENTO_NAO_EFETUADO", "NEGADO", "CANCELADO" ]
+          },
+          "description" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AdhesionTermView" : {
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "body" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ReimbursementStatementView" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StatementItem"
+            }
+          },
+          "total" : {
+            "type" : "number"
+          }
+        }
+      },
+      "StatementItem" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "beneficiary" : {
+            "type" : "string"
+          },
+          "paidAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "amountPaid" : {
+            "type" : "number"
+          }
+        }
+      },
+      "EligibilityView" : {
+        "type" : "object",
+        "properties" : {
+          "eligible" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "DocumentationGuideView" : {
+        "type" : "object",
+        "properties" : {
+          "expenseType" : {
+            "type" : "string"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "CatalogView" : {
+        "type" : "object",
+        "properties" : {
+          "expenseTypes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExpenseTypeView"
+            }
+          },
+          "councils" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProfessionalCouncilView"
+            }
+          },
+          "banks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BankView"
+            }
+          }
+        }
+      },
+      "ExpenseTypeView" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ProfessionalCouncilView" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ReimbursementPreviewListItem" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "expenseType" : {
+            "type" : "string"
+          },
+          "beneficiary" : {
+            "type" : "string"
+          },
+          "requestedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "situation" : {
+            "type" : "string",
+            "enum" : [ "EM_ANALISE", "CONCLUIDA" ]
+          },
+          "estimatedValue" : {
+            "type" : "number"
           }
         }
       },
