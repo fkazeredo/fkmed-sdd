@@ -27,3 +27,4 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 | [0018](0018-guides-module.md) | Module map revision — `domain.guides` (authorization guides + attendance token, SPEC-0012) | Proposed |
 | [0019](0019-finance-module.md) | Module map revision — `domain.finance` (Plano › Finanças, SPEC-0013) | Proposed |
 | [0020](0020-operator-simulation-full-api.md) | Operator Simulation full API — guides + finance actions (extends ADR-0017, SPEC-0018) | Proposed |
+| [0021](0021-support-module.md) | Module map revision — `domain.support` (Canais de Atendimento e FAQ, SPEC-0014) | Proposed |

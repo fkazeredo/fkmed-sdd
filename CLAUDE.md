@@ -43,6 +43,12 @@ Routing Map below. Inherited architecture decisions live in `docs/DECISIONS-BASE
    the main thread meanwhile, and report unknown or stale status the moment you notice it —
    silence is not a status update.
 
+## Codex interoperability
+
+This repository also supports Codex. `AGENTS.md` is the Codex entry point and `.agents/skills/`
+contains repo-local Codex skills. Keep `.claude/` and `.agents/` as tool-specific wrappers
+around the same shared truth: this file, specs, ADRs and architecture docs.
+
 ## Non-negotiable invariants
 
 1. **Rule Zero: avoid overengineering.** Architecture must reduce complexity. Patterns,

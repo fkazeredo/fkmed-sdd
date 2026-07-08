@@ -258,6 +258,22 @@ export const routes: Routes = [
         path: 'financas/quitacao',
         loadComponent: () => import('./features/financas/quitacao').then((m) => m.Quitacao),
       },
+      // SPEC-0014 (Phase 5, closes it): Atendimento — channel cards + antifraude section (anchor
+      // target of the Home fraud banner, AC2), FAQ (search + category, AC1/AC3) and Central de
+      // Libras (AC4). Reachable via the shell nav (nav-atendimento).
+      {
+        path: 'atendimento',
+        loadComponent: () =>
+          import('./features/atendimento/atendimento-hub').then((m) => m.AtendimentoHub),
+      },
+      {
+        path: 'atendimento/faq',
+        loadComponent: () => import('./features/atendimento/faq').then((m) => m.Faq),
+      },
+      {
+        path: 'atendimento/libras',
+        loadComponent: () => import('./features/atendimento/libras').then((m) => m.Libras),
+      },
     ],
   },
 ];

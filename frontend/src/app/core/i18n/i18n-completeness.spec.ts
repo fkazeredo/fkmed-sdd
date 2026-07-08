@@ -45,6 +45,9 @@ import { ValidarBoleto } from '../../features/financas/validar-boleto';
 import { Coparticipacao } from '../../features/financas/coparticipacao';
 import { ImpostoRenda } from '../../features/financas/imposto-renda';
 import { Quitacao } from '../../features/financas/quitacao';
+import { AtendimentoHub } from '../../features/atendimento/atendimento-hub';
+import { Faq } from '../../features/atendimento/faq';
+import { Libras } from '../../features/atendimento/libras';
 import { APP_VERSION } from '../config/app-version';
 import { provideI18n, ReportMissingTranslationHandler } from './provide-i18n';
 import { TRANSLATIONS } from './translations';
@@ -99,6 +102,9 @@ describe('i18n completeness (pt-BR)', () => {
         Coparticipacao,
         ImpostoRenda,
         Quitacao,
+        AtendimentoHub,
+        Faq,
+        Libras,
       ],
       providers: [
         provideRouter([]),
@@ -1057,6 +1063,90 @@ describe('i18n completeness (pt-BR)', () => {
     expect(
       Array.from(handler.missing),
       'SPEC-0013 Finanças UI keys missing from the pt-BR bundle',
+    ).toHaveLength(0);
+  });
+
+  it('renders every SPEC-0014 Atendimento screen without a missing translation', async () => {
+    const handler = TestBed.inject(MissingTranslationHandler) as ReportMissingTranslationHandler;
+    const http = TestBed.inject(HttpTestingController);
+    TestBed.inject(BeneficiaryContextService).active.set({
+      beneficiaryId: 'maria-id',
+      firstName: 'MARIA',
+      role: 'TITULAR',
+    });
+
+    // Hub: channel cards (grouped Central 24h + WhatsApp + Ouvidoria + ANS) and the antifraud
+    // section (BR1/BR3, AC2 anchor).
+    const hub = TestBed.createComponent(AtendimentoHub);
+    hub.detectChanges();
+    http.expectOne('/api/support/channels').flush([
+      { type: 'CENTRAL', label: 'Central de Atendimento 24h', sublabel: 'Capitais', value: '4004-1234', order: 1 },
+      {
+        type: 'CENTRAL',
+        label: 'Central de Atendimento 24h',
+        sublabel: 'Demais localidades',
+        value: '0800 123 4567',
+        order: 2,
+      },
+      { type: 'WHATSAPP', label: 'WhatsApp oficial', value: '+55 11 91234-5678', order: 3 },
+      { type: 'OUVIDORIA', label: 'Ouvidoria', value: '0800 765 4321', hours: 'Seg. a sex., 8h às 18h', order: 4 },
+      { type: 'ANS', label: 'ANS', value: '0800 000 0000', order: 5 },
+    ]);
+    http.expectOne('/api/support/antifraud').flush({
+      title: 'Alerta de golpe!',
+      message: 'A operadora não solicita dados ou pagamentos por WhatsApp.',
+    });
+    hub.detectChanges();
+
+    // Hub error + retry.
+    const hubError = TestBed.createComponent(AtendimentoHub);
+    hubError.detectChanges();
+    http.expectOne('/api/support/channels').flush({ code: 'x' }, { status: 500, statusText: 'Server Error' });
+    http.expectOne('/api/support/antifraud').flush({ code: 'x' }, { status: 500, statusText: 'Server Error' });
+    hubError.detectChanges();
+
+    // FAQ: default list, a search with a match, an empty-result search, and a category filter.
+    const faq = TestBed.createComponent(Faq);
+    faq.detectChanges();
+    http
+      .expectOne((r) => r.url === '/api/support/faq')
+      .flush([
+        { id: 'q1', category: 'REEMBOLSO', question: 'Qual é o prazo para reembolso?', answer: 'Até 12 meses.', order: 1 },
+      ]);
+    faq.detectChanges();
+    faq.componentInstance.selectCategory('REDE');
+    faq.detectChanges();
+    http.expectOne((r) => r.url === '/api/support/faq' && r.params.get('category') === 'REDE').flush([]);
+    faq.detectChanges();
+
+    // Central de Libras: the two AC4 outcomes (within hours / next period) + the error state.
+    const libras = TestBed.createComponent(Libras);
+    libras.detectChanges();
+    (libras.nativeElement.querySelector('[data-testid="libras-solicitar"]') as HTMLElement).click();
+    http
+      .expectOne('/api/support/libras-requests')
+      .flush({ situation: 'REGISTERED', nextStep: 'videocall-shortly' });
+    libras.detectChanges();
+
+    const libras2 = TestBed.createComponent(Libras);
+    libras2.detectChanges();
+    (libras2.nativeElement.querySelector('[data-testid="libras-solicitar"]') as HTMLElement).click();
+    http
+      .expectOne('/api/support/libras-requests')
+      .flush({ situation: 'REGISTERED', nextStep: 'next-period', hoursStart: '08:00', hoursEnd: '18:00' });
+    libras2.detectChanges();
+
+    const libras3 = TestBed.createComponent(Libras);
+    libras3.detectChanges();
+    (libras3.nativeElement.querySelector('[data-testid="libras-solicitar"]') as HTMLElement).click();
+    http
+      .expectOne('/api/support/libras-requests')
+      .flush({ code: 'x' }, { status: 500, statusText: 'Server Error' });
+    libras3.detectChanges();
+
+    expect(
+      Array.from(handler.missing),
+      'SPEC-0014 Atendimento UI keys missing from the pt-BR bundle',
     ).toHaveLength(0);
   });
 });

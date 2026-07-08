@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { AccessibleBeneficiary } from '../../core/context/accessible-beneficiaries.api';
 import { BeneficiaryContextService } from '../../core/context/beneficiary-context.service';
 import { BeneficiarySummary } from '../../core/context/beneficiary-summary.api';
@@ -58,7 +59,7 @@ const BOLETO_BANNER: HomeBanner = {
   title: 'Valide seu boleto',
   text: 'Confira a autenticidade do seu boleto antes de pagar.',
   buttonLabel: 'Validar boleto',
-  destination: '/boletos/validar',
+  destination: '/financas/validar',
   imageUrl: null,
   order: 2,
 };
@@ -78,7 +79,7 @@ describe('Home', () => {
     sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [Home],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideI18n()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideI18n(), provideRouter([])],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
     context = TestBed.inject(BeneficiaryContextService);
@@ -281,19 +282,18 @@ describe('Home', () => {
       const el = fixture.nativeElement as HTMLElement;
       // PrimeNG's circular carousel clones the edge items for seamless wraparound, so DOM order
       // of `[data-testid="banner-item"]` isn't the content order — assert on the section's full
-      // text instead of "the first match" (real behavior: both banners are present and CTAs are
-      // disabled with the "em breve" hint, per the phased-delivery note).
+      // text instead of "the first match" (real behavior: both banners are present and CTAs
+      // navigate to their operator-managed destination — SPEC-0014 AC2).
       const bannersSection = el.querySelector('[data-testid="home-banners"]');
       expect(bannersSection).not.toBeNull();
       expect(bannersSection?.textContent).toContain('Alerta de golpe!');
       expect(bannersSection?.textContent).toContain('Valide seu boleto');
 
-      const buttons = Array.from(el.querySelectorAll('[data-testid="banner-button"]')) as HTMLButtonElement[];
-      expect(buttons.length).toBeGreaterThan(0);
-      for (const button of buttons) {
-        expect(button.disabled).toBe(true);
-      }
-      expect(el.querySelectorAll('[data-testid="banner-em-breve"]').length).toBeGreaterThan(0);
+      const links = Array.from(el.querySelectorAll('[data-testid="banner-button"]')) as HTMLAnchorElement[];
+      expect(links.length).toBeGreaterThan(0);
+      const hrefs = links.map((link) => link.getAttribute('href'));
+      expect(hrefs).toContain('/atendimento#antifraude');
+      expect(hrefs).toContain('/financas/validar');
     });
 
     it('rotates automatically every 6 seconds (BR6)', async () => {

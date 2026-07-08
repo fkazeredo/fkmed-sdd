@@ -677,5 +677,37 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     'financas.negado.mensagem':
       'As informações financeiras do contrato estão disponíveis apenas para o titular. Selecione o titular no topo da página para acessá-las.',
     'financas.negado.voltar': 'Voltar para o Início',
+    // Atendimento (SPEC-0014) — canais, antifraude, FAQ e Central de Libras
+    'nav.atendimento': 'Atendimento',
+    'atendimento.hub.title': 'Atendimento',
+    'atendimento.hub.linkFaq': 'Perguntas frequentes',
+    'atendimento.hub.linkLibras': 'Central de Libras',
+    'atendimento.canais.title': 'Canais de atendimento',
+    // Seção antifraude (BR3) — destino do banner de golpe da Home
+    'atendimento.antifraude.dica1': 'Nunca compartilhe sua senha ou token com ninguém.',
+    'atendimento.antifraude.dica2': 'Valide o boleto antes de pagar no',
+    'atendimento.antifraude.linkValidador': 'validador antifraude',
+    'atendimento.antifraude.dica3': 'Use somente os canais oficiais listados nesta página.',
+    // FAQ (BR5/BR6)
+    'atendimento.faq.title': 'Perguntas frequentes',
+    'atendimento.faq.buscarPlaceholder': 'Buscar por palavra-chave',
+    'atendimento.faq.semResultado': "Nenhum resultado para '{{termo}}'",
+    'atendimento.faq.categoria.TODAS': 'Todas',
+    'atendimento.faq.categoria.REEMBOLSO': 'Reembolso',
+    'atendimento.faq.categoria.CARTEIRINHA': 'Carteirinha',
+    'atendimento.faq.categoria.AGENDAMENTO': 'Agendamento',
+    'atendimento.faq.categoria.TELEMEDICINA': 'Telemedicina',
+    'atendimento.faq.categoria.BOLETOS': 'Boletos',
+    'atendimento.faq.categoria.REDE': 'Rede',
+    // Central de Libras (BR4)
+    'atendimento.libras.title': 'Central de Libras',
+    'atendimento.libras.explicacao':
+      'Atendimento em Língua Brasileira de Sinais (Libras) por videochamada com um intérprete da nossa equipe.',
+    'atendimento.libras.horario': 'Funcionamento: segunda a sexta, das 08h às 18h.',
+    'atendimento.libras.solicitar': 'Solicitar atendimento em Libras',
+    'atendimento.libras.confirmacao.dentroHorario':
+      'Solicitação registrada! Nossa equipe iniciará a videochamada em instantes.',
+    'atendimento.libras.confirmacao.foraHorario':
+      'Solicitação registrada! Estamos fora do horário de atendimento ({{inicio}} às {{fim}}, seg. a sex.) — vamos atendê-lo no próximo período.',
   },
 };

@@ -1,0 +1,32 @@
+<section class="mx-auto max-w-xl space-y-4 p-4" aria-labelledby="libras-title" data-testid="libras-page">
+  <h1 id="libras-title" class="text-xl font-semibold text-teal-800">{{ 'atendimento.libras.title' | translate }}</h1>
+  <p class="text-sm text-slate-600">{{ 'atendimento.libras.explicacao' | translate }}</p>
+  <p class="text-sm font-medium text-slate-700" data-testid="libras-horario">
+    {{ 'atendimento.libras.horario' | translate }}
+  </p>
+
+  @if (result(); as r) {
+    <div class="rounded bg-teal-50 p-4 text-sm text-teal-900" data-testid="libras-confirmacao">
+      @if (r.nextStep === 'videocall-shortly') {
+        <p>{{ 'atendimento.libras.confirmacao.dentroHorario' | translate }}</p>
+      } @else {
+        <p>
+          {{ 'atendimento.libras.confirmacao.foraHorario' | translate: { inicio: r.hoursStart, fim: r.hoursEnd } }}
+        </p>
+      }
+    </div>
+  } @else {
+    @if (errorKey()) {
+      <p class="text-sm text-red-700">{{ errorKey() | translate }}</p>
+    }
+    <button
+      type="button"
+      class="rounded bg-teal-700 px-4 py-2 text-sm text-white disabled:opacity-50"
+      [disabled]="loading()"
+      (click)="request()"
+      data-testid="libras-solicitar"
+    >
+      {{ 'atendimento.libras.solicitar' | translate }}
+    </button>
+  }
+</section>

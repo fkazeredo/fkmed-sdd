@@ -3,7 +3,7 @@
   "info" : {
     "title" : "FKMed",
     "description" : "FKMed — health plan beneficiary portal API",
-    "version" : "0.10.0"
+    "version" : "0.11.0"
   },
   "servers" : [ {
     "url" : "http://localhost",
@@ -222,6 +222,34 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/TeleSessionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/support/libras-requests" : {
+      "post" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "registerLibrasRequest",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LibrasServiceRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LibrasRequestResult"
                 }
               }
             }
@@ -1165,6 +1193,81 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/SystemHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/support/faq" : {
+      "get" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "faq",
+        "parameters" : [ {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/FaqEntryView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/support/channels" : {
+      "get" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "channels",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SupportChannelView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/support/antifraud" : {
+      "get" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "antifraud",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AntifraudView"
                 }
               }
             }
@@ -2409,6 +2512,34 @@
           }
         }
       },
+      "LibrasServiceRequest" : {
+        "type" : "object",
+        "properties" : {
+          "beneficiaryId" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        },
+        "required" : [ "beneficiaryId" ]
+      },
+      "LibrasRequestResult" : {
+        "type" : "object",
+        "properties" : {
+          "situation" : {
+            "type" : "string",
+            "enum" : [ "REGISTERED", "ATTENDED" ]
+          },
+          "nextStep" : {
+            "type" : "string"
+          },
+          "hoursStart" : {
+            "type" : "string"
+          },
+          "hoursEnd" : {
+            "type" : "string"
+          }
+        }
+      },
       "CloseTeleSessionRequest" : {
         "type" : "object",
         "properties" : {
@@ -3164,6 +3295,63 @@
             "type" : "string"
           },
           "database" : {
+            "type" : "string"
+          }
+        }
+      },
+      "FaqEntryView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "question" : {
+            "type" : "string"
+          },
+          "answer" : {
+            "type" : "string"
+          },
+          "order" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SupportChannelView" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "sublabel" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          },
+          "hours" : {
+            "type" : "string"
+          },
+          "order" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "AntifraudView" : {
+        "type" : "object",
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "message" : {
             "type" : "string"
           }
         }

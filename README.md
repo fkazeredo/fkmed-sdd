@@ -75,9 +75,10 @@ estimativa.
 A tese continua a mesma: **a IA nao inventa o produto; ela executa specs sob regras e gates**.
 O que mudou foi o tamanho do processo.
 
-O fluxo atual esta em [CLAUDE.md](CLAUDE.md), [docs/TUTORIAL.md](docs/TUTORIAL.md),
-[docs/architecture/workflow.md](docs/architecture/workflow.md) e
-[docs/GUIA-TIME-CLAUDE.md](docs/GUIA-TIME-CLAUDE.md):
+O fluxo atual esta em [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md),
+[docs/TUTORIAL.md](docs/TUTORIAL.md), [docs/architecture/workflow.md](docs/architecture/workflow.md),
+[docs/GUIA-TIME-CLAUDE.md](docs/GUIA-TIME-CLAUDE.md) e
+[docs/GUIA-CODEX.md](docs/GUIA-CODEX.md):
 
 ```text
 0 QUESTIONS -> 1 PLAN -> 2 TEST ANCHOR -> 3 IMPLEMENT -> 4 GATES
@@ -217,9 +218,12 @@ cd backend && ./mvnw -Pmutation org.pitest:pitest-maven:mutationCoverage
 
 | Caminho | Conteudo |
 |---|---|
-| [CLAUDE.md](CLAUDE.md) | Constituicao operacional do Claude |
+| [CLAUDE.md](CLAUDE.md) | Constituicao operacional do projeto/Claude Code |
+| [AGENTS.md](AGENTS.md) | Instrucao canonica para Codex neste repo |
 | [.claude/agents/](.claude/agents/) | Agentes atuais: architect, reviewer, qa |
 | [.claude/skills/](.claude/skills/) | Comandos `/spec`, `/slice`, `/dod`, `/manual`, `/ci-triage` etc. |
+| [.agents/skills/](.agents/skills/) | Skills repo-locais do Codex |
+| [docs/GUIA-CODEX.md](docs/GUIA-CODEX.md) | Como alternar entre Claude Code e Codex |
 | [docs/specs/](docs/specs/) | Specs vivas do produto |
 | [docs/adr/](docs/adr/) | Decisoes de arquitetura |
 | [docs/decision-log/](docs/decision-log/) | Decisoes autonomas autorizadas |

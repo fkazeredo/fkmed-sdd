@@ -87,6 +87,13 @@ class AppointmentApiIT extends AbstractIntegrationTest {
 
   @AfterEach
   void tearDown() {
+    // Regression: tearDown only removed PEDRO's account, never this class's own care_unit/
+    // unit_agenda/schedule_slot fixtures — left dangling in the shared Postgres until the next
+    // AppointmentApiIT run's setUp() cleaned them. On a day where `far` (setUp's +40-day slot)
+    // lands on a Sunday, the leftover row corrupted AppointmentSeedIT's Mon-Sat assertion when it
+    // ran afterward in the same suite (docs/architecture/testing.md shared-Postgres isolation
+    // rule — every other IT in this package cleans in both @BeforeEach and @AfterEach).
+    clean();
     PedroAccountFixture.remove(jdbc);
   }
 

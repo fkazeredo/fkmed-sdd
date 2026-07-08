@@ -1,0 +1,7 @@
+interface:
+  display_name: "FKMed Lean SDD"
+  short_description: "Run FKMed slices with Lean SDD."
+  default_prompt: "Use $fkmed-lean-sdd to execute this FKMed repository task."
+
+policy:
+  allow_implicit_invocation: true
