@@ -28,14 +28,15 @@ equivalent replaced it.
 
 ## 2. Gates
 
-Run or cite green evidence from the same commit:
+This is the **final delivery** — run the full battery **once, here**, not incrementally during
+implementation (spec tests + general homologation, together):
 
 ```bash
-cd backend && ./mvnw verify
+cd backend && ./mvnw spotless:apply && ./mvnw verify
 cd frontend && npm run lint && npm test && npm run build
 ```
 
-- Start with focused tests, then stack gates.
+- Run the complete battery a single time at close; do not rerun `verify`/tests per change earlier.
 - E2E is required when a user journey changes:
 
   ```bash
@@ -44,7 +45,7 @@ cd frontend && npm run lint && npm test && npm run build
 
 - PIT/mutation is reserved for money or critical domain logic when useful.
 - A red gate means fix the code or architecture; never weaken the gate.
-- Reuse green evidence from the same commit instead of rerunning identical expensive gates.
+- Reuse that single green run instead of rerunning identical expensive gates.
 
 ## 3. Definition of Done
 

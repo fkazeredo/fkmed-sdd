@@ -55,12 +55,17 @@ class OperatorSimGuidesIT extends AbstractIntegrationTest {
     jdbc.update("delete from notification where account_id = ?::uuid", MARIA_ACCOUNT_ID);
     mail.messages.clear();
     restoreSeedGuide();
-    // Guides created by this suite's own tests carry a GD-SIM-* number, never colliding with the
-    // V23 seed's GD-0000000X numbers.
+    // Every guide this suite creates goes through createGuideBody(), which stamps
+    // requesting_provider = 'Dr. Sim Testador' — a marker the V23 seed never uses (its providers
+    // are 'Dr. Ricardo Nunes - Cardiologia' / 'Laboratório Central' / 'Hospital São Lucas'). The
+    // guide NUMBER is server-generated (the GD-SIM-* marker only tags the item description), so the
+    // previous filter on the number matched nothing and leaked every sim-created guide onto MARIA —
+    // breaking GuideApiIT's seed assertions when it ran afterward in the shared Postgres
+    // (debt_guideapiit_flaky_isolation). Clean by the provider marker instead.
     jdbc.update(
-        "delete from guide_item where guide_id in (select id from guide where number like"
-            + " 'GD-SIM-%')");
-    jdbc.update("delete from guide where number like 'GD-SIM-%'");
+        "delete from guide_item where guide_id in (select id from guide where requesting_provider"
+            + " = 'Dr. Sim Testador')");
+    jdbc.update("delete from guide where requesting_provider = 'Dr. Sim Testador'");
   }
 
   @BeforeEach

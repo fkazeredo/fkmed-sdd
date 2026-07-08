@@ -130,21 +130,25 @@ approved parallel experiments. They are not part of the normal workflow.
 
 ## Gates
 
-Run the cheapest commands that provide real confidence, then broaden as risk grows:
+Run the full battery **once, at final delivery** (closing the slice) — not incrementally per
+change. Write the code and its tests first, then run the complete battery a single time:
 
 ```bash
-cd backend && ./mvnw verify
+cd backend && ./mvnw spotless:apply && ./mvnw verify
 cd frontend && npm run lint && npm test && npm run build
 cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down
 ```
 
 Rules:
 
-- Start with focused tests when possible; run stack gates before closing.
+- **Do not run `verify`/tests repeatedly during implementation.** Tests run at the final
+  delivery — the spec's own tests or the general homologation — once, together at close.
+- The final battery: backend `verify`, frontend `lint`/`test`/`build`, and E2E when a user
+  journey changed.
 - E2E is required when a user journey changes.
 - PIT/mutation is reserved for money or critical domain logic when useful.
 - Red gate means fix the code or architecture, never weaken the gate.
-- Reuse green evidence from the same commit instead of rerunning identical expensive gates.
+- Reuse that single green run instead of rerunning identical expensive gates.
 
 ## Reviewer and QA
 
