@@ -24,6 +24,25 @@ Routing Map below. Inherited architecture decisions live in `docs/DECISIONS-BASE
    early in the work: automated test when practical, reproducible command, API call,
    screenshot/manual check, or focused regression reproducer.
 
+### Background subagents (visibility guardrails)
+
+1. **Prefer direct reads for narrow-scope context.** When you can already name the files or
+   docs a slice needs, reading them yourself is usually faster and cheaper than spawning an
+   Explore/search subagent. Reach for a context subagent when scope is genuinely uncertain or
+   spread across the repo, or for independent parallel work.
+2. **An interrupted turn's background subagents are dead.** Interrupting a turn — including a
+   model switch or a re-sent message — cancels the background agents that turn spawned, with
+   no notification to the main conversation. After any interrupt, treat those agents as gone:
+   re-verify liveness or re-spawn deliberately before relying on them.
+3. **Assert liveness only after checking it — never infer it from silence.** The absence of a
+   completion notification is not evidence that an agent is running. Confirm before telling
+   the owner an agent is "still working"; if you cannot confirm, say "não consigo confirmar"
+   instead of guessing.
+4. **Never leave the owner waiting on an opaque agent.** Do not block on a background agent
+   for context you could gather inline. When you do spawn one, announce it, keep working in
+   the main thread meanwhile, and report unknown or stale status the moment you notice it —
+   silence is not a status update.
+
 ## Codex interoperability
 
 This repository also supports Codex. `AGENTS.md` is the Codex entry point and `.agents/skills/`

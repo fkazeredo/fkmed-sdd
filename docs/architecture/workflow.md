@@ -198,3 +198,24 @@ modules, fake bounded contexts or placeholder classes.
 
 The first feature must be guided by a spec. Slices land through a branch and Pull Request to
 `develop`; protected branches change only via reviewed PR.
+
+## Background subagents and context gathering
+
+> The four numbered guardrails live in `CLAUDE.md` (always loaded, so they carry weight).
+> This section is the rationale.
+
+The main executor usually gathers context fastest by reading directly. An Explore/search
+subagent tends to be worth its cold-start cost when scope is genuinely uncertain or spread
+repo-wide, or when the work is independent enough to run in parallel — less so for a slice
+whose files you can already name (rule 1). Background subagents are fragile across turn
+boundaries: interrupting the current turn (stopping it, switching model, re-sending the
+prompt) cancels the subagents it spawned, and the main conversation gets no kill
+notification (rule 2). So never infer liveness from a missing completion notification —
+that silence is indistinguishable from a dead agent; verify before reporting an agent as
+running, and if you cannot, say so (rule 3). Owner visibility comes first: announce async
+spawns, keep working inline instead of blocking, and surface unknown or stale status
+immediately (rule 4).
+
+**Origin:** written after a slice where an Explore agent — spawned to read a single-file
+spec — was silently killed by a model-switch interrupt while the executor kept reporting it
+as "still running", costing the owner a blind wait on a dead process.
