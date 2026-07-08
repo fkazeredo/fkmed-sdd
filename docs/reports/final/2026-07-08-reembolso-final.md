@@ -1,7 +1,7 @@
 # Relatório de conclusão — Fase 6 "Reembolso"
 
 **Fase 6** · Specs: SPEC-0015, SPEC-0016, SPEC-0017 e ações de reembolso/prévia da SPEC-0018.
-Branch `feature/reembolso-solicitacao` → PR para `develop`. Versão **v0.12.0**. Migração **V27**.
+Branch `feature/reembolso-solicitacao` → PR #28 para `develop`. Versão **v0.12.0**. Migração **V27**.
 Módulo novo **`domain.reimbursement`** (ADR-0022) e kernel **`domain.upload`**.
 
 ## 1. Critérios de aceite
@@ -33,4 +33,4 @@ Módulo novo **`domain.reimbursement`** (ADR-0022) e kernel **`domain.upload`**.
 ## 4. Pendências conhecidas
 
 - Build frontend mantém warning de budget inicial: 916,40 kB contra aviso de 900,00 kB (+16,40 kB). O build passa; tratar como dívida de performance, não blocker da Fase 6.
-- PR ainda precisa ser aberto/atualizado e mergeado pelo owner; tag também permanece decisão do owner.
+- PR #28 ainda precisa ser revisado/mergeado pelo owner; tag também permanece decisão do owner.
