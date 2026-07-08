@@ -22,10 +22,10 @@ slice (`/slice` gate).
 | [0012](0012-guides-and-tokens.md) | Guides and Tokens | guides | Draft |
 | [0013](0013-plan-finance.md) | Plan Finance | finance | Draft |
 | [0014](0014-service-channels-and-faq.md) | Service Channels and FAQ | support | Draft |
-| [0015](0015-reimbursement-request.md) | Reimbursement Request | reimbursement | Draft |
-| [0016](0016-reimbursement-analysis-and-tracking.md) | Reimbursement Analysis and Tracking | reimbursement | Draft |
-| [0017](0017-reimbursement-preview.md) | Reimbursement Preview | reimbursement | Draft |
-| [0018](0018-operator-simulation-api.md) | Operator Simulation API | operator-sim (dev-only) | Draft |
+| [0015](0015-reimbursement-request.md) | Reimbursement Request | reimbursement | Approved |
+| [0016](0016-reimbursement-analysis-and-tracking.md) | Reimbursement Analysis and Tracking | reimbursement | Approved |
+| [0017](0017-reimbursement-preview.md) | Reimbursement Preview | reimbursement | Approved |
+| [0018](0018-operator-simulation-api.md) | Operator Simulation API | operator-sim (dev-only) | Approved |
 
 ## Product-wide UI norms (referenced by every spec)
 

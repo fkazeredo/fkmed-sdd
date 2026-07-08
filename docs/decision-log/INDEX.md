@@ -9,7 +9,7 @@ old one.
 
 | DL | Title | Why highlighted |
 |---|---|---|
-| — | *(none)* | |
+| [0025](DL-0025-reimbursement-poc-scope-and-outros-rate.md) | Reimbursement POC scope defaults and `OUTROS` table rate | Confidence=Low because SPEC-0015 did not define the `OUTROS` reimbursement amount |
 
 ## All decisions
 
@@ -39,3 +39,10 @@ old one.
 | [0022](DL-0022-sse-queue-transport-design.md) | 2026-07-06 | 4 / telemedicine | 0010 | Medium | Cheap | SSE queue transport — periodic server re-emit |
 | [0023](DL-0023-antifraud-content-persistence-split.md) | 2026-07-07 | 5 / 5.3 atendimento | 0014 | Medium | Cheap | Antifraud section: persisted title/message, static frontend guidance |
 | [0024](DL-0024-libras-hours-placeholder-and-placement.md) | 2026-07-07 | 5 / 5.3 atendimento | 0014 | Medium | Cheap | Central de Libras operating hours — placeholder value + domain-constant placement (OQ1) |
+| [0025](DL-0025-reimbursement-poc-scope-and-outros-rate.md) | 2026-07-08 | 6 / 6.1 reimbursement request | 0015 | Low | Cheap | Reimbursement POC scope defaults and `OUTROS` table rate |
+| [0026](DL-0026-reimbursement-minimal-timeline.md) | 2026-07-08 | 6 / 6.1 reimbursement request | 0015 | Medium | Cheap | Minimal reimbursement timeline in Slice 6.1 |
+| [0027](DL-0027-shared-file-content-type-detector.md) | 2026-07-08 | 6 / 6.1 reimbursement request | 0015 | Medium | Cheap | Shared file content-type detector after the third upload consumer |
+| [0028](DL-0028-reimbursement-eligibility-via-plan-facade.md) | 2026-07-08 | 6 / 6.1 reimbursement request | 0015 | Medium | Cheap | Reimbursement eligibility via the plan facade |
+| [0029](DL-0029-no-reimbursement-e2e-fixture.md) | 2026-07-08 | 6 / 6.1 reimbursement request | 0015 | Medium | Cheap | No-reimbursement beneficiary fixture for SPEC-0015 AC8 |
+| [0030](DL-0030-reimbursement-full-phase-auto-analysis.md) | 2026-07-08 | 6 reimbursement | 0015, 0016 | Medium | Cheap | Full Phase 6 automatic analysis after submission |
+| [0031](DL-0031-reimbursement-phase-6-open-questions.md) | 2026-07-08 | 6 reimbursement | 0016, 0017 | Medium | Cheap | Phase 6 reimbursement open-question defaults |

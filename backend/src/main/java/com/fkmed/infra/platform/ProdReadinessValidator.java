@@ -38,6 +38,10 @@ public class ProdReadinessValidator implements ApplicationRunner {
   static final String DEV_PROFILE_E2E_ACCOUNT_PASSWORD = "perfilE2e12345";
   static final String DEV_TERMS_E2E_ACCOUNT_EMAIL = "termos-e2e@fkmed.local";
   static final String DEV_TERMS_E2E_ACCOUNT_PASSWORD = "termosE2e12345";
+  // SPEC-0015 AC8: the disposable no-reimbursement E2E identity (Flyway V27).
+  static final String DEV_NO_REIMBURSEMENT_E2E_ACCOUNT_EMAIL =
+      "reembolso-sem-direito-e2e@fkmed.local";
+  static final String DEV_NO_REIMBURSEMENT_E2E_ACCOUNT_PASSWORD = "reembolso12345";
   // SPEC-0018 operator-simulation tele slice (ADR-0017/DL-0021): the dev-seeded operator credential
   // (Flyway V22) and the app.sim.enabled flag are dev-only and must never reach prod (BR1/AC4).
   static final String DEV_OPERATOR_SIM_ACCOUNT_EMAIL = "operador-sim@fkmed.local";
@@ -94,6 +98,13 @@ public class ProdReadinessValidator implements ApplicationRunner {
           "the dev seed account ("
               + DEV_TERMS_E2E_ACCOUNT_EMAIL
               + ") must not exist in prod (SPEC-0006 Phase 2)");
+    }
+    if (seedAccountPresent(
+        DEV_NO_REIMBURSEMENT_E2E_ACCOUNT_EMAIL, DEV_NO_REIMBURSEMENT_E2E_ACCOUNT_PASSWORD)) {
+      violations.add(
+          "the dev seed account ("
+              + DEV_NO_REIMBURSEMENT_E2E_ACCOUNT_EMAIL
+              + ") must not exist in prod (SPEC-0015 AC8)");
     }
     if (simProperties.enabled()) {
       violations.add(

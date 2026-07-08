@@ -79,6 +79,33 @@ public class BeneficiaryAccess {
   }
 
   /**
+   * Whether the caller's plan carries the reimbursement right (SPEC-0015 BR1). Fail-closed: an
+   * absent/unknown card is not eligible — mirrors {@link #accessibleFor}'s empty-list behavior
+   * rather than throwing, since the reimbursement hub gate itself decides what to render.
+   */
+  public boolean reimbursementEligible(String beneficiaryCard) {
+    return caller(beneficiaryCard)
+        .map(beneficiary -> beneficiary.getPlan().isReimbursement())
+        .orElse(false);
+  }
+
+  /**
+   * Whether the scoped target beneficiary has the mandatory contact e-mail and mobile needed to
+   * open a reimbursement request (SPEC-0015 BR2 via SPEC-0006 BR6). Out-of-scope targets still
+   * throw {@link BeneficiaryNotAccessibleException}; missing contact data returns {@code false} so
+   * the reimbursement module can raise its own BR2 error code.
+   */
+  public boolean hasRequiredContacts(String beneficiaryCard, UUID targetBeneficiaryId) {
+    Beneficiary target = requireInScope(beneficiaryCard, targetBeneficiaryId);
+    ContactInfo contact = target.getContact();
+    return contact != null
+        && contact.getContactEmail() != null
+        && !contact.getContactEmail().isBlank()
+        && contact.getMobile() != null
+        && !contact.getMobile().isBlank();
+  }
+
+  /**
    * The avatar URL for a beneficiary (SPEC-0006 BR3): the photo endpoint when a photo exists, else
    * {@code null} so the client shows the placeholder.
    */

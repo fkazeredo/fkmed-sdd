@@ -2,7 +2,7 @@
 
 > Artefato vivo em **pt-BR** (idioma do produto). Atualizado via `/manual` ao fechar toda
 > fatia com mudança visível ao usuário — a fatia só está "pronta" quando este manual
-> reflete a mudança. Versão do produto: **0.11.0** (pré-release; tag pendente do owner).
+> reflete a mudança. Versão do produto: **0.12.0** (pré-release; tag pendente do owner).
 
 ## Sobre o portal
 
@@ -254,10 +254,31 @@ Boletos ou Rede; cada pergunta abre em um acordeão que fecha a anterior automat
 atendimento em Libras"**: dentro do horário, a equipe inicia a videochamada em instantes; fora do
 horário, a solicitação é registrada e você é avisado para o próximo período de atendimento.
 
+### 17. Reembolso
+
+Em **Reembolso** você solicita e acompanha despesas de livre escolha, quando o seu plano possui esse
+direito. Se o contrato não tiver reembolso, a tela mostra o aviso **"Seu plano não possui
+reembolso"** e orienta a procurar os canais de atendimento.
+
+A área tem quatro abas:
+
+- **Solicitar** — escolha o beneficiário, tipo de despesa, data e valor, informe prestador e dados
+  bancários do titular, aceite o termo vigente e anexe os documentos obrigatórios (JPG, PNG ou PDF;
+  até 2 MB por arquivo e 20 MB no total). Ao enviar, você recebe um protocolo `RE-...`, a previsão de
+  pagamento e o status atual.
+- **Histórico** — lista os reembolsos da família, com status, valores, timeline, documentos,
+  prestador, banco mascarado, glosa e motivo de negativa quando houver. Se houver pendência, aparece
+  a ação **Enviar documentação**; se o pagamento falhar, aparece **Corrigir dados bancários**.
+- **Extrato** — mostra apenas reembolsos pagos no período filtrado, com total recalculado.
+- **Prévias** — simule quanto o plano estima reembolsar. Consulta retorna na hora com a base da
+  tabela vigente; outros tipos exigem orçamento e pedido/relatório médico e ficam em análise. Toda
+  prévia concluída exibe o aviso de que é estimativa, sem autorização nem garantia de pagamento.
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-08 | 0.12.0 | Reembolso (fecha a Fase 6): solicitação com termo, uploads, protocolo e análise automática; histórico/detalhe com timeline, pendências, glosa/negativa, correção bancária e extrato pago; prévia de reembolso com disclaimer e ações de operator-sim para aprovar, pagar e concluir prévias |
 | 2026-07-07 | 0.11.0 | Plano e finanças (fecha a Fase 5): Atendimento — canais oficiais (Central 24h, WhatsApp, Ouvidoria, ANS), seção antifraude (destino do banner de alerta da Início) e FAQ pesquisável por categoria; Central de Libras com registro do pedido e confirmação por horário |
 | 2026-07-06 | 0.10.0 | Plano e finanças: Finanças (titular) — boletos (abas em aberto/pagos, valor atualizado com multa+juros no vencido, copiar linha/PIX, 2ª via PDF com marca PAGO), validador antifraude, extrato de coparticipação, informe de IR e declaração de quitação Lei 12.007 |
 | 2026-07-06 | 0.9.0 | Plano e finanças (início): Guias e Token — acompanhamento das guias de autorização (lista, filtros, detalhe com senha/validade ou motivo de negativa, notificação de mudança) e geração do token de atendimento de 6 dígitos (validade 10 min, único válido, copiar, renovar) |

@@ -168,6 +168,29 @@ class ProdReadinessValidatorTest {
   }
 
   @Test
+  void refusesToBoot_whenTheNoReimbursementE2eAccountIsPresent() {
+    // SPEC-0015 AC8: the disposable no-reimbursement identity is dev-only and must equally block a
+    // prod boot, reusing the same seedAccountPresent(...) path.
+    MockEnvironment environment = new MockEnvironment();
+    environment.setActiveProfiles("prod");
+    environment.setProperty("spring.datasource.password", "a-real-secret-from-env");
+
+    JdbcTemplate jdbc = mock(JdbcTemplate.class);
+    when(jdbc.queryForList(anyString(), eq(String.class), any())).thenReturn(List.of());
+    when(jdbc.queryForList(
+            anyString(), eq(String.class), eq("reembolso-sem-direito-e2e@fkmed.local")))
+        .thenReturn(List.of(ENCODER.encode("reembolso12345")));
+
+    ProdReadinessValidator validator =
+        new ProdReadinessValidator(
+            productionSecurity(), productionIdentity(), simOff(), environment, jdbc, ENCODER);
+
+    assertThatIllegalStateException()
+        .isThrownBy(() -> validator.run(null))
+        .withMessageContaining("reembolso-sem-direito-e2e@fkmed.local");
+  }
+
+  @Test
   void refusesToBoot_whenTheOperatorSimulationFlagIsEnabled() {
     // SPEC-0018 BR1/AC4: the operator-simulation API must never be active under a prod-like
     // profile;
