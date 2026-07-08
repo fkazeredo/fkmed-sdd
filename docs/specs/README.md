@@ -11,17 +11,17 @@ slice (`/slice` gate).
 | [0001](0001-walking-skeleton.md) | Walking Skeleton — "Meu Plano" | platform / plan | Approved |
 | [0002](0002-identity-and-access.md) | Identity and Access | identity | Approved |
 | [0003](0003-beneficiary-context-and-authorization.md) | Beneficiary Context and Authorization | cross-cutting | Approved |
-| [0004](0004-notifications.md) | Notifications | notifications | Draft |
+| [0004](0004-notifications.md) | Notifications | notifications | Approved |
 | [0005](0005-home.md) | Home | home / content | Approved |
-| [0006](0006-profile-and-account.md) | Profile and Account | profile | Draft |
-| [0007](0007-digital-card.md) | Digital Card | card | Draft |
-| [0008](0008-provider-network-search.md) | Provider Network Search | network | Draft |
-| [0009](0009-appointments.md) | Appointments | scheduling | Draft |
-| [0010](0010-telemedicine.md) | Telemedicine | telemedicine | Draft |
-| [0011](0011-clinical-documents.md) | Clinical Documents (Minha Saúde) | clinical-docs | Draft |
-| [0012](0012-guides-and-tokens.md) | Guides and Tokens | guides | Draft |
-| [0013](0013-plan-finance.md) | Plan Finance | finance | Draft |
-| [0014](0014-service-channels-and-faq.md) | Service Channels and FAQ | support | Draft |
+| [0006](0006-profile-and-account.md) | Profile and Account | profile | Approved |
+| [0007](0007-digital-card.md) | Digital Card | card | Approved |
+| [0008](0008-provider-network-search.md) | Provider Network Search | network | Approved |
+| [0009](0009-appointments.md) | Appointments | scheduling | Approved |
+| [0010](0010-telemedicine.md) | Telemedicine | telemedicine | Approved |
+| [0011](0011-clinical-documents.md) | Clinical Documents (Minha Saúde) | clinical-docs | Approved |
+| [0012](0012-guides-and-tokens.md) | Guides and Tokens | guides | Approved |
+| [0013](0013-plan-finance.md) | Plan Finance | finance | Approved |
+| [0014](0014-service-channels-and-faq.md) | Service Channels and FAQ | support | Approved |
 | [0015](0015-reimbursement-request.md) | Reimbursement Request | reimbursement | Approved |
 | [0016](0016-reimbursement-analysis-and-tracking.md) | Reimbursement Analysis and Tracking | reimbursement | Approved |
 | [0017](0017-reimbursement-preview.md) | Reimbursement Preview | reimbursement | Approved |

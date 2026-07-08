@@ -21,10 +21,10 @@ spring:
     locale-resolver: fixed
   servlet:
     multipart:
-      # Above the 5 MB business limit (SPEC-0006 BR2) so an oversized photo reaches the domain and
-      # is refused with 422 profile.photo-too-large, not the container's raw 413.
+      # Request headroom above SPEC-0015's 20 MB reimbursement total (DL-0032), while the 10 MB
+      # per-file container cap stays above the smaller domain limits so business errors win.
       max-file-size: 10MB
-      max-request-size: 10MB
+      max-request-size: 25MB
 
   # SMTP is optional (ADR-0004): spring.mail.host is UNSET here, so no adapter is wired and the
   # LoggingMailSender fallback runs (tests + any host without SMTP). Dev/E2E/prod set it via the

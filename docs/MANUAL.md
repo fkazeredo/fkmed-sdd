@@ -11,6 +11,28 @@ O FKMed é o portal web do beneficiário do plano de saúde: identifique-se na r
 agendamento, telemedicina), acompanhe suas guias, cuide das finanças do contrato
 (boletos, coparticipação, IR) e solicite e acompanhe reembolsos.
 
+## Como usar este manual
+
+Este manual serve para usuários, PO, QA humano e pessoas novas no projeto. Cada capítulo explica
+onde a funcionalidade fica, qual é o fluxo esperado, quais limites/mensagens importam e quais
+cuidados existem com dados sensíveis, dinheiro, documentos e reembolso.
+
+Para homologação manual detalhada, use também o
+[Caderno de Testes QA](QA-CADERNO-DE-TESTES.md).
+
+## Ambiente de demonstração e perfis
+
+As massas do POC são fictícias. O perfil principal é **MARIA CLARA SOUZA LIMA**, titular do
+plano, com o dependente **PEDRO SOUZA LIMA**. A conta dev principal é:
+
+```text
+maria@fkmed.local / maria12345
+```
+
+Para testar a negativa de elegibilidade em Reembolso, existe uma conta dev-only de plano sem
+reembolso. Para dirigir fluxos de bastidor em ambiente local/E2E, existe o **operator-sim**. Essas
+credenciais estão documentadas em `SECURITY.md`, são fictícias e são bloqueadas em produção.
+
 ## Capítulos
 
 ### 1. Primeiro acesso (criar sua conta)
@@ -273,6 +295,48 @@ A área tem quatro abas:
 - **Prévias** — simule quanto o plano estima reembolsar. Consulta retorna na hora com a base da
   tabela vigente; outros tipos exigem orçamento e pedido/relatório médico e ficam em análise. Toda
   prévia concluída exibe o aviso de que é estimativa, sem autorização nem garantia de pagamento.
+
+Passo a passo da solicitação:
+
+1. Escolha o **beneficiário** correto no topo ou na própria tela.
+2. Selecione o **tipo de despesa**.
+3. Informe **data**, **valor pago** e dados do prestador.
+4. Para Terapia/Psicologia, informe as sessões e garanta que a soma bate com o total.
+5. Preencha os **dados bancários do titular**. Conta de terceiro, PJ ou conta salário é recusada.
+6. Leia e aceite o **termo de reembolso** vigente.
+7. Anexe os documentos obrigatórios. O portal aceita JPG, PNG ou PDF, até **2 MB por arquivo** e
+   **20 MB no total**.
+8. Revise e envie. O protocolo `RE-...` aparece na confirmação e no Histórico.
+
+Status comuns:
+
+- **Processamento** — pedido recebido e em análise automática/documental.
+- **Pendente de documentação** — envie o documento solicitado no próprio detalhe.
+- **Negado** — o motivo aparece no detalhe.
+- **Aprovado** — aguardando pagamento.
+- **Pagamento falhou** — corrija dados bancários.
+- **Pago** — aparece no extrato de reembolsos pagos.
+
+Cuidados:
+
+- a prévia não autoriza nem garante pagamento;
+- dados bancários aparecem mascarados nas telas e notificações;
+- pedidos fora do prazo ou com documento inválido são recusados com mensagem específica;
+- o portal não cobre, neste POC, recurso/contestação de negativas pelo próprio sistema.
+
+## Limitações conhecidas do POC
+
+Alguns itens são deliberadamente fora do escopo atual:
+
+- app mobile nativo e biometria real;
+- pagamento online dentro do portal;
+- cancelamento online de plano;
+- consulta de carências;
+- backoffice real da operadora;
+- recurso/contestação de negativas pelo portal;
+- vídeo/voz real na sala de telemedicina;
+- malware scanning/quarentena de uploads;
+- rotina de backup/restore automatizada versionada.
 
 ## Histórico de atualizações
 

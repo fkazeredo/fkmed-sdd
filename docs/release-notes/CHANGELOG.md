@@ -6,7 +6,18 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 ## [Unreleased]
 
-*(nothing yet)*
+### Fixed
+
+- Aligned reimbursement upload transport limits across Spring and nginx with SPEC-0015's 20 MB
+  business total (25 MB transport headroom, DL-0032).
+- Masked authentication event log user hints and added request correlation IDs to access logs
+  (DL-0033).
+
+### Documentation
+
+- Reconciled README, architecture guides, specs/ADR indexes, decision-log format and dev-only
+  credentials after the Phase 6 merge (DL-0034).
+- Added a detailed pt-BR human QA test book and expanded the user manual.
 
 ## [0.12.0] — 2026-07-08
 

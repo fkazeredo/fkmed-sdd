@@ -46,3 +46,6 @@ old one.
 | [0029](DL-0029-no-reimbursement-e2e-fixture.md) | 2026-07-08 | 6 / 6.1 reimbursement request | 0015 | Medium | Cheap | No-reimbursement beneficiary fixture for SPEC-0015 AC8 |
 | [0030](DL-0030-reimbursement-full-phase-auto-analysis.md) | 2026-07-08 | 6 reimbursement | 0015, 0016 | Medium | Cheap | Full Phase 6 automatic analysis after submission |
 | [0031](DL-0031-reimbursement-phase-6-open-questions.md) | 2026-07-08 | 6 reimbursement | 0016, 0017 | Medium | Cheap | Phase 6 reimbursement open-question defaults |
+| [0032](DL-0032-upload-transport-headroom.md) | 2026-07-08 | Hardening / docs reconciliation | 0015 | Medium | Cheap | Upload transport headroom for reimbursement documents |
+| [0033](DL-0033-observability-privacy-hardening.md) | 2026-07-08 | Hardening / docs reconciliation | 0001, 0003, 0015 | Medium | Cheap | Observability privacy hardening before a full authorization matrix |
+| [0034](DL-0034-post-phase-6-documentation-reconciliation.md) | 2026-07-08 | Hardening / docs reconciliation | Docs/governance | Medium | Cheap | Post-Phase 6 documentation reconciliation |

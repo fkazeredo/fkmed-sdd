@@ -1,5 +1,6 @@
 package com.fkmed.infra.observability;
 
+import com.fkmed.domain.audit.Masking;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
@@ -13,14 +14,16 @@ public class AuthenticationEventsLogger {
 
   @EventListener
   void onSuccess(AuthenticationSuccessEvent event) {
-    log.info("login.success user={}", event.getAuthentication().getName());
+    log.info(
+        "login.success user={}",
+        Masking.email(String.valueOf(event.getAuthentication().getName())));
   }
 
   @EventListener
   void onFailure(AbstractAuthenticationFailureEvent event) {
     log.warn(
         "login.failure user={} reason={}",
-        event.getAuthentication().getName(),
+        Masking.email(String.valueOf(event.getAuthentication().getName())),
         event.getException().getClass().getSimpleName());
   }
 }
