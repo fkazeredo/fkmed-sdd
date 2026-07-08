@@ -18,9 +18,12 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
  * SPEC-0012 API contract over MockMvc and Testcontainers Postgres: the V23 seed (MARIA — em
  * análise/autorizada/negada; PEDRO — none, AC1/AC2), the filtered list (BR2), the type-specific
  * detail (password+validity when authorized, reason when denied — AC3), family scope (SPEC-0003
- * BR3) and the {@code guide.not-found} 404 that never reveals existence. Read-only: the seed rows
- * are immutable from this test's perspective (no cleanup needed — see {@code OperatorSimGuidesIT}
- * for the mutating sim scenarios, which restore what they change).
+ * BR3) and the {@code guide.not-found} 404 that never reveals existence. Read-only over the V23
+ * seed; the list assertions are **seed-focused** (they identify the three seed guides by id, not by
+ * an absolute {@code $.length()} over MARIA's guides) so a sibling IT leaving an extra guide on
+ * MARIA in the shared Postgres cannot break them — the root cause of the CI-only flaky {@code
+ * debt_guideapiit_flaky_isolation}, whose real fix is {@code OperatorSimGuidesIT} now cleaning the
+ * guides it creates. The regression test below proves that robustness deterministically.
  */
 class GuideApiIT extends AbstractIntegrationTest {
 
@@ -45,7 +48,8 @@ class GuideApiIT extends AbstractIntegrationTest {
   }
 
   @Test
-  void list_asMaria_returnsThreeGuidesWithDistinctStatuses_mostRecentFirst_ac1() throws Exception {
+  void list_asMaria_returnsTheThreeSeedGuidesWithDistinctStatuses_mostRecentFirst_ac1()
+      throws Exception {
     String body =
         mockMvc
             .perform(
@@ -53,15 +57,18 @@ class GuideApiIT extends AbstractIntegrationTest {
                     .param("beneficiaryId", MARIA_ID.toString())
                     .with(authAs(MARIA_EMAIL)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(3))
             .andReturn()
             .getResponse()
             .getContentAsString();
 
-    List<String> statuses = com.jayway.jsonpath.JsonPath.read(body, "$[*].status");
-    assertThat(statuses).containsExactlyInAnyOrder("EM_ANALISE", "AUTORIZADA", "NEGADA");
-    // Most-recent-first: EM_ANALISE (5 days ago) sorts before AUTORIZADA (20 days ago) before
-    // NEGADA (35 days ago).
+    // Seed-focused (not an absolute count): the three seed guides are present with their distinct
+    // statuses, robust to any extra guide a sibling IT may leave on MARIA (the old $.length()==3
+    // was the CI-only flaky — debt_guideapiit_flaky_isolation).
+    assertThat(statusOf(body, EM_ANALISE_ID)).isEqualTo("EM_ANALISE");
+    assertThat(statusOf(body, AUTORIZADA_ID)).isEqualTo("AUTORIZADA");
+    assertThat(statusOf(body, NEGADA_ID)).isEqualTo("NEGADA");
+    // Most-recent-first among the seed guides: EM_ANALISE (5d) before AUTORIZADA (20d) before
+    // NEGADA (35d).
     List<String> ids = com.jayway.jsonpath.JsonPath.read(body, "$[*].id");
     assertThat(ids.indexOf(EM_ANALISE_ID.toString()))
         .isLessThan(ids.indexOf(AUTORIZADA_ID.toString()));
@@ -84,15 +91,24 @@ class GuideApiIT extends AbstractIntegrationTest {
 
   @Test
   void list_filteredByStatus_returnsOnlyThatStatus() throws Exception {
-    mockMvc
-        .perform(
-            get("/api/guides")
-                .param("beneficiaryId", MARIA_ID.toString())
-                .param("status", "NEGADA")
-                .with(authAs(MARIA_EMAIL)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(1))
-        .andExpect(jsonPath("$[0].id").value(NEGADA_ID.toString()));
+    String body =
+        mockMvc
+            .perform(
+                get("/api/guides")
+                    .param("beneficiaryId", MARIA_ID.toString())
+                    .param("status", "NEGADA")
+                    .with(authAs(MARIA_EMAIL)))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    // The filter returns only NEGADA guides and includes the seed NEGADA one — robust to any extra
+    // guide on MARIA (those are EM_ANALISE and excluded by the filter).
+    List<String> statuses = com.jayway.jsonpath.JsonPath.read(body, "$[*].status");
+    assertThat(statuses).isNotEmpty().containsOnly("NEGADA");
+    List<String> ids = com.jayway.jsonpath.JsonPath.read(body, "$[*].id");
+    assertThat(ids).contains(NEGADA_ID.toString());
   }
 
   @Test
@@ -110,14 +126,22 @@ class GuideApiIT extends AbstractIntegrationTest {
 
   @Test
   void list_periodLast90Days_includesEveryGuide() throws Exception {
-    mockMvc
-        .perform(
-            get("/api/guides")
-                .param("beneficiaryId", MARIA_ID.toString())
-                .param("period", "LAST_90D")
-                .with(authAs(MARIA_EMAIL)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(3));
+    String body =
+        mockMvc
+            .perform(
+                get("/api/guides")
+                    .param("beneficiaryId", MARIA_ID.toString())
+                    .param("period", "LAST_90D")
+                    .with(authAs(MARIA_EMAIL)))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    // All three seed guides fall within 90 days; assert their presence, not an absolute count.
+    List<String> ids = com.jayway.jsonpath.JsonPath.read(body, "$[*].id");
+    assertThat(ids)
+        .contains(EM_ANALISE_ID.toString(), AUTORIZADA_ID.toString(), NEGADA_ID.toString());
   }
 
   @Test
@@ -214,6 +238,57 @@ class GuideApiIT extends AbstractIntegrationTest {
                 .with(authAs(MARIA_EMAIL)))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("context.beneficiary-not-accessible"));
+  }
+
+  // --- regression: robustness to extra guides on the same beneficiary ---
+
+  @Test
+  void list_identifiesTheSeedGuides_evenWithAnotherGuideOnMaria_regression() throws Exception {
+    // Deterministically reproduces the CI-only flaky (debt_guideapiit_flaky_isolation): an extra
+    // guide on MARIA in the shared Postgres must NOT break the seed-focused list assertions — the
+    // old absolute "$.length()==3" failed exactly here (expected:<3> but was:<4>). Manages its own
+    // row so it stays isolated (docs/architecture/testing.md).
+    UUID extra = UUID.fromString("ee1e0000-0000-4000-8000-0000000000ff");
+    jdbc.update(
+        "insert into guide (id, number, type, beneficiary_id, requesting_provider, requested_at,"
+            + " status) values (?::uuid, 'GD-REG-0001', 'CONSULTA', ?::uuid, 'Regression Provider',"
+            + " current_date - 1, 'EM_ANALISE')",
+        extra,
+        MARIA_ID);
+    jdbc.update(
+        "insert into guide_item (id, guide_id, tuss_code, description, quantity, status) values"
+            + " (?::uuid, ?::uuid, '10101012', 'Regression item', 1, 'EM_ANALISE')",
+        UUID.randomUUID(),
+        extra);
+    try {
+      String body =
+          mockMvc
+              .perform(
+                  get("/api/guides")
+                      .param("beneficiaryId", MARIA_ID.toString())
+                      .with(authAs(MARIA_EMAIL)))
+              .andExpect(status().isOk())
+              .andReturn()
+              .getResponse()
+              .getContentAsString();
+
+      // The three seed guides are still correctly identified despite the extra row.
+      assertThat(statusOf(body, EM_ANALISE_ID)).isEqualTo("EM_ANALISE");
+      assertThat(statusOf(body, AUTORIZADA_ID)).isEqualTo("AUTORIZADA");
+      assertThat(statusOf(body, NEGADA_ID)).isEqualTo("NEGADA");
+      List<String> ids = com.jayway.jsonpath.JsonPath.read(body, "$[*].id");
+      assertThat(ids).contains(extra.toString());
+    } finally {
+      jdbc.update("delete from guide_item where guide_id = ?::uuid", extra);
+      jdbc.update("delete from guide where id = ?::uuid", extra);
+    }
+  }
+
+  /** The status of the guide with {@code id} in the list response, or {@code null} when absent. */
+  private static String statusOf(String body, UUID id) {
+    List<String> statuses =
+        com.jayway.jsonpath.JsonPath.read(body, "$[?(@.id=='" + id + "')].status");
+    return statuses.isEmpty() ? null : statuses.get(0);
   }
 
   private static RequestPostProcessor authAs(String email) {
