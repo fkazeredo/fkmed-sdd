@@ -65,7 +65,7 @@ observabilidade, limites de upload e documentacao operacional.
 | Migracoes Flyway | 28 |
 | Arquivos Java em `backend/src/main/java` | 515 |
 | Arquivos TS/HTML/SCSS/CSS em `frontend/src` | 250 |
-| Ultima bateria backend local registrada | 781 testes |
+| Ultima bateria backend local registrada | 786 testes |
 | Ultima bateria frontend local registrada | 524 testes |
 | Ultima bateria E2E local registrada | 33/33 jornadas Playwright |
 | Caderno de QA humano | 42 jornadas guiadas + 241 casos atomicos |

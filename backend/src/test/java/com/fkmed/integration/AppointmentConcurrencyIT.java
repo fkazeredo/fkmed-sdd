@@ -18,6 +18,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,12 +50,9 @@ class AppointmentConcurrencyIT extends AbstractIntegrationTest {
 
   @BeforeEach
   void setUp() {
-    // Isolation (docs/architecture/testing.md): clean in @BeforeEach — Postgres is a shared
-    // singleton. Tests build their own capacity-1 fixture rather than the capacity-5 seed.
-    cleanBeneficiaryAppointments();
-    jdbc.update("delete from schedule_slot where id = ?::uuid", FIX_SLOT);
-    jdbc.update("delete from unit_agenda where id = ?::uuid", FIX_AGENDA);
-    jdbc.update("delete from care_unit where id = ?::uuid", FIX_UNIT);
+    // Postgres is shared: clean before and after so the capacity-1 race fixture cannot leak into
+    // seed assertions that run later in the suite.
+    clean();
 
     jdbc.update(
         "insert into care_unit (id, name, neighborhood, city, uf, phone)"
@@ -74,6 +72,11 @@ class AppointmentConcurrencyIT extends AbstractIntegrationTest {
         FIX_AGENDA,
         date,
         LocalTime.of(9, 0));
+  }
+
+  @AfterEach
+  void tearDown() {
+    clean();
   }
 
   @Test
@@ -132,7 +135,7 @@ class AppointmentConcurrencyIT extends AbstractIntegrationTest {
         "select count(*) from appointment where slot_id = ?::uuid", Long.class, FIX_SLOT);
   }
 
-  private void cleanBeneficiaryAppointments() {
+  private void clean() {
     jdbc.update(
         "delete from appointment_attachment where appointment_id in"
             + " (select id from appointment where beneficiary_id in (?::uuid, ?::uuid))",
@@ -140,6 +143,9 @@ class AppointmentConcurrencyIT extends AbstractIntegrationTest {
         PEDRO_ID);
     jdbc.update(
         "delete from appointment where beneficiary_id in (?::uuid, ?::uuid)", MARIA_ID, PEDRO_ID);
+    jdbc.update("delete from schedule_slot where id = ?::uuid", FIX_SLOT);
+    jdbc.update("delete from unit_agenda where id = ?::uuid", FIX_AGENDA);
+    jdbc.update("delete from care_unit where id = ?::uuid", FIX_UNIT);
   }
 
   private record Outcome(BookingConfirmation confirmation, Throwable error) {

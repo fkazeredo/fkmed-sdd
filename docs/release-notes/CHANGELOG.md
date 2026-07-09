@@ -30,6 +30,10 @@ beneficiary-facing upload contracts while making development and production pers
   business total (25 MB transport headroom, DL-0032).
 - Masked authentication event log user hints and added request correlation IDs to access logs
   (DL-0033).
+- Fixed Spring construction of the S3 adapter and PostgreSQL `timestamptz` binding found by the
+  full backend gate.
+- Added domain-level magic-byte and namespace tests that kill all 17 `domain.upload` mutants, and
+  stopped `AppointmentConcurrencyIT` from leaking its race fixture into later seed tests.
 
 ### Documentation
 
