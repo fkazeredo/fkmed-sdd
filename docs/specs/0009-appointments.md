@@ -94,7 +94,7 @@ Migration (number at implementation): `care_unit` (2 seeded own units with addre
 `unit_agenda`/`schedule_slot` (unit, specialty/exam scope, date, time, capacity, occupied —
 consistency guarded by optimistic/atomic update); `exam_type` registry; `appointment`
 (id, protocol unique, type `CONSULTATION|EXAM`, beneficiary_id, specialty_code/exam_code,
-unit_id, scheduled_at, status, medical_order file ref, cancel_reason, created_by,
+  unit_id, scheduled_at, status, medical-order storage reference (SPEC-0019), cancel_reason, created_by,
 timestamps). Seed: agenda for the next 30 days, Mon–Sat, 08:00–17:00, 30-min slots.
 
 ## Validation Rules

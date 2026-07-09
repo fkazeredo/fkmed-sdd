@@ -1,98 +1,103 @@
 # Build, Delivery, Infrastructure, Flags and Audit
 
-> Read when: touching build config, dependencies, Git workflow, CI/CD, Docker/deploy,
-> feature flags or audit fields.
+> Read when: touching build config, dependencies, Git workflow, CI/CD, Docker/deploy, feature
+> flags, production posture or audit fields.
 
-## Build and versions
+## Build and Versions
 
-Maven is the default for Java/Spring Boot (wrapper only: `backend/mvnw`); never migrate
-Maven<->Gradle without explicit instruction and an ADR. Java/Spring Boot/Angular/Node
-versions prioritize stability and LTS; no experimental/milestone/RC/snapshot dependencies in
-production. Dependencies are chosen conservatively: standard capabilities first, mature
-libraries, acceptable licenses; risky dependencies isolated; architecturally significant
-dependencies documented in ADRs. Do not add libraries for trivial problems.
+Backend uses Maven through `backend/mvnw`; never use a system Maven in project commands.
+Frontend uses npm scripts from `frontend/package.json`.
 
-Final toolchain: Java 21 · Spring Boot 4.1.0 · Maven wrapper 3.9.x · Node/npm 11.7.0 ·
-Angular CLI 22.0.4. Exact library versions live in `backend/pom.xml` and
-`frontend/package.json` (summarized in `backend.md` and `frontend-angular.md`).
+Current stack highlights:
 
-## Git
+- Java 21, Spring Boot 4.1.0, Spring Modulith 2.1.0;
+- Node/npm as declared by `frontend/package.json` (`npm@11.7.0`);
+- Angular 22, PrimeNG 21, Tailwind 4;
+- PostgreSQL 16 and Flyway migrations.
 
-Pragmatic Git Flow (`main`, `develop`, `feature/*`, `bugfix/*`, `release/*`, `hotfix/*`) and
-Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`).
+Do not add experimental/RC/snapshot dependencies to production code. Architecturally significant
+dependencies require an ADR.
 
-**Branch protection & PR-only (DECISIONS-BASELINE §0023).** `main` and `develop` are **protected**: **no direct
-push**, **no direct merge** — they change **only via a reviewed Pull Request**. Ruleset (both
-branches): require a PR, **≥1 review + CODEOWNERS review**, dismiss stale approvals, conversation
-resolution, **required status checks** (Backend verify · Mutation/PIT · Flyway validate · Frontend
-lint/test/build · Playwright E2E · CodeQL ×2 · **Gitleaks**), branch up to date, **linear history**,
-no force-push, no deletions, **include administrators**. Enable GitHub **Secret Scanning + Push
-Protection** and Dependabot. PRs target `develop`; `main` is updated only via a **release PR**
-(`develop → main`), from which a human cuts the tag. **AI agents never merge to protected branches,
-never publish releases, and never force-push** (`.claude/settings.json`); on a green slice they push
-the feature branch and open the PR to `develop`, and may tag only on explicit request. See
-`CONTRIBUTING.md` and `SECURITY.md`.
+## Git and PR Flow
 
-Semantic Versioning (`MAJOR.MINOR.PATCH`) is the official policy — see **DECISIONS-BASELINE §0015** for the per-digit
-criteria, reset rules, the `0.y.z` initial-development phase and the mapping to ROADMAP phases /
-Conventional Commits. The version's source of truth is `backend/pom.xml`; the release tag is cut from
-`main` **via the release PR**. Docs-only slices do **not** bump the version (standing precedent).
+Use pragmatic Git Flow:
 
-Generated files are never edited manually — modify the generation source (OpenAPI snapshot
-via `-Dopenapi.snapshot.write=true`, module diagram via `-Dmodulith.diagram.write=true`).
+- work on `feature/*`, `bugfix/*`, `hotfix/*` or release branches;
+- PRs target `develop`;
+- `main` changes through release PRs;
+- agents never merge protected branches, force-push, tag or publish releases without explicit owner
+  instruction.
 
-## CI/CD (real pipelines — `.github/workflows/`)
+Conventional commits are expected for local commits/PRs. The version source of truth is
+`backend/pom.xml`; release tags are owner actions.
 
-| Workflow | What it does |
-|---|---|
-| `ci.yml` | backend `./mvnw verify` (tests + ArchUnit/Modulith + Spotless/Checkstyle + JaCoCo floors + snapshot gates), frontend lint/test+coverage/build, `npm audit --audit-level=critical` gate, PIT mutation job, artifacts (JaCoCo always, surefire on failure) |
-| `e2e.yml` | Playwright suite against the isolated `compose.e2e.yaml` stack |
-| `codeql.yml` | CodeQL static analysis (java manual build + ts), weekly + on PR |
-| `gitleaks.yml` | **secret scanning** (blocking) on push/PR, full history, allowlisting the enumerated dev defaults (`.gitleaks.toml`) |
-| `docker-publish.yml` | backend/frontend images to **GHCR** tagged per release |
+## CI/CD
 
-Dependabot watches Maven, npm and GitHub Actions. Failed tests, broken builds, invalid
-migrations or broken contracts block merge/deploy. Concurrency groups cancel superseded runs.
+Real workflows live in `.github/workflows/`:
 
-`ci.yml` and `e2e.yml` run on **pull requests and protected/release branches only** — a push
-to a `feature/**`/`bugfix/**` branch does not trigger them (the PR run would duplicate it;
-dev-time validation is the local gates, and the E2E suite must be green locally before the
-push/PR — owner order, Phase-4 lesson). `workflow_dispatch` covers the rare mid-slice manual
-run.
+- backend verify, coverage, architecture and snapshot gates;
+- frontend lint/test/build and critical audit gate;
+- Playwright E2E against isolated stack;
+- CodeQL;
+- Gitleaks;
+- Docker image publishing to GHCR.
 
-## Local development and configuration
+Feature-branch pushes do not need duplicate CI runs when the PR will run the protected checks.
+Local gates are the development proof before opening the PR.
 
-Reproducible local env: `docker-compose.yml` (app db + observability; optional `emulators`
-profile with WireMock for the NFS-e integration), `compose.e2e.yaml` (isolated E2E stack,
-tmpfs Postgres, frontend :4201), `.env.example` provided. Configuration is externalized,
-typed and validated at startup; secrets never committed (env vars; the `prod` profile
-fail-fasts on dev defaults — `ProdReadinessValidator`).
+## Local Development
 
-## Deployment and IaC
+Typical local flow:
 
-Production ships as **`compose.prod.yaml`** (DECISIONS-BASELINE §0021): nginx reverse proxy
-terminating TLS with SPA + API + AS under one origin (HSTS, conservative CSP), Postgres
-without a public port, observability on the internal network, Grafana on loopback, images
-from GHCR by tag or built locally. Backup/DR per **DECISIONS-BASELINE §0021**: daily `pg_dump -Fc` + vault
-tar (`infra/backup/backup.sh`), 30d local retention + offsite copies, RPO 24h / RTO 4h,
-quarterly restore drill.
+```bash
+docker compose up -d
+cd backend && ./mvnw verify
+cd frontend && npm run lint && npm test && npm run build
+```
 
-Business logic **MUST NOT** depend on cloud SDKs or deployment-specific details — abstract
-storage, messaging and notifications when variation is possible. Never create
-Terraform/Helm/K8s files unless the project context requires it.
+E2E uses an isolated stack:
 
-## Feature flags
+```bash
+cd frontend
+npm run e2e:up
+npm run e2e
+npm run e2e:down
+```
 
-Flags reduce delivery risk; they **MUST NOT** become permanent hidden complexity. Every flag
-has: name, purpose, owner, scope, default, removal condition, and tests for both states when
-business logic changes. Most flags are temporary (the OverrideNudge flag was removed when the
-real model shipped in 20c); long-lived flags only for real product configuration (e.g.
-`BILLING_TAX_REGIME_CONFIRMED`, pending the accountant's decision).
+## Deployment
 
-## Audit and history
+Production is represented by `compose.prod.yaml`: TLS-terminating nginx proxy, one public origin for
+SPA/API/OIDC, Postgres without public port and Grafana bound to loopback. The proxy owns HSTS/CSP
+headers and request-body limits.
 
-Auditability proportional to business relevance. Relevant entities track createdAt,
-updatedAt, createdBy, updatedBy. Important business actions audited in business language
-(`ManualOverridePerformed`, `RateFrozen`, `PeriodClosed`). Critical domains **MAY** need
-richer history: state transitions, decisions, manual overrides, DSS insights and the human
-decision on each, operational timeline.
+File storage is environment-selected (SPEC-0019/ADR-0023):
+
+- base/test default: `FKMED_STORAGE_BACKEND=postgres`;
+- `dev`: filesystem, `/fkmed/uploads`, persisted by the `file-storage` Docker volume;
+- isolated E2E: filesystem on disposable tmpfs;
+- `prod`: S3, requiring `FKMED_STORAGE_S3_BUCKET` and `AWS_REGION`.
+
+S3 credentials use the AWS SDK default provider chain. Prefer deployment IAM roles; when local
+static credentials are unavoidable, keep them only in ignored `.env` files or a secret manager.
+
+Backup/DR remains a baseline target (daily `pg_dump`, document vault copy, retention and restore
+drills per DECISIONS-BASELINE §0021), but no committed `infra/backup/backup.sh` implementation exists
+yet. Do not claim it is implemented until a future production-readiness slice adds and tests it.
+
+Business logic depends only on `domain.upload.FileStorage`; cloud SDKs and deployment-specific
+storage stay under `infra.storage`.
+
+## Feature Flags
+
+Flags must not become permanent hidden complexity. Each flag needs purpose, scope, default, owner,
+tests for relevant states and removal condition.
+
+`app.sim.enabled` is a dev/E2E flag and is refused in production by `ProdReadinessValidator`.
+
+## Audit
+
+Auditability is proportional to business impact. Security/account events, family-scope access to
+dependent-sensitive data, clinical document access, support requests, guide/token transitions,
+finance operations and reimbursement transitions must be recorded when the spec requires it.
+
+Audit details must already be masked before they are stored.

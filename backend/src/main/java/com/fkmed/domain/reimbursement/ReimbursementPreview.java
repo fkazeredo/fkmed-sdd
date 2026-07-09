@@ -76,19 +76,20 @@ public class ReimbursementPreview {
       String protocol,
       UUID beneficiaryId,
       String expenseTypeCode,
-      List<UploadedDocument> documents,
+      List<StoredDocument> documents,
       UUID createdBy,
       Instant now) {
     ReimbursementPreview preview = base(protocol, beneficiaryId, expenseTypeCode, createdBy, now);
     preview.situation = PreviewSituation.EM_ANALISE;
-    for (UploadedDocument document : documents) {
+    for (StoredDocument document : documents) {
       preview.documents.add(
           PreviewDocument.of(
               preview,
               document.category(),
-              document.content(),
+              document.storageReference(),
               document.contentType(),
               document.fileName(),
+              document.fileSize(),
               now));
     }
     return preview;

@@ -1,71 +1,83 @@
 # Testing
 
-> Read when: writing or changing any test, or deciding test strategy for a change.
+> Read when: writing or changing tests, deciding test strategy or closing a slice.
 
 ## Philosophy
 
-Tests protect behavior, prevent regressions, make refactoring safer and document
-expectations. Coverage is a signal, not the goal; high coverage with weak assertions is not
-quality.
+Tests protect behavior, prevent regressions and document expectations. Coverage is a signal, not
+the goal. A weak assertion with high coverage is still weak quality.
 
-## The real pyramid (final — v0.51.1, all enforced at `./mvnw verify` / CI)
+Every defect found while building, reviewing or verifying needs a regression test at every layer the
+defect can realistically reach. Skipping a layer requires a clear reason in the final response.
+
+## Pyramid and Gates
 
 | Level | Tooling | Gate |
 |---|---|---|
-| Unit (domain rules, VOs, state machines) | JUnit 5 | part of `verify` (617 backend tests total) |
-| Property-based (money math, cent distribution) | jqwik 1.9.2 — 8 properties × 1000 cases | part of `verify` |
-| Integration (persistence, API, events, security) | Testcontainers (Postgres 16), `TestJwtTokens` | part of `verify` |
-| Architecture | ArchUnit (18 rules) + Spring Modulith `verify()` (23 modules, acyclic) | fails the build on violation |
-| Contract | OpenAPI snapshot (`docs/api/openapi.json`) + module-diagram drift gates | fails the build on drift |
-| Mutation (money-math domain) | PIT 1.17.3, `-Pmutation` profile, own CI job | `mutationThreshold=60` (measured: 68% killed, 89% test strength) |
-| Coverage floors | JaCoCo INSTRUCTION ≥ 0.80, BRANCH ≥ 0.65 · Vitest statements 70 / lines 75 / functions 49 / branches 55 | fails the build below the floor |
-| Frontend unit | Vitest 4 (jsdom), 331 tests | `npm test` |
-| E2E | Playwright 1.61 on the **isolated** stack (`compose.e2e.yaml`: ephemeral tmpfs Postgres, frontend :4201) — never the dev database | `npm run e2e` / CI job |
-| Smoke | `/api/system/health` liveness + readiness | part of `verify` / compose healthcheck |
+| Domain/unit | JUnit 5 | part of `./mvnw verify` |
+| Integration/API/security/events | Spring test + Testcontainers/Postgres + `TestJwtTokens` | part of `./mvnw verify` |
+| Architecture | ArchUnit + Spring Modulith `verify()` | part of `./mvnw verify` |
+| Contract | OpenAPI snapshot + module diagram snapshot | part of `./mvnw verify` |
+| Coverage | JaCoCo instruction/branch floors | part of `./mvnw verify` |
+| Mutation | PIT profile for money/critical domain rules | `./mvnw -Pmutation ...` when useful |
+| Frontend unit | Vitest + jsdom + coverage floors | `npm test` |
+| Frontend lint/build | angular-eslint + Angular build budgets | `npm run lint`, `npm run build` |
+| E2E | Playwright on `compose.e2e.yaml` isolated stack | `npm run e2e` |
 
-## Backend
+Latest local evidence after the post-Phase 6 hardening branch: backend verify 763 tests, frontend
+lint/test/build with 524 frontend tests, and `git diff --check`. Latest recorded Phase 6 E2E
+evidence remains 33 Playwright journeys; E2E was not rerun for the hardening branch because no user
+journey or frontend behavior changed. This branch adds focused backend regressions for upload
+transport limits, masked authentication logs and correlation IDs.
 
-Prioritize: domain rules, state transitions, invariants, Application Services, business
-exceptions, validation, repositories/queries, transactions, locking, integration boundaries
-and ACLs, messaging, API contracts, security-sensitive flows (401/403/409 sad paths),
-concurrency (the model: prove the bug red, then fix to green).
+## Backend Testing
 
-Unit tests cover domain/application logic without infrastructure. Integration tests cover
-persistence, transactions, APIs, events — use Testcontainers when infrastructure behavior
-matters. Architecture tests (ArchUnit / Spring Modulith `verify()`) run in the normal test
-suite and **MUST NOT** be weakened to make code pass.
+Prioritize:
 
-## Regression tests
+- domain invariants and state transitions;
+- service orchestration and business exceptions;
+- persistence, transactions and locking;
+- API contracts, status codes and error codes;
+- security-sensitive 401/403/404/409/422 paths;
+- event publication/listeners and notification side effects;
+- uploads and file-content validation;
+- time/date boundaries.
 
-Every defect found — a shipped bug, a review finding, or anything caught while building —
-**MUST** get a regression test that fails before the fix and passes after. If a regression
-test is genuinely impossible, explain why in the final response.
+Use Testcontainers when database behavior matters. Use unit tests for pure domain logic. Do not
+weaken ArchUnit, Modulith, snapshot or coverage gates to make a change pass.
 
-**Cover every applicable layer, not just the most convenient one (owner rule).** A
-defect usually surfaces at one layer but its root cause and its contract live at several. Add
-a regression test at **each layer the defect can reach**, choosing from the pyramid above:
+## Frontend Testing
 
-- domain/unit — when an invariant, value object, state machine or calculation was wrong;
-- integration (Testcontainers) — when persistence, a transaction, an event, a query or an
-  authorization rule was wrong (this is where most backend defects belong);
-- API/contract — when a status code, error code or response shape was wrong;
-- frontend unit — when a service, guard, form or component behaved wrong;
-- E2E — when a critical user journey broke end to end.
+Protect feature services, guards, validators, submit flows, error handling, permission behavior,
+loading/empty/error states and critical user journeys. E2E is for critical flows, not every tiny UI
+branch.
 
-One layer is not enough when the defect spans more: e.g. a wrong authorization rule gets both
-an integration test (the endpoint returns 403/allows the gate) **and** a frontend test (the
-menu/guard reflects it). Skipping an applicable layer is only acceptable with a stated reason.
+When a backend contract changes, update frontend tests and OpenAPI-aware code together.
 
-## Frontend
+## Regression Layers
 
-Protect real behavior: feature/API/state services, guards (`canDeactivate`/auth),
-interceptors, validators, error handling, permission behavior, loading/empty/error states,
-submit flows, keyboard shortcuts and critical user journeys. E2E for critical flows only.
+A wrong upload limit can need:
 
-## Test environments
+- config test for transport limits;
+- API/integration test for domain error path if the request reaches the backend;
+- frontend test for client-side blocking if visible.
 
-Right level of realism: don't mock everything blindly; don't boot the whole stack for simple
-logic. Mocks/fakes for logic and orchestration; Testcontainers for infrastructure behavior;
-the JDK `HttpServer` (no extra dependency) for HTTP-adapter tests; WireMock only in the dev
-emulator compose profile. Separate unit, integration and E2E commands. Tests create their
-own data via builders/factories/fixtures — the E2E suite assumes a fresh database per run.
+A wrong authorization rule can need:
+
+- integration/API test for denied access;
+- frontend guard/menu test when UI can reach it;
+- E2E if it breaks a critical user journey.
+
+A UI-only validation or copy defect may only need a frontend unit/E2E test, as long as the backend
+contract was already correct.
+
+## Manual QA
+
+Manual QA complements automation. Use `docs/QA-CADERNO-DE-TESTES.md` for the human test book:
+coverage by feature, exploratory charters, security/privacy probes, accessibility checks and
+evidence templates.
+
+## Test Environments
+
+Never run E2E against a developer database. Playwright uses `compose.e2e.yaml` with fresh isolated
+data. Tests must create or reset their own data and avoid relying on mutable global state.

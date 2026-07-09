@@ -4,6 +4,8 @@ import com.fkmed.domain.network.SpecialtyValidator;
 import com.fkmed.domain.plan.AccessibleBeneficiary;
 import com.fkmed.domain.plan.BeneficiaryAccess;
 import com.fkmed.domain.plan.ProtocolGenerator;
+import com.fkmed.domain.upload.FileStorage;
+import com.fkmed.domain.upload.StorageNamespace;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
 import java.time.Instant;
@@ -51,6 +53,7 @@ public class AppointmentService {
   private final ExamTypeRepository examTypes;
   private final AppointmentRepository appointments;
   private final AppointmentAttachmentRepository attachments;
+  private final FileStorage fileStorage;
   private final SpecialtyValidator specialties;
   private final BeneficiaryAccess beneficiaryAccess;
   private final ProtocolGenerator protocolGenerator;
@@ -192,7 +195,10 @@ public class AppointmentService {
                 now);
     appointments.save(appointment);
     if (order != null) {
-      attachments.save(AppointmentAttachment.of(appointment.getId(), order, fileName, now));
+      String storageReference =
+          fileStorage.store(StorageNamespace.APPOINTMENT_ORDER, order.content());
+      attachments.save(
+          AppointmentAttachment.of(appointment.getId(), storageReference, order, fileName, now));
     }
 
     metrics.counter("appointment.confirmed").increment();

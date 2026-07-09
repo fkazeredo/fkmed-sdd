@@ -2,9 +2,11 @@
 
 - **Date:** 2026-07-08
 - **Phase/slice:** Phase 6 reimbursement
-- **Related specs:** SPEC-0016, SPEC-0017
+- **Spec(s):** SPEC-0016, SPEC-0017
+- **Related ADR:** ADR-0022
+- **Status:** ASSUMED
 - **Confidence:** Medium
-- **Cost of change:** Cheap
+- **Reversibility:** Cheap
 
 ## Context
 
@@ -27,4 +29,21 @@ Use the proposed defaults for Phase 6:
 - Preview list/detail screens do not need expiry badges or validity windows.
 - Both choices are data/UI cheap to revise later if the owner wants stricter audit or
   estimate-validity behavior.
+
+## Alternatives discarded
+
+- Add a post-payment pendency status now - rejected because SPEC-0016 explicitly keeps
+  post-payment audits outside the POC state machine.
+- Add preview expiration now - rejected because SPEC-0017 treats concluded previews as
+  informational history, not binding offers.
+
+## Impact
+
+No extra reimbursement state is added after `PAGO`; preview screens omit validity-window UI. Support
+channels remain the route for post-payment audit questions in the POC.
+
+## How to revert
+
+Add a future migration/status and UI badges for post-payment audits or preview expiration. Both
+changes are localized to reimbursement state/view models and copy.
 

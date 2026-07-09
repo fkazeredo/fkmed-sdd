@@ -45,6 +45,8 @@ services:
       SPRING_MAIL_HOST: mailpit-e2e
       SPRING_MAIL_PORT: 1025
       APP_WEB_BASE_URL: http://localhost:4201 # verification links resolve to the E2E SPA origin
+      FKMED_STORAGE_BACKEND: filesystem
+      FKMED_STORAGE_FILESYSTEM_ROOT: /fkmed/uploads
     depends_on:
       db-e2e:
         condition: service_healthy
@@ -56,6 +58,8 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    tmpfs:
+      - /fkmed
 
   frontend-e2e:
     build:

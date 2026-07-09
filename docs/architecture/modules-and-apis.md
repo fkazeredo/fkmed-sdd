@@ -1,108 +1,106 @@
 # Modules, Boundaries, APIs and Repositories Layout
 
-> Read when: defining module boundaries, calling across modules, designing/changing
-> endpoints or JSON contracts, considering microservices, BFF or repository split.
+> Read when: defining module boundaries, calling across modules, designing/changing endpoints or
+> JSON contracts, considering microservices, BFFs or repository split.
 
-## Package layers (hexagonal / DDD — baseline §0012)
+## Package Layers
 
-Three top-level layers under `com.example.product`:
+The FKMed backend is a modular monolith under `com.fkmed`.
 
 | Layer | Package | Contents |
 |---|---|---|
-| **Domain** (hexagon core) | `com.example.product.domain.<module>` | Services, entities, repositories, domain events, enums, value/view records, **business exceptions**, module facades (ports). Plus the kernel `com.example.product.domain.error` (`DomainException`, `ErrorDetails`, `RateLimited`). |
-| **Delivery** (driving adapters) | `com.example.product.application` | Only the entry mechanisms: `api` (REST controllers) + `api.dto` (request/response DTOs), `realtime` (WebSocket publishers) + `realtime.dto` (messages), `queue` (consumers) if any. |
-| **Infra** (driven adapters) | `com.example.product.infra.<concern>` | Email, integration, security (incl. `UserContext`/`UserContextProvider`), web (`ApiErrorResponse`, `GlobalExceptionHandler`, `HttpErrorMapping`, `PageResponse`), i18n, time, observability, socket config. |
+| Domain | `com.fkmed.domain.<module>` | Business services, entities, repositories, domain events, value/view records, business exceptions and public module facades. |
+| Delivery | `com.fkmed.application` | Entry mechanisms only: REST controllers in `api`, transport DTOs in `api.dto`, and dev-only operator-simulation endpoints in `sim`. |
+| Infra | `com.fkmed.infra.<concern>` | Security, identity adapters, web/error handling, observability, e-mail dispatch, i18n, time, health, platform checks and OpenAPI wiring. |
 
-**Dependency rule (ArchUnit-enforced):** `domain` is pure — it **MUST NOT** depend on
-`application` or `infra`. `application` and `infra` may depend on `domain`; `application`
-**MAY** depend on `infra` (delivery wires domain + infra). Entities never leave the domain:
-the delivery layer is entity-free — services return view/response records, never `@Entity`
-(the few Response DTOs that map an entity stay inside their domain module).
+`domain` must not depend on `application` or `infra`. `application` and `infra` may depend on
+`domain`; `application` may depend on `infra` for security/user context and delivery adapters.
 
-## Modules and bounded contexts
+## Module Ownership
 
-Modules are defined primarily by business domain: own language, rules, workflows, state
-transitions, lifecycle, data ownership and reasons to change. Independent evolution is a
-secondary criterion. Do not create modules only because a folder seems organized.
+Modules are business boundaries, not folders for visual tidiness. Current FKMed domains include:
 
-Cross-module rules (Spring Modulith / ArchUnit enforced):
+- plan/family access;
+- identity/access;
+- audit;
+- content/home;
+- notifications;
+- digital card;
+- provider network;
+- appointments;
+- telemedicine;
+- clinical documents;
+- guides/tokens;
+- finance;
+- support;
+- reimbursement;
+- small kernels such as `error` and `upload`.
 
-- Synchronous collaboration through a public application-level API/facade only.
-- A module **MUST NOT** depend on another **module's** repositories, internal entities,
-  persistence details or implementation classes.
-- Asynchronous reactions through domain events.
-- Boundaries **SHOULD** preserve future microservice extraction.
+Cross-module rules are enforced by ArchUnit and Spring Modulith:
 
-Module ↔ infra (DECISIONS-BASELINE §0010): a module exposes a **port** (interface in the module) for each
-technical adapter; the implementation lives in `com.example.product.infra.<concern>` and depends on
-the module (infra → domain is allowed; domain → infra is forbidden). The centralized
-`infra` layer **MAY** read/write a module's own persistence to operate that module's
-technical adapter (e.g. the outbox dispatch worker, the mock payment gateway) — the
-per-module persistence rule exempts `com.example.product.infra`, but **other business modules are
-still forbidden** from touching it.
+- call another module only through a public facade/API it exposes;
+- do not depend on another module's repository, entity or internal implementation;
+- react asynchronously through domain events when a module only needs to observe a fact;
+- keep dependencies one-directional and acyclic.
 
-Data ownership: in a monolith, a shared database is acceptable — do not pretend to be
-distributed. Modules may read shared data for reports/projections; for commands, respect
-business ownership. In microservices, each service owns its data; never write into another
-service's database.
+## APIs
 
-Extract a microservice only with a clear bounded context plus a concrete reason: independent
-deployment/scalability, isolated load, separate team ownership, different runtime, fault or
-security isolation. Microservices do not fix bad modularity — they distribute it.
+APIs are contracts. Every endpoint must have an explicit purpose, URL, method, request/response
+shape, validation behavior, status codes, error codes, authentication/authorization expectation and
+compatibility impact.
 
-## API design
+- Do not expose JPA entities.
+- Pragmatic REST action endpoints are acceptable when they model product actions clearly, such as
+  `POST /api/guides/{id}/token` or operator-sim transitions.
+- JSON field names, enum values, nullability, dates and pagination envelopes are contract surface.
+  Change them only with tests and OpenAPI snapshot updates.
+- Dates/times use ISO-8601 over the wire; user formatting belongs to the frontend locale layer.
 
-APIs are external contracts, not accidental exposure of entities or framework structures.
-Every endpoint defines: purpose, URL, method, request/response bodies, status codes, error
-codes, validation behavior, pagination/filtering/sorting, authn/authz expectations,
-versioning and compatibility expectations.
+The committed OpenAPI snapshot (`docs/api/openapi.json`) is the public contract snapshot. Regenerate
+it through the backend gate flag when controller contracts intentionally change; never edit the
+snapshot by hand.
 
-- **MUST NOT** expose JPA entities; use stable DTOs.
-- Pragmatic REST: domain action endpoints are fine (`POST /orders/{id}/cancel`).
-- JSON is part of the contract: never casually change field names/types, enum values, date
-  formats, nullability, structure, pagination, error format or status codes.
-- Enums exposed in APIs **SHOULD** have explicit external values; invalid values produce
-  clear validation errors. Date/time values use ISO-8601.
+## Repositories
 
-Versioning: prefer backward-compatible changes; breaking change => new version + deprecation
-period, documented. Explicit versioning when external systems, multiple frontends, mobile or
-partners depend on the API.
+Each module owns its persistence. Command paths should go through the owning module's service and
+repositories. Read models can use projections when they keep the code clearer, but must not become a
+back door for cross-module writes.
 
-OpenAPI **MUST** document relevant APIs and **MUST** be updated when contracts change.
-Code-first acceptable for internal APIs; contract-first when external consumers or generated
-clients depend on it.
+Infrastructure adapters may use a module's persistence when they are implementing that module's own
+technical concern. Other business modules must not touch that persistence directly.
 
-Beyond REST: GraphQL only for real data-composition needs; gRPC for service-to-service with
-strong contracts/low latency; webhooks are serious external contracts (signature, retries,
-idempotency, logs, versioning, docs). Do not introduce them without a justifying use case.
+## BFF, Gateway and Microservices
 
-## BFF and API Gateway
+Do not introduce a BFF, gateway business layer or microservice split by default. Consider them only
+for concrete pressure: different clients with divergent contracts, token isolation, legacy API
+composition, independent deployment/scaling, team ownership or security/fault isolation.
 
-BFF **MUST NOT** be introduced by default; consider only for web/mobile contract divergence,
-heavy screen-specific aggregation, legacy APIs, token isolation or migration. A BFF **MUST
-NOT** own business rules. API Gateway is infrastructure (routing, TLS, rate limiting, CORS,
-observability) — never a hidden business layer.
+The current architecture goal is a well-factored modular monolith. Microservices would distribute
+bad modularity if the in-process boundaries are not already clean.
 
-## Monorepo vs multiple repositories
-
-Prefer monorepo for cohesive products — this repo's real layout:
+## Repo Layout
 
 ```txt
 project-root
-  backend/   frontend/   infra/
-  docs/      (architecture/ specs/ adr/ decision-log/ plan/ test-report/ release-notes/ api/)
-  docker-compose.yml  compose.e2e.yaml  compose.prod.yaml  README.md  CLAUDE.md
+  backend/                 Java/Spring backend
+  frontend/                Angular SPA
+  infra/                   deployment-supporting infrastructure
+  docs/
+    specs/                 product specs
+    adr/                   architecture decisions
+    decision-log/          autonomous owner-authorized decisions
+    architecture/          working rules by area
+    api/openapi.json       committed contract snapshot
+    architecture-diagrams/ modules diagram snapshot
+  compose*.yaml
+  README.md
+  CLAUDE.md
+  AGENTS.md
 ```
 
-If it changes together, keep it together. Split only for real organizational, deployment,
-security, lifecycle or ownership reasons.
+## Verified Map
 
-## The verified module map (Spring Modulith, acyclic)
-
-The product's business modules (one flat package each — e.g. `orders` · `customers` ·
-`billing` · `registry` · `identity` · `platform`) + the `error`/`money` kernels. The map
-comes from YOUR domain, one module per bounded context — never invent empty ones (Rule Zero).
-Two build gates keep the map honest: the committed module diagram
-(`docs/architecture-diagrams/modules.puml`) is compared against the Modulith `Documenter`
-output on every build, and the committed OpenAPI snapshot (`docs/api/openapi.json`) fails the
-build on contract drift.
+The module diagram in `docs/architecture-diagrams/modules.puml` is generated from Spring Modulith.
+`ModularityTest` compares the generated diagram to the committed snapshot during `verify`. If the
+module map changes intentionally, regenerate the snapshot with the documented flag and review the
+new dependencies as part of the PR.

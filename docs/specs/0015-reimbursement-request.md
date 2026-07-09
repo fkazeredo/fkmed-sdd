@@ -127,7 +127,8 @@ seed: Consulta 120,00 · Exame 80,00 · Terapia/Psicologia 60,00 per session · 
 `reimbursement_request` (id, protocol unique, beneficiary_id, expense_type_code, care_date,
 amount, provider fields, bank fields, term version, status, expected_payment_date,
 idempotency_key unique, created_by, timestamps); `reimbursement_session_item` (date,
-amount); `reimbursement_document` (category, file ref, name, size).
+amount); `reimbursement_document` (category, provider-qualified storage reference from SPEC-0019,
+content type, display name, size).
 
 ## Validation Rules
 

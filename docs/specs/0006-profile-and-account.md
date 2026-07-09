@@ -84,7 +84,8 @@ new** e-mail addresses + in-app (mandatory type).
 ## Persistence Changes
 
 Migration (number at implementation): add contact/address columns (or `beneficiary_contact`
-table) per BR5; `beneficiary_photo` (beneficiary_id, image, content_type, updated_at);
+table) per BR5; `beneficiary_photo` (beneficiary_id, storage_reference, content_type, updated_at;
+physical bytes through SPEC-0019);
 `legal_document` (type `TERMS|PRIVACY`, version, published_at, body) + seed of current
 versions; `term_acceptance` shared with SPEC-0002. UF validated against a seeded UF
 registry (baseline §0019).

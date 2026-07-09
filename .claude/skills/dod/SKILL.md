@@ -28,15 +28,15 @@ equivalent replaced it.
 
 ## 2. Gates
 
-This is the **final delivery** — run the full battery **once, here**, not incrementally during
-implementation (spec tests + general homologation, together):
+This is the **final delivery** — run the complete applicable battery together here, not after every
+implementation edit (spec tests + general homologation):
 
 ```bash
 cd backend && ./mvnw spotless:apply && ./mvnw verify
 cd frontend && npm run lint && npm test && npm run build
 ```
 
-- Run the complete battery a single time at close; do not rerun `verify`/tests per change earlier.
+- Focused test anchors/regressions may run earlier; do not repeat the entire battery per edit.
 - E2E is required when a user journey changes:
 
   ```bash
@@ -44,8 +44,10 @@ cd frontend && npm run lint && npm test && npm run build
   ```
 
 - PIT/mutation is reserved for money or critical domain logic when useful.
-- A red gate means fix the code or architecture; never weaken the gate.
-- Reuse that single green run instead of rerunning identical expensive gates.
+- A red gate means fix the code or architecture and rerun the failed/affected gate until green;
+  never weaken it or hide the failed attempt.
+- On PowerShell, quote Maven system properties such as
+  `.\mvnw.cmd verify "-Dopenapi.snapshot.write=true"`.
 
 ## 3. Definition of Done
 
@@ -54,6 +56,8 @@ Walk `CLAUDE.md` Definition of Done:
 - Spec updated if requirement changed.
 - Tests created/updated; bug fix has regression coverage.
 - Migration added for schema changes; applied migrations not edited.
+- SemVer decision recorded; code/migration delivery bumps MINOR/PATCH unless already grouped in the
+  current unreleased version, while docs-only does not bump. Lockstep files stay synchronized.
 - OpenAPI snapshot/docs updated when contracts changed.
 - i18n updated for user-facing text and error codes.
 - ADR created/updated when architecture changed.
@@ -84,6 +88,9 @@ useful. Historical reports remain evidence and should not be rewritten.
 - Conventional commits, one purpose per commit.
 - `git push -u origin feature/<slice>`.
 - `gh pr create --base develop`.
+- Authorization to implement/finish the slice already authorizes these commit, push and PR steps.
+  Do not wait for another owner prompt. `local-only` or `no PR` suppresses them; `draft` means use
+  `gh pr create --draft`.
 - Never merge the PR, tag or force-push unless the owner explicitly asks for an allowed
   operation.
 - PR checks red afterwards? Use `/ci-triage` before changing code.

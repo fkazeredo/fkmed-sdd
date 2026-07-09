@@ -19,9 +19,10 @@ All conversation is in **pt-BR**. Announce what you are about to do before each 
 1. **Read the authority**: `docs/DECISIONS-BASELINE.md` §0015 (or the project ADR that
    revised it) decides the digit — MINOR = new backwards-compatible capability, PATCH = fix
    only; breaking changes are highlighted in the release note while the version is `0.y`.
-2. **Entry gate**: if the slice is **docs-only** (no code, migration or test touched — check
-   with `git diff --stat`), do **NOT** bump — say so and stop (established precedent for
-   docs-only slices).
+2. **Entry gate and grouping**: every code/migration close makes a SemVer decision. If the slice is
+   **docs-only** (no code, migration or test touched — check with `git diff --stat`), do **NOT**
+   bump. If the work is already part of the current unreleased version/slice-group, do not bump a
+   second time. Otherwise MINOR = new delivered capability/slice-group and PATCH = fix-only.
 3. **Source of truth**: `backend/pom.xml` `<version>`. Read the current version and compute
    the next one.
 4. **Edit in lockstep** (all three places — never just one):
@@ -30,8 +31,9 @@ All conversation is in **pt-BR**. Announce what you are about to do before each 
       description, if present). **Locate it via Glob**
       `backend/src/main/java/**/OpenApiConfig.java` — never by a fixed package path (the base
       package changes in child projects).
-   c. Snapshot: `cd backend && ./mvnw verify -Dopenapi.snapshot.write=true` — regenerates
-      `docs/api/openapi.json`; the build's drift gate validates the sync.
+   c. Snapshot: run `cd backend && ./mvnw verify -Dopenapi.snapshot.write=true` on POSIX, or
+      `cd backend; .\mvnw.cmd verify "-Dopenapi.snapshot.write=true"` on PowerShell. This
+      regenerates `docs/api/openapi.json`; the build's drift gate validates the sync.
 5. **Changelog(s)**: a new entry at the TOP of `docs/release-notes/CHANGELOG.md`, in the
    file's existing format (`# Release X.Y.Z — … · title` + date/tag line + highlights +
    technical section). Multilingual product ⇒ every locale face gets the entry in the same

@@ -1,0 +1,3 @@
+app:
+  storage:
+    backend: ${FKMED_STORAGE_BACKEND:s3}

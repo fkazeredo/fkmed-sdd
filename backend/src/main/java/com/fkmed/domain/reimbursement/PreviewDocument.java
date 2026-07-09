@@ -29,8 +29,8 @@ public class PreviewDocument {
   @Column(nullable = false)
   private DocumentCategory category;
 
-  @Column(nullable = false)
-  private byte[] content;
+  @Column(name = "storage_reference", nullable = false, length = 220)
+  private String storageReference;
 
   @Column(name = "content_type", nullable = false)
   private String contentType;
@@ -49,27 +49,30 @@ public class PreviewDocument {
   private PreviewDocument(
       ReimbursementPreview preview,
       DocumentCategory category,
-      byte[] content,
+      String storageReference,
       String contentType,
       String fileName,
+      int fileSize,
       Instant uploadedAt) {
     this.id = UUID.randomUUID();
     this.preview = preview;
     this.category = category;
-    this.content = content;
+    this.storageReference = storageReference;
     this.contentType = contentType;
     this.fileName = fileName;
-    this.fileSize = content.length;
+    this.fileSize = fileSize;
     this.uploadedAt = uploadedAt;
   }
 
   static PreviewDocument of(
       ReimbursementPreview preview,
       DocumentCategory category,
-      byte[] content,
+      String storageReference,
       String contentType,
       String fileName,
+      int fileSize,
       Instant uploadedAt) {
-    return new PreviewDocument(preview, category, content, contentType, fileName, uploadedAt);
+    return new PreviewDocument(
+        preview, category, storageReference, contentType, fileName, fileSize, uploadedAt);
   }
 }

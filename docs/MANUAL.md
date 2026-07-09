@@ -2,7 +2,7 @@
 
 > Artefato vivo em **pt-BR** (idioma do produto). Atualizado via `/manual` ao fechar toda
 > fatia com mudança visível ao usuário — a fatia só está "pronta" quando este manual
-> reflete a mudança. Versão do produto: **0.12.0** (pré-release; tag pendente do owner).
+> reflete a mudança. Versão do produto: **0.13.0** (pré-release; tag pendente do owner).
 
 ## Sobre o portal
 
@@ -10,6 +10,28 @@ O FKMed é o portal web do beneficiário do plano de saúde: identifique-se na r
 (carteirinha digital e token de atendimento), encontre atendimento (rede credenciada,
 agendamento, telemedicina), acompanhe suas guias, cuide das finanças do contrato
 (boletos, coparticipação, IR) e solicite e acompanhe reembolsos.
+
+## Como usar este manual
+
+Este manual serve para usuários, PO, QA humano e pessoas novas no projeto. Cada capítulo explica
+onde a funcionalidade fica, qual é o fluxo esperado, quais limites/mensagens importam e quais
+cuidados existem com dados sensíveis, dinheiro, documentos e reembolso.
+
+Para homologação manual detalhada, use também o
+[Caderno de Testes QA](QA-CADERNO-DE-TESTES.md).
+
+## Ambiente de demonstração e perfis
+
+As massas do POC são fictícias. O perfil principal é **MARIA CLARA SOUZA LIMA**, titular do
+plano, com o dependente **PEDRO SOUZA LIMA**. A conta dev principal é:
+
+```text
+maria@fkmed.local / maria12345
+```
+
+Para testar a negativa de elegibilidade em Reembolso, existe uma conta dev-only de plano sem
+reembolso. Para dirigir fluxos de bastidor em ambiente local/E2E, existe o **operator-sim**. Essas
+credenciais estão documentadas em `SECURITY.md`, são fictícias e são bloqueadas em produção.
 
 ## Capítulos
 
@@ -274,10 +296,57 @@ A área tem quatro abas:
   tabela vigente; outros tipos exigem orçamento e pedido/relatório médico e ficam em análise. Toda
   prévia concluída exibe o aviso de que é estimativa, sem autorização nem garantia de pagamento.
 
+Passo a passo da solicitação:
+
+1. Escolha o **beneficiário** correto no topo ou na própria tela.
+2. Selecione o **tipo de despesa**.
+3. Informe **data**, **valor pago** e dados do prestador.
+4. Para Terapia/Psicologia, informe as sessões e garanta que a soma bate com o total.
+5. Preencha os **dados bancários do titular**. Conta de terceiro, PJ ou conta salário é recusada.
+6. Leia e aceite o **termo de reembolso** vigente.
+7. Anexe os documentos obrigatórios. O portal aceita JPG, PNG ou PDF, até **2 MB por arquivo** e
+   **20 MB no total**.
+8. Revise e envie. O protocolo `RE-...` aparece na confirmação e no Histórico.
+
+Status comuns:
+
+- **Processamento** — pedido recebido e em análise automática/documental.
+- **Pendente de documentação** — envie o documento solicitado no próprio detalhe.
+- **Negado** — o motivo aparece no detalhe.
+- **Aprovado** — aguardando pagamento.
+- **Pagamento falhou** — corrija dados bancários.
+- **Pago** — aparece no extrato de reembolsos pagos.
+
+Cuidados:
+
+- a prévia não autoriza nem garante pagamento;
+- dados bancários aparecem mascarados nas telas e notificações;
+- pedidos fora do prazo ou com documento inválido são recusados com mensagem específica;
+- o portal não cobre, neste POC, recurso/contestação de negativas pelo próprio sistema.
+
+## Limitações conhecidas do POC
+
+Alguns itens são deliberadamente fora do escopo atual:
+
+- app mobile nativo e biometria real;
+- pagamento online dentro do portal;
+- cancelamento online de plano;
+- consulta de carências;
+- backoffice real da operadora;
+- recurso/contestação de negativas pelo portal;
+- vídeo/voz real na sala de telemedicina;
+- malware scanning/quarentena de uploads;
+- rotina de backup/restore automatizada versionada.
+
+Os arquivos enviados já podem ser armazenados em PostgreSQL, filesystem privado ou Amazon S3,
+conforme a configuração do ambiente. Essa escolha é transparente para o usuário e não altera os
+limites, formatos ou telas de upload descritos neste manual.
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-09 | 0.13.0 | Armazenamento configurável de uploads: PostgreSQL binário, filesystem privado em desenvolvimento e Amazon S3 em produção, sem alterar os fluxos e limites mostrados ao beneficiário |
 | 2026-07-08 | 0.12.0 | Reembolso (fecha a Fase 6): solicitação com termo, uploads, protocolo e análise automática; histórico/detalhe com timeline, pendências, glosa/negativa, correção bancária e extrato pago; prévia de reembolso com disclaimer e ações de operator-sim para aprovar, pagar e concluir prévias |
 | 2026-07-07 | 0.11.0 | Plano e finanças (fecha a Fase 5): Atendimento — canais oficiais (Central 24h, WhatsApp, Ouvidoria, ANS), seção antifraude (destino do banner de alerta da Início) e FAQ pesquisável por categoria; Central de Libras com registro do pedido e confirmação por horário |
 | 2026-07-06 | 0.10.0 | Plano e finanças: Finanças (titular) — boletos (abas em aberto/pagos, valor atualizado com multa+juros no vencido, copiar linha/PIX, 2ª via PDF com marca PAGO), validador antifraude, extrato de coparticipação, informe de IR e declaração de quitação Lei 12.007 |

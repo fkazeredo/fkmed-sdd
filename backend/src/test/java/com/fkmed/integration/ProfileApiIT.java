@@ -163,6 +163,18 @@ class ProfileApiIT extends AbstractIntegrationTest {
     mockMvc
         .perform(get("/api/beneficiaries/{id}/profile", MARIA_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(jsonPath("$.avatarUrl").value("/api/beneficiaries/" + MARIA_ID + "/photo"));
+    String reference =
+        jdbc.queryForObject(
+            "select storage_reference from beneficiary_photo where beneficiary_id=?::uuid",
+            String.class,
+            MARIA_ID);
+    assertThat(reference).startsWith("postgres:profile-photo/");
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from file_blob where object_key=?",
+                Integer.class,
+                reference.substring("postgres:".length())))
+        .isEqualTo(1);
     assertThat(auditCount("profile.photo-changed")).isEqualTo(1);
   }
 
@@ -191,12 +203,23 @@ class ProfileApiIT extends AbstractIntegrationTest {
   @Test
   void photo_removeReturnsToPlaceholder() throws Exception {
     uploadPhoto(MARIA_EMAIL, MARIA_ID, "image/png", png(64)).andExpect(status().isNoContent());
+    String reference =
+        jdbc.queryForObject(
+            "select storage_reference from beneficiary_photo where beneficiary_id=?::uuid",
+            String.class,
+            MARIA_ID);
     mockMvc
         .perform(delete("/api/beneficiaries/{id}/photo", MARIA_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isNoContent());
     mockMvc
         .perform(get("/api/beneficiaries/{id}/photo", MARIA_ID).with(authAs(MARIA_EMAIL)))
         .andExpect(status().isNotFound());
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from file_blob where object_key=?",
+                Integer.class,
+                reference.substring("postgres:".length())))
+        .isZero();
   }
 
   @Test

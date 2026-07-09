@@ -130,8 +130,9 @@ approved parallel experiments. They are not part of the normal workflow.
 
 ## Gates
 
-Run the full battery **once, at final delivery** (closing the slice) — not incrementally per
-change. Write the code and its tests first, then run the complete battery a single time:
+Run the expensive full battery first at final delivery (closing the slice), not after every edit.
+Focused test anchors/regressions may run earlier when they materially guide implementation. Write
+the code and tests, then run the complete applicable battery together:
 
 ```bash
 cd backend && ./mvnw spotless:apply && ./mvnw verify
@@ -141,14 +142,17 @@ cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down
 
 Rules:
 
-- **Do not run `verify`/tests repeatedly during implementation.** Tests run at the final
-  delivery — the spec's own tests or the general homologation — once, together at close.
-- The final battery: backend `verify`, frontend `lint`/`test`/`build`, and E2E when a user
-  journey changed.
+- **Do not run the full battery repeatedly during implementation.**
+- The final battery is backend `verify` when backend changed, frontend `lint`/`test`/`build` when
+  frontend changed, and E2E when a user journey or its runtime infrastructure changed.
 - E2E is required when a user journey changes.
 - PIT/mutation is reserved for money or critical domain logic when useful.
-- Red gate means fix the code or architecture, never weaken the gate.
-- Reuse that single green run instead of rerunning identical expensive gates.
+- A red gate means fix the code/architecture and rerun the failed or affected gate until green,
+  never weaken it. Unrelated gates already green need not rerun unless the fix can affect them.
+- Invocation/configuration failures that execute no project code are reported and corrected, but
+  are not test failures.
+- On PowerShell, quote Maven system-property arguments:
+  `.\mvnw.cmd verify "-Dmodulith.diagram.write=true"`.
 
 ## Reviewer and QA
 
@@ -158,6 +162,10 @@ fresh eyes. Reviewer is read-only by default and should lead with findings.
 Use `qa` for money, LGPD, authorization, audit/retention, clinical documents, jobs,
 concurrency, external integrations or broad cross-stack user journeys. QA validates against
 the spec and reports evidence; it does not fix production code by default.
+
+Reviewer/QA are quality roles, not mandatory background processes. If the current tool/runtime
+cannot create them, the main executor performs and reports the same review/QA checklist inline;
+it must not pretend an unavailable agent ran or leave the owner waiting.
 
 ## Closing a slice
 
@@ -170,6 +178,14 @@ Use `/dod` or follow the same structure:
 5. Run reviewer/QA if the risk triggers them or the owner asks.
 6. Push the feature branch and open a PR to `develop`.
 7. Do not merge, tag or force-push.
+
+An owner instruction to implement/finish the slice authorizes step 6 in advance. The executor MUST
+not stop after a local commit or ask for a second push/PR confirmation. `local-only` or `no PR`
+suppresses push/PR; `draft` means push and open a Draft PR. Red gates, missing remote authentication
+or another concrete blocker are reported instead of silently skipping closure.
+
+After opening the PR, inspect its check status. Red checks trigger CI triage and a same-branch fix;
+the executor still never merges the PR.
 
 `docs/reports/final/` is optional for complex retrospectives only. It is not a mandatory
 per-slice artifact.

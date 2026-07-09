@@ -59,10 +59,10 @@ public class ReimbursementPreviewService {
           new PreviewConcluded(preview.getId(), beneficiaryId, protocol, tableEntry.getAmount()));
       metrics.counter("reimbursement.preview.created", "mode", "immediate").increment();
     } else {
-      List<UploadedDocument> validated = reimbursements.validatePreviewDocuments(documents);
+      List<StoredDocument> stored = reimbursements.validateAndStorePreviewDocuments(documents);
       preview =
           ReimbursementPreview.analyzed(
-              protocol, beneficiaryId, expenseType, validated, authorAccountId, now);
+              protocol, beneficiaryId, expenseType, stored, authorAccountId, now);
       metrics.counter("reimbursement.preview.created", "mode", "analyzed").increment();
     }
     previews.save(preview);

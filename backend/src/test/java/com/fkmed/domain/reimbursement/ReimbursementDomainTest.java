@@ -42,7 +42,7 @@ class ReimbursementDomainTest {
   void calculation_capsEverySessionAndComputesGlosa() {
     ReimbursementService service =
         new ReimbursementService(
-            null, null, null, null, null, null, null, null, null, null, null, clock());
+            null, null, null, null, null, null, null, null, null, null, null, null, clock());
     ReimbursementTableEntry table = tableEntry("TERAPIA", "60.00", true, "1.00");
 
     ReimbursementCalculation calculation =
@@ -101,9 +101,7 @@ class ReimbursementDomainTest {
 
     request.openPendency("Enviar pedido medico", LocalDate.of(2026, 8, 7), NOW.plusSeconds(1));
     request.resolvePendency(
-        List.of(
-            new UploadedDocument(
-                DocumentCategory.MEDICAL_ORDER, pdf(), "application/pdf", "p.pdf")),
+        List.of(stored(DocumentCategory.MEDICAL_ORDER, "p.pdf")),
         ReimbursementCalculation.of(money("120.00"), money("150.00")),
         LocalDate.of(2026, 7, 15),
         NOW.plusSeconds(2));
@@ -206,9 +204,8 @@ class ReimbursementDomainTest {
             BENEFICIARY,
             ExpenseTypeCodes.EXAME,
             List.of(
-                new UploadedDocument(DocumentCategory.BUDGET, pdf(), "application/pdf", "o.pdf"),
-                new UploadedDocument(
-                    DocumentCategory.MEDICAL_ORDER, pdf(), "application/pdf", "p.pdf")),
+                stored(DocumentCategory.BUDGET, "o.pdf"),
+                stored(DocumentCategory.MEDICAL_ORDER, "p.pdf")),
             AUTHOR,
             NOW);
 
@@ -252,7 +249,17 @@ class ReimbursementDomainTest {
         term(),
         LocalDate.of(2026, 7, 15),
         AUTHOR,
+        List.of(stored(DocumentCategory.RECEIPT, "r.pdf")),
         NOW);
+  }
+
+  private static StoredDocument stored(DocumentCategory category, String fileName) {
+    return new StoredDocument(
+        category,
+        "postgres:reimbursement-document/12345678-1234-4234-8234-123456789abc",
+        "application/pdf",
+        fileName,
+        pdf().length);
   }
 
   private static AdhesionTerm term() {

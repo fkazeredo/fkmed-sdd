@@ -16,6 +16,8 @@ regexes = [
   '''perfilE2e12345''',
   # disposable terms-interception E2E password (SPEC-0006 Phase 2; refused in prod by ProdReadinessValidator)
   '''termosE2e12345''',
+  # dev-only internal operator-simulation password (SPEC-0018; refused in prod by ProdReadinessValidator)
+  '''operador12345''',
   # disposable no-reimbursement E2E password (SPEC-0015 AC8; refused in prod by ProdReadinessValidator)
   '''reembolso12345''',
   # retired in-memory dev-login seam (SPEC-0001 BR8 — replaced by SPEC-0002); still referenced

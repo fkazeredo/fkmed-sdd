@@ -1,95 +1,115 @@
-# Frontend Architecture — Angular
+# Frontend Architecture - Angular
 
-> Read when: writing or changing any Angular code, UI behavior, forms, state, HTTP or
-> keyboard/UX handling.
+> Read when: writing or changing Angular code, UI behavior, forms, state, HTTP or UX/keyboard
+> handling.
 
-## Stack (final — v0.51.1)
+## Stack (current FKMed POC - v0.13.0)
 
-| Concern | Choice | Version |
+| Concern | Choice | Version / source |
 |---|---|---|
-| Framework | Angular (standalone components, **zoneless**, signals) | 22.0.x |
-| UI kit | PrimeNG (preset **Aura** via `@primeuix/themes` 2.0.x) + primeicons 7 | 21.1.x |
-| Utility CSS | Tailwind CSS (integrated with PrimeNG through CSS layers) | 4.3.x |
+| Framework | Angular standalone components, zoneless, signals | 22.0.x |
+| UI kit | PrimeNG Aura + primeicons | PrimeNG 21.1.x / primeicons 7 |
+| Utility CSS | Tailwind CSS | 4.3.x |
 | A11y/behavior primitives | Angular CDK | 22.0.x |
-| i18n | `@ngx-translate/core` with an **in-memory loader** (`core/i18n/translations.ts`, default = the product's primary locale) | 18 |
-| Auth | `angular-oauth2-oidc` — OIDC Authorization Code + **PKCE** against the embedded AS; silent refresh via iframe | 20.0.x |
-| Unit tests | Vitest (+ `@vitest/coverage-v8`; jsdom) | 4.x |
-| E2E | Playwright against the **isolated** stack (`compose.e2e.yaml`, port 4201) | 1.61.x |
-| Lint/format | angular-eslint 22 + ESLint 10 + Prettier 3 | — |
+| i18n | `@ngx-translate/core` with in-memory pt-BR translations | 18 |
+| Auth | `angular-oauth2-oidc`, Authorization Code + PKCE against embedded AS | 22.0.x |
+| Unit tests | Vitest + jsdom + coverage v8 | 4.x |
+| E2E | Playwright against `compose.e2e.yaml` isolated stack | 1.61.x |
+| Lint/format | angular-eslint, ESLint, Prettier | see `package.json` |
 | Language | TypeScript | 6.0.x |
 
-Gates (all must stay green): `npm run lint`, `npm test` (coverage floors: statements 70,
-lines 75, functions 49, branches 55), `ng build`.
+Gates: `npm run lint`, `npm test`, `npm run build`. E2E runs with
+`npm run e2e:up`, `npm run e2e`, `npm run e2e:down`.
 
-## Structure (real)
-
-Organize by feature/domain with controlled `core` and `shared`:
+## Structure
 
 ```txt
 src/app
-  core/      auth (OIDC config, guards, interceptor)  http  i18n (in-memory translations)
-             layout (shell: sidebar, topbar, command palette)  shortcuts (ShortcutService)
-             feedback (FeedbackService → global p-toast)
-  shared/    components (app-screen-state, ...)  pipes (registryLabel, ...)  validators  utils
-  features/  <one folder per backend module/screen — e.g. orders  customers  billing
-             registry  identity  dashboard  login  health>
+  core/
+    auth       OIDC config, guards, token handling
+    context    active beneficiary state
+    http       interceptors and API helpers
+    i18n       in-memory translation bundle
+    layout     shell, navigation, selector and notification bell
+  shared/
+    reusable components, validators and utilities
+  features/
+    home
+    my-plan
+    first-access / email-verification / password-recovery / security
+    perfil
+    card
+    rede
+    agendamento
+    telemedicina
+    minha-saude
+    guias
+    financas
+    atendimento
+    reembolso
 ```
 
-`core` = app-wide infrastructure and singletons. `shared` = genuinely reusable UI/utils.
-Feature-specific code **MUST** stay inside the feature.
+`core` is for application-wide singletons and infrastructure. `shared` is for genuinely reusable UI
+or utilities. Feature-specific behavior stays inside the feature.
 
-## Product and UX (corporate, keyboard-first)
+## Product UX Rules
 
-Frontend is product in use. Decision priority: product requirements > UX spec > customer
-expectations > approved designs > design system > acceptance criteria > accessibility >
-existing patterns > Angular code organization. The UI represents the user workflow, not the
-database model.
+The UI represents the beneficiary workflow, not the database model. Every screen must handle loading,
+empty, error, permission-denied and success states where relevant. Every write action must prevent
+duplicate submission and give visible feedback.
 
-Standing UX invariants of this app (do not regress):
+User-facing text lives in the translation bundle. Dates, times, currency and CPF/CNPJ/phone masks
+must follow pt-BR product conventions. Do not render raw enum names.
 
-- **Keyboard-first:** every screen has a curated, unique `g + <key>` shortcut; the `?`
-  dictionary and the `Ctrl/Cmd+K` command palette derive from the **same** registry that
-  navigates (they can never disagree). Single-key shortcuts have a persisted **off toggle**
-  (WCAG 2.1.4). Contextual per-screen commands register on init and dispose on destroy.
-- **`Esc` climbs one layer at a time** (open dialog → editable field blur → `Location.back()`
-  guarded); **`Enter` submits** every mutation form (`ngSubmit`/`keyup.enter`).
-- **Unsaved-work guard:** every mutation screen implements `isDirty()` + `canDeactivate`.
-- **Real states everywhere:** loading, empty, error, validation, permission denied — via the
-  shared `<app-screen-state>` component; disabled submit while processing.
-- **Success feedback by toast** (global `p-toast` host + `FeedbackService`); **errors stay
-  inline**, next to the field that failed.
-- Motion respects `prefers-reduced-motion`; focus uses `:focus-visible` tokens; light/dark
-  themes via `--app-*` tokens.
+The app uses restrained operational UI. Prefer clear flows, predictable controls and compact content
+over decorative sections. Health-plan tasks are repetitive and sensitive; clarity wins.
 
-## State management
+## State
 
-Pragmatic and proportional. No global store: local component state (signals) for simple UI
-state; feature services for state shared inside a feature; RxJS or signals by clarity. NgRx
-or similar only for real complexity — this app never needed it.
+Use the simplest state holder that fits:
 
-## Components and forms
+- local signals for local UI;
+- feature services when state is shared inside a feature;
+- RxJS when stream semantics are clearer;
+- no global store unless the product grows into real cross-feature state complexity.
 
-Pages/feature components **MAY** orchestrate; reusable components are presentation-oriented
-with inputs/outputs and minimal business coupling. Template-driven forms with `ngModel` are
-the project norm for the operational screens; extract builders/mappers/validators when forms
-grow. Confirmation before destructive actions.
+## Forms
 
-## HTTP and errors
+Template-driven forms with `ngModel` are the project norm for operational screens. Extract validators
+and mappers when forms grow. Destructive actions need confirmation. Dirty mutation screens should use
+the existing guard pattern when leaving would lose work.
 
-Hybrid approach: `core` owns base URL, auth token propagation, correlation ID, global error
-normalization and interceptors. Each feature exposes a domain-oriented API service returning
-typed responses; list endpoints use the backend's `PageResponse` envelope. No raw
-`HttpClient` scattered in components; no generic API client hiding domain intention.
+## HTTP and Errors
 
-Error handling combines global normalization with feature-specific presentation (inline
-error near the field, error state, permission screen). Do not force every error into a
-generic toast — toasts are for **success** feedback in this app.
+Feature API services own domain-oriented HTTP calls. Components do not scatter raw `HttpClient`
+calls. The backend contract is the committed OpenAPI snapshot and the TypeScript models/services
+should reflect it directly.
 
-## UI libraries and styling
+Global error handling normalizes transport errors; feature screens decide how to present them.
+Errors that block a form belong near the field/action. Toasts are mainly for successful writes.
 
-PrimeNG (Aura) + Tailwind v4 is the standard — never casually mix other libraries. Component
-styles stay close to the component; global styles hold only design tokens (`--app-*`,
-elevation/motion) and layer wiring. User-facing text always goes through ngx-translate
-(labels, buttons, tables, empty states, dialogs, toasts, display names, dates/currencies) —
-the translation source is `core/i18n/translations.ts`, kept in full parity across the
-product's locales.
+## Accessibility and Responsive Behavior
+
+Every interactive control needs a label or an accessible name. Icon-only buttons need clear
+`aria-label`s. Keyboard navigation must work without pointer-only traps. Text must fit on mobile and
+desktop without overlap.
+
+Manual QA should exercise at least:
+
+- keyboard-only navigation in every critical flow;
+- focus after submit/error/dialog close;
+- screen states at 320 px mobile width and desktop;
+- long beneficiary/provider names and long translated strings;
+- reduced-motion preference where animation exists.
+
+Automated a11y tooling is not yet part of the gate; add it in a future hardening slice when the
+project decides on the tool and threshold.
+
+## Styling
+
+PrimeNG + Tailwind is the standard. Do not add another component library without an ADR. Keep global
+styles limited to tokens, CSS layers and app-wide layout. Feature styles stay close to the component.
+
+The frontend build has a warning budget (`initial` warning at 900 kB, error at 1.5 MB). Phase 6
+recorded a warning above 900 kB; treat further growth as performance debt and prefer route-level
+lazy loading or dependency trimming over simply raising the budget.

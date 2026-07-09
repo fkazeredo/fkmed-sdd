@@ -1,85 +1,87 @@
 # Observability and Performance
 
-> Read when: adding/changing logs, metrics, tracing, health checks, or doing any
-> performance-related work.
+> Read when: adding/changing logs, metrics, tracing, health checks, correlation IDs or
+> performance-related behavior.
 
-## The stack
+## Current Stack
 
-- **Metrics:** Micrometer → `/actuator/prometheus` (role-gated `ROLE_IT`); Prometheus scrapes
-  it natively via OAuth2 `client_credentials` (confidential client `prometheus-scraper`,
-  scope `metrics.read` — no manual tokens). Business metrics via an infra event
-  listener (`BusinessMetrics`, e.g. `app_platform_job_runs_total{status}`). Standard set:
-  `app_outbound_breaker_state{breaker}` (0/1/2, gauge held by a strong reference —
-  Micrometer gauges are weak-ref), one Timer per outbound integration
-  (`app_<integration>_calls{operation,outcome}`, manual — no AOP),
-  `app_identity_login_failures`/`_lockouts` (aggregate, no username tag — PII/cardinality)
-  and expiry gauges for any managed credential/certificate (hourly cached, NaN when none —
-  never queries on scrape).
-- **Logs:** structured JSON on the container console (ECS format by
-  default, `LOGGING_STRUCTURED_FORMAT_CONSOLE`), personal data masked; MDC carries
-  `correlationId` (every request) **and `username`** (authenticated requests only —
-  `UserMdcFilter`, via the `UserContextProvider` port; e-mail/userId deliberately excluded).
-  Shipped by **Grafana Alloy** to **Loki** through a parsing pipeline: **`level` is a LABEL**
-  (bounded ~5 values — stream selector, alertable) and **`correlationId`/`username` are
-  STRUCTURED METADATA** — the cardinality golden rule: an unbounded value must NEVER become a
-  label (one stream per value explodes the index). A **derived field** on the Loki datasource
-  turns the correlationId inside a log line into a "Related logs" link (all logs of that
-  request). **Runtime log levels:** `/actuator/loggers` is exposed, gated `ROLE_IT` (raise a
-  logger to DEBUG without redeploy; levels reset on restart). Prod mounts the same
-  `loki-config.yml` as dev (parity fix — it used to run the image default).
-- **Dashboards:** **Grafana** pre-provisioned — 5 dashboards: *Backend Overview* (landing),
-  *Application Health (RED)* (availability, rate, error %, p50/p95/p99, per-status, top-10
-  endpoints, breakers, outbound integrations), *JVM, Pool & Cache* (heap/GC/threads/CPU,
-  full HikariCP, Caffeine hit-ratio/size), *Business & Jobs* (KPIs, events/h, jobs by
-  status, logins×failures×lockouts, credential days-to-expiry) and *Logs* (volume by level,
-  live errors/warnings, browse by container, correlation search). No template variables
-  on Prometheus dashboards (single app/instance — dead UI); the Logs dashboard DOES use them
-  (`$container`, `$correlationId` — there are N containers).
-- **Alerts (10, Grafana-managed):** 5xx > 5%, p95 > 2s, Hikari pool > 90%, job FAILED, target
-  down + heap > 90%/10m, certificate < 30 days, login-failure spike > 25/15m
-  (password spraying — the per-account lockout caps ONE account; the aggregate is the
-  signal), breaker OPEN 5m + **error-log spike > 10/5m on the Loki datasource**
-  (catches failures with NO HTTP footprint: scheduled jobs, event listeners, best-effort
-  mail). All new rules use `noDataState: OK` so dev stays silent. **Delivery: e-mail via SMTP** — contact point `ops-email` + notification
-  policy provisioned; Grafana reuses the app's `SPRING_MAIL_*`/`MAIL_FROM` via `GF_SMTP_*` +
-  `ALERT_EMAIL_TO` (compose). Without SMTP, alerts are panel-only.
-- **Deliberately NOT added (Rule Zero):** p99/GC/cache-ratio/self-monitoring alerts
-  (noise — no operator action); **postgres_exporter** (actionable DB signals are app-side —
-  Hikari + `db` probe; revisit trigger: a Hikari-saturation incident unexplainable via
-  `pg_stat_activity`); **OpenTelemetry** (single-process monolith — correlationId covers it);
-  **external-dependency HealthIndicators** (`/actuator/health` is public AND the compose
-  healthcheck — an SMTP outage must not restart the app; `management.health.mail.enabled=false`
-  guards against Boot auto-registering one when `spring.mail.host` is set).
-- **Retention:** dev has a persistent `prometheus-data` volume + explicit 15d; prod 60d + 4GB
-  size cap (cardinality-accident guard).
-- **Version:** `GET /api/version` (version, commit, build time — from `build-info` +
-  `git-commit-id` Maven plugins).
-- **Health:** `/actuator/health` distinguishes liveness/readiness; compose healthchecks use it.
+- **Metrics:** Micrometer + Prometheus registry. `/actuator/health`, `/actuator/info` and
+  `/actuator/prometheus` are exposed at application level; production exposure is controlled by the
+  nginx proxy/network boundary, not by an application `ROLE_IT` gate.
+- **Logs:** application logs are written to the container console. Access logs include method, path,
+  status, duration and a request correlation ID.
+- **Correlation:** `AccessLogFilter` accepts a safe inbound `X-Correlation-Id` or generates a UUID,
+  stores it in MDC as `correlationId`, echoes it in the response header and removes it after the
+  request.
+- **Security/privacy logs:** authentication event logs mask e-mail hints; logs must not include
+  passwords, tokens, raw CPF/CNS, raw bank data or request bodies.
+- **Health:** `/actuator/health` distinguishes liveness/readiness and is used by compose
+  healthchecks.
+- **Version:** `/api/system/version` is backed by build/git metadata.
+- **Dashboards:** dev/prod compose files include Grafana/Prometheus support; dashboard inventory and
+  alert rules should be verified against the committed provisioning before being described as
+  production guarantees.
 
-Everything ships in `docker-compose.yml` (dev) and `compose.prod.yaml` (prod; Grafana bound
-to loopback, password required, no anonymous access).
+Not currently implemented: role-gated Prometheus scraping, `/actuator/loggers` exposure,
+`UserMdcFilter`, OpenTelemetry tracing and a complete production alert catalog. Treat those as future
+hardening unless a later slice implements them.
 
-## Observability rules
+## Logging Rules
 
-Observability is architecture, not optional polish. Logs are structured, contextual and
-safe; distinguish application flow, business events, integration, error, audit and security
-logs. Logs **MUST** answer: what happened, when, which user/request/job/message, which
-business entity, success or failure, duration, and failure class (validation, business,
-infrastructure, integration, bug). Never log secrets; mask personal data (LGPD).
+Logs must answer what happened, where, outcome and duration without leaking personal data.
 
-Every relevant request, message, job and async flow **SHOULD** carry a correlation ID.
+Required for meaningful request/business logs:
 
-Alerts are actionable. AI/DSS observability: insights carry evidence + provenance; human
-decisions on insights are recorded (accepted/rejected), never silently applied.
+- stable event/action name;
+- correlation ID;
+- business identifier only when it is non-sensitive or masked;
+- outcome/failure class;
+- duration where useful;
+- no raw payloads containing personal or clinical data.
+
+Use bounded labels/tags for metrics. Unbounded values such as e-mail, user id, beneficiary id,
+protocol, correlation id and free-text errors must not become Prometheus labels or Loki labels.
+
+## Correlation IDs
+
+Every request should have a correlation ID. When frontend/manual QA sends `X-Correlation-Id`, the
+backend may reuse it if it is short and safe (`A-Z`, `a-z`, digits, `.`, `_`, `:`, `-`). Unsafe values
+are ignored and replaced by a generated UUID.
+
+Future async/event flows should copy the same correlation ID when it helps connect request, event,
+notification and job logs.
+
+## Metrics
+
+Use business metrics only when they drive a real operational or product question. Good examples in
+this app:
+
+- login failures/lockouts as aggregate counters;
+- notification dispatch outcomes;
+- reimbursement submissions and upload rejections by reason;
+- file-storage operations and failures tagged only by backend/operation/outcome;
+- finance validation outcomes;
+- support FAQ empty searches and Libras requests.
+
+Never tag metrics with personal data.
 
 ## Performance
 
-Avoid obviously bad choices from the start: N+1 queries, missing indexes, large object
-graphs, unbounded queries, missing pagination, huge payloads, external calls in loops,
-synchronous long-running work, missing timeouts, screens loading too much data (the
-dashboard KPI endpoint aggregates server-side for exactly this reason).
+Avoid obvious performance traps from the start: N+1 queries, missing indexes, unbounded lists,
+large payloads, synchronous long-running work, external calls in loops and missing timeouts.
 
-Heavy optimization is evidence-driven only: logs, metrics, traces, profilers, execution
-plans, slow query logs, load tests, production-like volumes. Do not introduce complex
-caching, async processing, denormalization or distribution without reason. Code stays
-readable unless a measured hotspot justifies complexity.
+Optimize only with evidence from logs, metrics, profiles, execution plans or production-like
+volumes. Do not introduce caching, async processing or denormalization just to look enterprise.
+
+The frontend initial bundle currently exceeds the warning budget slightly after Phase 6. Treat
+additional growth as debt and prefer lazy loading/dependency trimming over budget inflation.
+
+## Future Production Hardening
+
+Before a real production launch, add or confirm:
+
+- authenticated or network-isolated scraping with a clear threat model;
+- structured JSON log format and log shipping pipeline;
+- an alert catalog with actionable thresholds and owners;
+- runbooks for high error rate, latency, DB outage, mail outage, E2E failures and upload failures;
+- privacy review of all logs and dashboards.

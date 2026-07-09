@@ -1,221 +1,172 @@
 # Backend Architecture (Java / Spring Boot)
 
-> Read when: writing or changing any backend code — services, entities, DTOs, mapping,
-> validation, error handling, dates, naming, comments.
+> Read when: writing or changing backend code: services, entities, DTOs, mapping,
+> validation, error handling, dates, naming or comments.
 
-## Stack (final — v0.51.1)
+## Stack (current FKMed POC - v0.13.0)
 
-| Concern | Choice | Version |
+| Concern | Choice | Version / source |
 |---|---|---|
-| Language / runtime | Java (LTS) | 21 |
+| Language / runtime | Java LTS | 21 |
 | Framework | Spring Boot | 4.1.0 |
-| Module boundaries | Spring Modulith (23 verified modules, acyclic) | 2.1.0 |
+| Module boundaries | Spring Modulith | 2.1.0 |
 | JSON | Jackson 3 (`tools.jackson`, Boot 4 default) | Boot BOM |
 | Persistence | Spring Data JPA + PostgreSQL | Postgres 16 |
-| Migrations | Flyway (`spring-boot-starter-flyway` + `flyway-database-postgresql`) | Boot BOM |
-| Security | Spring Security + OAuth2 Resource Server + **embedded** Spring Authorization Server (DECISIONS-BASELINE §0018) | Boot BOM |
-| E-mail / login page | spring-boot-starter-mail (abstract `EmailSender`) + Thymeleaf (custom login) | Boot BOM |
-| Sessions / HA | Spring Session JDBC (DECISIONS-BASELINE §0020) | Boot BOM |
-| API docs | springdoc-openapi (webmvc-ui) + committed snapshot with drift gate | 3.0.3 |
-| Observability | Micrometer + Prometheus registry, Actuator | Boot BOM |
-| Cache | Spring Cache + Caffeine (in-process — DECISIONS-BASELINE §0022) | Boot BOM |
-| Search | pg_trgm GIN indexes for indexed ILIKE "contains" | Postgres 16 |
-| Boilerplate | Lombok (baseline §0013 — policy below) | Boot BOM |
-| Tests | JUnit 5 · Testcontainers 1.21.4 · ArchUnit 1.4.2 · jqwik 1.9.2 · PIT 1.17.3 | — |
-| Format / style gates | Spotless (google-java-format) 3.7.0 + Checkstyle 10.21.4 | — |
-| Coverage gates | JaCoCo 0.8.12 (INSTRUCTION ≥ 0.80, BRANCH ≥ 0.65) | — |
+| File storage | `FileStorage` port + PostgreSQL/filesystem/S3 adapters | ADR-0023 |
+| Migrations | Flyway + `flyway-database-postgresql` | Boot BOM |
+| Security | Spring Security + OAuth2 Resource Server + embedded Spring Authorization Server | Boot BOM |
+| E-mail / login page | `spring-boot-starter-mail` behind `EmailSender` + Thymeleaf login | Boot BOM |
+| Sessions / HA | Spring Session JDBC | DECISIONS-BASELINE §0020 |
+| API docs | springdoc-openapi + committed snapshot drift gate | 3.0.3 |
+| Observability | Micrometer + Prometheus registry + Actuator | Boot BOM |
+| Cache | Spring Cache + Caffeine, in-process | DECISIONS-BASELINE §0022 |
+| Search | PostgreSQL indexes, including `pg_trgm` where needed | Postgres 16 |
+| Boilerplate | Lombok for constructor/logging boilerplate only | Boot BOM |
+| Tests and gates | JUnit 5, Testcontainers, ArchUnit, Modulith verify, PIT, JaCoCo, Spotless, Checkstyle | see `pom.xml` |
 
-Build with the wrapper only (`cd backend && ./mvnw verify`); never a system Maven.
+Build with the wrapper only: `cd backend && ./mvnw verify`.
 
-## Default style and package layout
+## Package Layout
 
-Pragmatic modular hexagonal architecture, organized by business domain. Hexagonal is a
-principle, not folder theater. Spring, Lombok, Bean Validation and JPA annotations are
-acceptable; the project does not pretend Spring does not exist.
-
-Three top-level layers (DECISIONS-BASELINE §0012): `domain` (pure hexagon core), `application` (delivery /
-driving adapters), `infra` (driven adapters). The real layout:
+The root package is `com.fkmed`.
 
 ```txt
-com.example.product
-  domain                  <- DOMAIN: pure hexagon core (business only), one package per module
-    <one flat package per business module — e.g. orders  customers  billing  registry  identity>
-      e.g. orders/
-        Order.java  OrderItem.java  OrderService.java
-        OrderConfirmed.java (domain event)  OrderNotFoundException.java
-        Orders.java                 <- public module facade (port consumed by other modules)
-        PaymentGateway.java         <- PORT (interface) for a technical adapter
-        OrderResponse.java          <- a Response that maps an @Entity stays inside the module
-    error                 <- domain kernel: DomainException, ErrorDetails, RateLimited
-    money                 <- domain kernel: Money (BigDecimal scale 2, HALF_UP)
-  application             <- DELIVERY (driving adapters): entry mechanisms only, entity-free
-    api/       OrderController.java  CustomerController.java ...   (REST controllers)
-    api/dto/   OrderRequest.java ...                  (request/response DTOs)
-  infra                   <- CENTRALIZED technical layer, by concern (DECISIONS-BASELINE §0010)
-      billing/  health/  i18n/  integration/  jobs/  observability/  openapi/  platform/
-      security/ (UserContext, UserContextProvider, AuthorizationServerConfig, authz matrix)
-      time/  web/ (ApiErrorResponse, GlobalExceptionHandler, HttpErrorMapping, PageResponse)
-      — Spring config, framework adapters, and the *impls* of module ports such as
-      HttpMunicipalNfseService implements billing.MunicipalNfseService
+com.fkmed
+  domain
+    plan             beneficiary, plan, family-scope access, protocol generator
+    identity         accounts, first access, password/recovery, verification
+    audit            immutable audit trail and masking helpers
+    content          Home banners and notices
+    notification     in-app/e-mail notification center
+    card             digital card and PDF
+    network          provider network search and registries
+    appointment      scheduling, slots, medical-order upload
+    telemedicine     queue, sessions, scheduled teleconsultation
+    clinicaldocs     prescriptions, sick notes, referrals, exam orders
+    guides           authorization guides and attendance tokens
+    finance          invoices, copay, IR, settlement declaration
+    support          service channels, FAQ and Libras request
+    reimbursement    reimbursement request, tracking, preview and statement
+    upload           shared magic-byte detector + file-storage port
+    error            domain exception kernel
+  application
+    api              REST controllers
+    api.dto          transport request/response DTOs
+    sim              dev-only operator-simulation entrypoints
+  infra
+    health identity i18n notification observability openapi platform security storage time web
 ```
 
-**Dependency rule (baseline §0012, ArchUnit-enforced):** `domain` is the pure core — it **MUST NOT**
-depend on `application` (delivery: controllers) or on `infra`. Both `application` and
-`infra` may depend on `domain`; `application` **MAY** depend on `infra` (delivery wires domain +
-infra). Technical adapters live in `com.example.product.infra.<concern>` and implement a **port defined
-in the domain module**, so the domain depends on the port, never on infra. Infra MAY read/write
-a module's own persistence to run that module's technical adapter (outbox dispatch, mock
-gateway); other business modules still must not touch each other's persistence (Spring Modulith).
-The delivery layer is **entity-free**: services return view/response records, never `@Entity`.
+The committed module diagram in `docs/architecture-diagrams/modules.puml` is generated by
+Spring Modulith and compared during `verify`. When modules change, regenerate the diagram through
+the documented gate instead of editing it manually.
 
-**MUST NOT** create `domain/application/ports/adapters/in/out` folder trees unless complexity
-truly justifies it. Single Maven project with strong package modularity; multi-module only
-for shared libraries, separate deployables, very large codebases or independent ownership.
+## Dependency Rule
 
-## Services and use cases
+`domain` is the core and must not depend on `application` or `infra`. `application` and `infra`
+may depend on `domain`; `application` may depend on `infra` because controllers wire security,
+request metadata and adapters.
 
-A module service is an Application Service: coordinates flow, transactions, repositories,
-domain behavior and results. It **MUST NOT** become a dumping ground for business rules —
-domain rules live in entities, value objects, enums with behavior, policies or domain
-services. **MUST NOT** create explicit `UseCase` classes by default.
+Cross-module collaboration happens through public facades or domain events. A module must not use
+another module's repositories, entities or implementation classes. The delivery layer is entity-free:
+REST controllers return DTOs/view records, not JPA entities.
 
-Lombok is the pragmatic default for component boilerplate (DECISIONS-BASELINE §0013): `@RequiredArgsConstructor`
-for constructor injection (over `final` fields; no field `@Autowired`) and `@Slf4j` for loggers.
-Keep a hand-written constructor only when params carry `@Value`/`@Qualifier` or the constructor
-has logic.
+## Services and Use Cases
 
-## Domain entities and JPA
+A module service coordinates transactions, repositories, domain behavior and returned views. Do not
+create a `UseCase` class for every endpoint. Extract policies or value objects only when they protect
+real business rules or remove real duplication.
 
-JPA entities **MAY** be domain entities; no artificial domain/persistence separation by
-default. Anemic models are not acceptable: entities **MUST** protect invariants and expose
-meaningful methods. Entities **MAY** use Lombok `@Getter` and
-`@NoArgsConstructor(access = PROTECTED)` for boilerplate (baseline §0013; the project sets
-`lombok.accessors.fluent = true`, so getters stay `title()`), but **NEVER** `@Data` or
-`@Setter` — they mutate only through meaningful business methods (both ArchUnit-enforced).
-Separate persistence models only for concrete reasons (complex legacy mapping, read models
-very different from write models, critical domain isolation).
+Constructor injection is mandatory. Lombok `@RequiredArgsConstructor` and `@Slf4j` are welcome.
+Field injection is forbidden. Avoid `*Impl` naming; interfaces are for real ports or multiple
+implementations, not internal ceremony.
 
-## DTOs, requests, commands and mapping
+## Domain Entities and JPA
 
-Request/response DTOs **MAY** be passed to Application Services when it stays simple.
-**MUST NOT** create a `Command` class per request by default — use commands when multiple
-delivery mechanisms trigger the same use case, the API shape differs from the use case
-input, or parameters multiply. Use records, Lombok and builders to reduce boilerplate.
+JPA entities may be domain entities. They must protect invariants through meaningful methods and
+must not expose unrestricted setters. Lombok `@Getter` and protected no-arg constructors are fine;
+`@Data` and entity `@Setter` are forbidden and guarded by tests.
 
-Mapping: prefer explicit factory methods close to the object (`OrderResponse.from(order)`).
-Dedicated mapper classes **SHOULD NOT** be the default; MapStruct **MAY** be used for
-repetitive many-field mappings.
+Separate persistence models only for concrete reasons: legacy mappings, read models very different
+from write models, or critical domain isolation.
+
+## DTOs, Commands and Mapping
+
+Use records for DTOs and view objects. A command object is useful when multiple delivery mechanisms
+call the same use case or when the input grows; it is not mandatory for every endpoint.
+
+Mapping should stay explicit and near the object when possible: `Response.from(view)` or a small
+factory method. Avoid generic mappers unless many-field repetition becomes a real maintenance cost.
 
 ## Validation
 
-Validate at every relevant boundary: delivery (controllers, consumers, schedulers),
-application (preconditions, existence), domain (invariants, transitions), persistence
-(constraints, FKs, indexes), integration (incoming/outgoing data). The domain **MUST NOT**
-depend on controller validation to remain valid.
+Validate at every relevant boundary:
 
-## Errors and i18n
+- delivery: bean validation, request shape, multipart parts;
+- application/service: existence, ownership, preconditions;
+- domain: invariants and transitions;
+- persistence: constraints, indexes and locks;
+- integrations/uploads: content, size, type, authorization and failure translation.
 
-Business errors are explicit, specific exceptions (`OrderCannotBeCancelledException`) that extend
-the pure **`DomainException`** (domain kernel `com.example.product.domain.error`) carrying only domain data: a stable `code`
-(== i18n key) + optional message args, and — when needed — extra domain data via the kernel
-interfaces `ErrorDetails` (e.g. the conflicting item ids) or `RateLimited` (a retry duration).
-**Domain exceptions carry NO transport concern** (no `HttpStatus`, no headers, no response DTO) —
-baseline §0011. The **presentation layer** (`com.example.product.infra.web`) owns the HTTP mapping: a
-`@RestControllerAdvice` `GlobalExceptionHandler` + an `HttpErrorMapping` registry (exception
-type → status; build-time test enforces completeness) renders the response and sets `Retry-After`.
-Every API **MUST** have a global handler and a predictable error structure:
+The domain must remain valid even if a controller validation is bypassed.
 
-```json
-{ "code": "order.cannot-be-cancelled", "message": "...", "fields": [] }
-```
+## Errors and I18n
 
-User-facing messages **MUST** be internationalized from the beginning
-(`messages.properties` + one file per product locale). Never expose raw enum names as
-user-facing labels. The project **MUST** define whether backend, frontend or hybrid resolves
-API error messages.
+Business errors are explicit exceptions extending `com.fkmed.domain.error.DomainException`.
+The exception carries a stable `code` equal to the i18n key and optional arguments/details. It does
+not carry HTTP status, headers or response DTOs.
 
-## Repositories
+`com.fkmed.infra.web.GlobalExceptionHandler` and `HttpErrorMapping` own transport mapping. A
+completeness test fails when a domain exception has no HTTP mapping. API errors use the stable
+structure documented in the OpenAPI snapshot.
 
-Command repositories are aggregate-oriented and **SHOULD** expose explicit locking methods
-(`getRequiredForUpdate(id)`) when concurrency risk exists. Read operations are flexible:
-query anything that makes sense (projections, views, SQL). Do not force aggregate purity on
-read-only queries. Repository interfaces via Spring Data are natural; do NOT create
-interface+`Impl` pairs for internal services — interfaces are for real ports (external
-providers, messaging, file storage, notification gateways, AI providers, cache, multiple
-implementations).
+User-facing messages must be internationalized through the product locale bundle. Never expose raw
+enum names or raw exception messages to beneficiaries.
 
-## Cross-cutting types (no `shared` module — baseline §0012)
+## Repositories and Transactions
 
-There is **no `com.example.product.shared` package**; cross-cutting types live where their dependency
-direction allows:
+Repositories are aggregate-oriented for commands and may expose explicit locking methods when
+concurrency matters. Read queries may use projections or SQL when they are clearer.
 
-- **Domain kernel** `com.example.product.domain.error` — `DomainException`, `ErrorDetails`, `RateLimited`.
-  The domain depends on these, so they must sit in the domain (never in infra).
-- **Identity** `com.example.product.infra.security` — `UserContext` + the `UserContextProvider` port and
-  its `SecurityContextUserProvider` adapter. Controllers (delivery) inject the port.
-- **Web/presentation** `com.example.product.infra.web` — `ApiErrorResponse`, `GlobalExceptionHandler`,
-  `HttpErrorMapping`, `PageResponse` (the pagination envelope controllers wrap pages with).
+Use transactions around business state changes. Important state transitions should be audited or
+represented in timelines/events when the spec requires it.
 
-Anything technical the domain does NOT import (web error handler, correlation filter, i18n
-`MessageSource` config, mail/JWT/STOMP adapters) is `com.example.product.infra.<concern>` (DECISIONS-BASELINE §0010).
-i18n message bundles (`messages*.properties`) are resources; the `MessageSource` config is
-`infra.i18n`. Prefer small duplication over a bad shared abstraction.
+## Cross-Cutting Types
 
-## Dates and timezones
+There is no generic `shared` package. Put cross-cutting types where dependency direction allows:
 
-UTC for technical instants. `Instant`/`OffsetDateTime` for real instants; avoid
-`LocalDateTime` when timezone matters; `LocalDate` for calendar dates; `Duration` vs `Period`
-by meaning. APIs use ISO-8601. Never rely on server default timezone. Timezone-sensitive
-rules **MUST** be tested.
+- `com.fkmed.domain.error`: domain exception kernel;
+- `com.fkmed.domain.audit`: audit contracts and masking helpers;
+- `com.fkmed.domain.upload`: content-type detector and provider-neutral `FileStorage` port;
+- `com.fkmed.infra.storage`: PostgreSQL binary, local filesystem and Amazon S3 adapters;
+- `com.fkmed.infra.security`: `UserContext`, `UserContextProvider` and security adapters;
+- `com.fkmed.infra.web`: API error model, exception handler and pagination envelope;
+- `com.fkmed.infra.observability`: access logs, correlation IDs and metrics wiring.
 
-## Code style and naming
+Prefer small duplication over a bad abstraction that crosses module ownership.
 
-Readable, explicit, domain-oriented. Business language first; technical suffixes when they
-clarify (`OrderController`, `OrderCreatedEvent`, `EtaPredictionProvider`, `S3FileStorage`,
-`OrderAccessPolicy`). Avoid vague names (`Manager`, `Helper`, `Util`, `Handler`, `Data`)
-unless context makes them precise. Events are named as business facts that happened. Avoid
-`ServiceImpl`. Constructor injection only. Streams only when clear; Optional without abuse.
+## Dates and Timezones
 
-Value Objects when they protect invariants, carry business meaning or group values — never
-mechanically for every primitive. Simple enums for simple statuses; enums **MAY** contain
-behavior; explicit state machines only when workflow complexity justifies; invalid
-transitions throw specific business exceptions; important transitions audited.
+Use UTC for technical instants. Use `Instant` or `OffsetDateTime` for real instants,
+`LocalDate` for calendar dates, and choose `Duration` vs `Period` by meaning. APIs use ISO-8601.
+Never depend on the server default timezone. Time-sensitive rules require tests.
 
-## Enums vs registry (reference data) — DECISIONS-BASELINE §0019
+## Naming and Comments
 
-A business enum **MUST NOT** be introduced for reference data. The standing rule:
+Use business language first: `ReimbursementRequest`, `AttendanceToken`, `GuideStatusChanged`.
+Technical suffixes are fine when they clarify: `Controller`, `Repository`, `PdfRenderer`,
+`AccessPolicy`.
 
-- **Keep an enum ONLY when** it is a **state machine** (`*Status`/lifecycle whose transitions
-  the code enforces), a **technical classification** (`*FailureClass`, circuit-breaker states),
-  or a value **fixed by law** (`LegalType`, `LegalBasis`). Document the keep criterion in the
-  type's Javadoc.
-- **Everything else is registry data**: the persisted value is a `String code` validated
-  through the registry's validator port, seeded by a Flyway migration (`code` = a stable
-  constant name so the JSON contract never changes), label editable at runtime on the
-  reference-data screen, and any wired branching goes through `*Codes` constants (e.g.
-  `ChargeKindCodes.PENALTY`) with a safe `default` for unknown codes (pure data, no wired
-  effect).
+Javadoc is required for public module facades, important domain methods, ports, business
+exceptions and non-obvious orchestration, concurrency, security, date/time or validation logic.
+Comments should explain intent and constraints, not restate the method name.
 
-## Documentation comments (owner rule, revised)
+## Enums vs Registry Data
 
-Javadoc is **REQUIRED** for code that carries business meaning or a contract:
+Business reference data is registry data by default, not an enum. Keep an enum only when it is:
 
-- public module APIs/facades and Application Service public methods;
-- domain entities' business methods, domain services, policies;
-- business exceptions, integration ports/ACL interfaces;
-- any non-obvious logic: validation, orchestration, concurrency, date/time, security.
+- a lifecycle/state machine whose transitions the code enforces;
+- a technical classification;
+- a value fixed by law or a truly fixed external standard.
 
-Javadoc is **NOT required** for: trivial records/DTOs with self-explanatory fields, simple
-getters/accessors, controllers that only delegate, and test code. Equivalent rules apply to
-other languages (TSDoc, docstrings, KDoc, XML docs).
-
-Comments **MUST** explain intent, contract, constraints, side effects and exceptions — never
-restate the name:
-
-```java
-/**
- * Cancels an order when the current status allows cancellation.
- * @throws OrderCannotBeCancelledException when the status does not allow cancellation.
- */
-public void cancel(CancellationReason reason, String requestedBy) { ... }
-```
+Everything else is a persisted `code`, seeded by migration and validated through the owning module.

@@ -9,6 +9,8 @@ import com.fkmed.domain.plan.BeneficiaryAccess;
 import com.fkmed.domain.plan.BeneficiaryNotAccessibleException;
 import com.fkmed.domain.plan.ProtocolGenerator;
 import com.fkmed.domain.upload.FileContentType;
+import com.fkmed.domain.upload.FileStorage;
+import com.fkmed.domain.upload.StorageNamespace;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -58,6 +60,7 @@ public class ReimbursementService {
   private final AuditRecorder auditRecorder;
   private final ApplicationEventPublisher events;
   private final MeterRegistry metrics;
+  private final FileStorage fileStorage;
   private final Clock clock;
 
   public EligibilityView eligibility(String callerCard) {
@@ -135,9 +138,11 @@ public class ReimbursementService {
     LocalDate expectedPaymentDate = expectedDate(expenseType);
     String protocol = protocolGenerator.next(PROTOCOL_PREFIX);
     SubmitReimbursementCommand validated = withValidatedDocuments(command, expenseType, documents);
+    List<StoredDocument> storedDocuments =
+        storeDocuments(StorageNamespace.REIMBURSEMENT_DOCUMENT, documents);
     ReimbursementRequest request =
         ReimbursementRequest.submit(
-            validated, protocol, term, expectedPaymentDate, authorAccountId, now);
+            validated, protocol, term, expectedPaymentDate, authorAccountId, storedDocuments, now);
     request.markProcessing(
         calculate(tableEntry, request.getAmount(), request.getSessionItems()),
         expectedPaymentDate,
@@ -235,8 +240,10 @@ public class ReimbursementService {
     }
     ReimbursementTableEntry tableEntry = requireTableEntry(request.getExpenseTypeCode());
     Instant now = clock.instant();
+    List<StoredDocument> storedDocuments =
+        storeDocuments(StorageNamespace.REIMBURSEMENT_DOCUMENT, validated);
     request.resolvePendency(
-        validated,
+        storedDocuments,
         calculate(tableEntry, request.getAmount(), request.getSessionItems()),
         expectedDate(request.getExpenseTypeCode()),
         now);
@@ -351,13 +358,15 @@ public class ReimbursementService {
     return ReimbursementCalculation.of(money(reimbursed), money(total));
   }
 
-  List<UploadedDocument> validatePreviewDocuments(List<UploadedDocument> documents) {
-    return validateDocuments(
-        ExpenseTypeCodes.EXAME,
-        documents,
-        EnumSet.of(DocumentCategory.BUDGET, DocumentCategory.MEDICAL_ORDER),
-        EnumSet.of(DocumentCategory.BUDGET, DocumentCategory.MEDICAL_ORDER),
-        PreviewAttachmentsRequiredException::new);
+  List<StoredDocument> validateAndStorePreviewDocuments(List<UploadedDocument> documents) {
+    List<UploadedDocument> validated =
+        validateDocuments(
+            ExpenseTypeCodes.EXAME,
+            documents,
+            EnumSet.of(DocumentCategory.BUDGET, DocumentCategory.MEDICAL_ORDER),
+            EnumSet.of(DocumentCategory.BUDGET, DocumentCategory.MEDICAL_ORDER),
+            PreviewAttachmentsRequiredException::new);
+    return storeDocuments(StorageNamespace.REIMBURSEMENT_PREVIEW, validated);
   }
 
   ReimbursementTableEntry requireTableEntry(String expenseType) {
@@ -609,6 +618,20 @@ public class ReimbursementService {
         command.termVersion(),
         documents,
         command.idempotencyKey().strip());
+  }
+
+  private List<StoredDocument> storeDocuments(
+      StorageNamespace namespace, List<UploadedDocument> documents) {
+    return documents.stream()
+        .map(
+            document ->
+                new StoredDocument(
+                    document.category(),
+                    fileStorage.store(namespace, document.content()),
+                    document.contentType(),
+                    document.fileName(),
+                    document.content().length))
+        .toList();
   }
 
   private ReimbursementHistoryItem historyItemOf(

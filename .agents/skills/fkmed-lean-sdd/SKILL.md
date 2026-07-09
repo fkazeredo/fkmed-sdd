@@ -62,7 +62,7 @@ helpers. Do not create worktrees or parallel agents by default.
 
 ## Gates
 
-Run focused tests first, then gates proportionally:
+Use a focused test anchor when useful, then run the complete applicable gates together at close:
 
 ```bash
 cd backend && ./mvnw verify
@@ -74,6 +74,10 @@ cd backend && ./mvnw -Pmutation org.pitest:pitest-maven:mutationCoverage
 Backend/frontend gates run when those stacks changed. E2E runs when a user journey changed.
 PIT/mutation is for money or critical domain rules when useful.
 
+Do not repeat the whole battery after each edit. If a close gate fails, fix and rerun the
+failed/affected gate until green, reporting every attempt. On PowerShell, quote `-D...` Maven
+arguments.
+
 ## Reviewer and QA
 
 Use a review stance for broad/risky/self-directed diffs. Use QA thinking for money, LGPD,
@@ -82,9 +86,12 @@ integrations or broad user journeys.
 
 ## Close
 
-Before final response or PR:
+Before final response:
 
 - map acceptance criteria to evidence;
 - update spec/ADR/manual/changelog/status when applicable;
 - report commands run and skipped checks honestly;
+- create conventional commit(s), push the feature branch and open the PR to `develop`; the owner's
+  implementation instruction already authorizes these close actions, so do not ask again unless
+  they explicitly requested `local-only` or `no PR`; `draft` means open a Draft PR;
 - never merge PRs, tag or force-push unless the owner explicitly asks for an allowed action.

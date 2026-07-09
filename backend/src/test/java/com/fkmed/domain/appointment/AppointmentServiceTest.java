@@ -16,6 +16,8 @@ import com.fkmed.domain.plan.BeneficiaryAccess;
 import com.fkmed.domain.plan.BeneficiaryNotAccessibleException;
 import com.fkmed.domain.plan.BeneficiaryRole;
 import com.fkmed.domain.plan.ProtocolGenerator;
+import com.fkmed.domain.upload.FileStorage;
+import com.fkmed.domain.upload.StorageNamespace;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.lang.reflect.Field;
 import java.time.Clock;
@@ -66,6 +68,7 @@ class AppointmentServiceTest {
   @Mock private ExamTypeRepository examTypes;
   @Mock private AppointmentRepository appointments;
   @Mock private AppointmentAttachmentRepository attachments;
+  @Mock private FileStorage fileStorage;
   @Mock private SpecialtyValidator specialties;
   @Mock private BeneficiaryAccess beneficiaryAccess;
   @Mock private ProtocolGenerator protocolGenerator;
@@ -83,12 +86,16 @@ class AppointmentServiceTest {
             examTypes,
             appointments,
             attachments,
+            fileStorage,
             specialties,
             beneficiaryAccess,
             protocolGenerator,
             events,
             new SimpleMeterRegistry(),
             CLOCK);
+    lenient()
+        .when(fileStorage.store(eq(StorageNamespace.APPOINTMENT_ORDER), any()))
+        .thenReturn("postgres:appointment-order/12345678-1234-4234-8234-123456789abc");
   }
 
   // ---- book: consultation ----------------------------------------------------------------------
@@ -216,6 +223,7 @@ class AppointmentServiceTest {
 
     assertThat(result.protocol()).isEqualTo("AG-20260708-0002");
     verify(attachments).save(any(AppointmentAttachment.class));
+    verify(fileStorage).store(StorageNamespace.APPOINTMENT_ORDER, PDF);
     verify(events).publishEvent(any(AppointmentConfirmed.class));
   }
 

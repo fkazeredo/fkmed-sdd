@@ -5,12 +5,15 @@
 Pragmatic Git Flow: `main` and `develop` are protected. They change only via reviewed Pull
 Request. Work happens on `feature/*` / `bugfix/*` branches; PRs target `develop`; `main` is
 updated only via release PR (`develop` -> `main`), and a human cuts the tag. AI agents push
-feature branches and open PRs; they never merge, tag or force-push.
+feature branches and open PRs as the automatic close of an authorized green slice; no second owner
+prompt is required. `local-only` or `no PR` suppresses publication; `draft` opens a Draft PR.
+Agents never merge, tag or force-push.
 
 ## Commits
 
-Use Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`). The commit type
-drives the SemVer digit (baseline §0015).
+Use Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`). For delivered code/slice
+groups, `feat` drives MINOR and fix-only drives PATCH; docs-only does not bump. Work already grouped
+under the current unreleased version does not create another bump (baseline §0015).
 
 ## Quality gates
 

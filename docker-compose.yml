@@ -38,6 +38,17 @@ services:
       SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-mailpit}
       SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-1025}
       APP_WEB_BASE_URL: ${APP_WEB_BASE_URL:-http://localhost:4200}
+      FKMED_STORAGE_BACKEND: ${FKMED_STORAGE_BACKEND:-filesystem}
+      FKMED_STORAGE_FILESYSTEM_ROOT: ${FKMED_STORAGE_FILESYSTEM_ROOT:-/fkmed/uploads}
+      FKMED_STORAGE_S3_BUCKET: ${FKMED_STORAGE_S3_BUCKET:-}
+      FKMED_STORAGE_S3_PREFIX: ${FKMED_STORAGE_S3_PREFIX:-fkmed}
+      FKMED_STORAGE_S3_KMS_KEY_ID: ${FKMED_STORAGE_S3_KMS_KEY_ID:-}
+      FKMED_STORAGE_S3_ENDPOINT: ${FKMED_STORAGE_S3_ENDPOINT:-}
+      FKMED_STORAGE_S3_PATH_STYLE: ${FKMED_STORAGE_S3_PATH_STYLE:-false}
+      AWS_REGION: ${AWS_REGION:-sa-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
     ports:
       - '127.0.0.1:${APP_PORT:-8080}:8080' # loopback: dev login page + /actuator must not be LAN-exposed (M2)
     depends_on:
@@ -45,6 +56,8 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
+    volumes:
+      - file-storage:/fkmed
     healthcheck:
       test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/actuator/health']
       interval: 10s
@@ -112,3 +125,4 @@ volumes:
   prometheus-data:
   loki-data:
   grafana-data:
+  file-storage:

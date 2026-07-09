@@ -27,6 +27,7 @@ allowlisted in `.gitleaks.toml`. Each row lists what blocks it in production:
 | Disposable account-security E2E account (SPEC-0003 débito B; keeps the E2E off MARIA) | `seguranca-e2e@fkmed.local` / `seguranca12345` | Flyway `V7` seed (all envs) | `ProdReadinessValidator` (refuses to boot when the seeded account + dev password are present) |
 | Disposable profile E2E account (SPEC-0006 Phase 2; keeps the profile E2E off MARIA) | `perfil-e2e@fkmed.local` / `perfilE2e12345` | Flyway `V13` seed (all envs) | `ProdReadinessValidator` (refuses to boot when the seeded account + dev password are present) |
 | Disposable terms-interception E2E account (SPEC-0006 Phase 2; drives the Terms interception BR8) | `termos-e2e@fkmed.local` / `termosE2e12345` | Flyway `V13` seed (all envs) | `ProdReadinessValidator` (refuses to boot when the seeded account + dev password are present) |
+| Internal operator-simulation account (SPEC-0018; drives dev-only `/api/sim/**` journeys) | `operador-sim@fkmed.local` / `operador12345` | Flyway `V22` seed (all envs) | `ProdReadinessValidator` (refuses to boot when the seeded account + dev password or `app.sim.enabled` are present) |
 | Disposable no-reimbursement E2E account (SPEC-0015 AC8; keeps the eligibility negative case off MARIA) | `reembolso-sem-direito-e2e@fkmed.local` / `reembolso12345` | Flyway `V27` seed (all envs) | `ProdReadinessValidator` (refuses to boot when the seeded account + dev password are present) |
 | Postgres dev password | `fkmed` | `.env.example`, compose dev/E2E | `ProdReadinessValidator` (refuses the dev DB password) |
 | Grafana dev admin | `admin` / `admin` | `.env.example`, compose dev | `compose.prod.yaml`: `GRAFANA_ADMIN_*` are mandatory `:?` variables (the app validator never sees Grafana) |
@@ -44,3 +45,8 @@ allowlisted in `.gitleaks.toml`. Each row lists what blocks it in production:
   `docs/api/openapi.json`, so exposing it app-level leaks nothing).
 - The OIDC signing key is a persisted PKCS#8 RSA key injected via `OIDC_JWK_PRIVATE_KEY`
   (DECISIONS-BASELINE §0020) — never generated ephemeral in prod.
+- Uploaded files use a private Amazon S3 bucket in production (ADR-0023). Objects are encrypted
+  with SSE-S3 by default or SSE-KMS when `FKMED_STORAGE_S3_KMS_KEY_ID` is configured. AWS
+  credentials come from the SDK default provider chain; prefer an IAM role over static keys.
+- Storage references and server-generated object keys never include client filenames. Bucket
+  names, object paths, credentials and provider errors are not returned in API responses.

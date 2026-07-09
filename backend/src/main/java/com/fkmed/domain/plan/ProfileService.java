@@ -4,6 +4,8 @@ import com.fkmed.domain.audit.AuditContext;
 import com.fkmed.domain.audit.AuditEntry;
 import com.fkmed.domain.audit.AuditEventTypes;
 import com.fkmed.domain.audit.AuditRecorder;
+import com.fkmed.domain.upload.FileStorage;
+import com.fkmed.domain.upload.StorageNamespace;
 import java.time.Clock;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +29,7 @@ public class ProfileService {
 
   private final BeneficiaryAccess beneficiaryAccess;
   private final BeneficiaryPhotoRepository photos;
+  private final FileStorage fileStorage;
   private final UfValidator ufValidator;
   private final AuditRecorder auditRecorder;
   private final ApplicationEventPublisher events;
@@ -84,15 +87,20 @@ public class ProfileService {
       AuditContext auditContext) {
     Beneficiary target = beneficiaryAccess.requireInScope(beneficiaryCard, targetBeneficiaryId);
     UUID beneficiaryId = target.getId();
+    BeneficiaryPhoto.validateUpload(bytes);
+    String newReference = fileStorage.store(StorageNamespace.PROFILE_PHOTO, bytes);
     BeneficiaryPhoto photo =
         photos
             .findById(beneficiaryId)
             .map(
                 existing -> {
-                  existing.replace(bytes, clock.instant());
+                  String oldReference = existing.getStorageReference();
+                  existing.replace(bytes, newReference, clock.instant());
+                  fileStorage.delete(oldReference);
                   return existing;
                 })
-            .orElseGet(() -> BeneficiaryPhoto.of(beneficiaryId, bytes, clock.instant()));
+            .orElseGet(
+                () -> BeneficiaryPhoto.of(beneficiaryId, bytes, newReference, clock.instant()));
     photos.save(photo);
     recordPhotoChange(authorAccountId, beneficiaryId, "uploaded", auditContext);
   }
@@ -106,10 +114,14 @@ public class ProfileService {
       AuditContext auditContext) {
     Beneficiary target = beneficiaryAccess.requireInScope(beneficiaryCard, targetBeneficiaryId);
     UUID beneficiaryId = target.getId();
-    if (photos.existsByBeneficiaryId(beneficiaryId)) {
-      photos.deleteById(beneficiaryId);
-      recordPhotoChange(authorAccountId, beneficiaryId, "removed", auditContext);
-    }
+    photos
+        .findById(beneficiaryId)
+        .ifPresent(
+            photo -> {
+              photos.delete(photo);
+              fileStorage.delete(photo.getStorageReference());
+              recordPhotoChange(authorAccountId, beneficiaryId, "removed", auditContext);
+            });
   }
 
   /**
@@ -122,7 +134,10 @@ public class ProfileService {
     Beneficiary target = beneficiaryAccess.requireInScope(beneficiaryCard, targetBeneficiaryId);
     return photos
         .findById(target.getId())
-        .map(photo -> new PhotoContent(photo.getImage(), photo.getContentType()));
+        .map(
+            photo ->
+                new PhotoContent(
+                    fileStorage.read(photo.getStorageReference()), photo.getContentType()));
   }
 
   private void recordPhotoChange(

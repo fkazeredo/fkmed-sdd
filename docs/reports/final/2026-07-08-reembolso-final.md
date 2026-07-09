@@ -33,4 +33,4 @@ Módulo novo **`domain.reimbursement`** (ADR-0022) e kernel **`domain.upload`**.
 ## 4. Pendências conhecidas
 
 - Build frontend mantém warning de budget inicial: 916,40 kB contra aviso de 900,00 kB (+16,40 kB). O build passa; tratar como dívida de performance, não blocker da Fase 6.
-- PR #28 ainda precisa ser revisado/mergeado pelo owner; tag também permanece decisão do owner.
+- Nota pós-merge: PR #28 foi posteriormente mergeado em `develop`; tag ainda permanece decisão do owner.
