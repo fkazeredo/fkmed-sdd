@@ -29,3 +29,4 @@ via a **new ADR citing the baseline number**. New ADRs are created via `/adr` fr
 | [0020](0020-operator-simulation-full-api.md) | Operator Simulation full API — guides + finance + reimbursement actions (extends ADR-0017, SPEC-0018) | Accepted |
 | [0021](0021-support-module.md) | Module map revision — `domain.support` (Canais de Atendimento e FAQ, SPEC-0014) | Accepted |
 | [0022](0022-reimbursement-module.md) | Module map revision - `domain.reimbursement` (Reimbursement, SPEC-0015..0017) | Accepted |
+| [0023](0023-configurable-file-storage-adapters.md) | Configurable file storage adapters - PostgreSQL, filesystem and Amazon S3 | Accepted |

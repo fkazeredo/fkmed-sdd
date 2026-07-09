@@ -6,6 +6,24 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-07-09
+
+Post-Phase 6 hardening and configurable file-storage delivery (SPEC-0019), preserving the
+beneficiary-facing upload contracts while making development and production persistence explicit.
+
+### Added
+
+- Added configurable uploaded-file storage (SPEC-0019/ADR-0023): the existing PostgreSQL binary
+  behavior is now an adapter alongside local filesystem and Amazon S3 adapters, selected through
+  environment configuration.
+- Added provider-qualified references, transaction rollback compensation, private S3 server-side
+  encryption and production storage fail-fast validation.
+
+### Changed
+
+- Migrated profile photos, appointment medical orders, reimbursement documents and preview
+  attachments from binary business-table columns to storage references through Flyway V28.
+
 ### Fixed
 
 - Aligned reimbursement upload transport limits across Spring and nginx with SPEC-0015's 20 MB
@@ -17,7 +35,8 @@ by the owner only (§0023). Docs-only slices do not bump the version.
 
 - Reconciled README, architecture guides, specs/ADR indexes, decision-log format and dev-only
   credentials after the Phase 6 merge (DL-0034).
-- Added a detailed pt-BR human QA test book and expanded the user manual.
+- Added a detailed pt-BR human QA test book with 42 guided journeys and 241 atomic
+  cases, and expanded the user manual.
 
 ## [0.12.0] — 2026-07-08
 

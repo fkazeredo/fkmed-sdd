@@ -33,8 +33,8 @@ public class ReimbursementDocument {
   @Column(nullable = false)
   private DocumentCategory category;
 
-  @Column(nullable = false)
-  private byte[] content;
+  @Column(name = "storage_reference", nullable = false, length = 220)
+  private String storageReference;
 
   @Column(name = "content_type", nullable = false)
   private String contentType;
@@ -54,17 +54,18 @@ public class ReimbursementDocument {
   private ReimbursementDocument(
       ReimbursementRequest request,
       DocumentCategory category,
-      byte[] content,
+      String storageReference,
       String contentType,
       String fileName,
+      int fileSize,
       Instant uploadedAt) {
     this.id = UUID.randomUUID();
     this.request = request;
     this.category = category;
-    this.content = content;
+    this.storageReference = storageReference;
     this.contentType = contentType;
     this.fileName = fileName;
-    this.fileSize = content.length;
+    this.fileSize = fileSize;
     this.uploadedAt = uploadedAt;
   }
 
@@ -72,10 +73,12 @@ public class ReimbursementDocument {
   static ReimbursementDocument of(
       ReimbursementRequest request,
       DocumentCategory category,
-      byte[] content,
+      String storageReference,
       String contentType,
       String fileName,
+      int fileSize,
       Instant uploadedAt) {
-    return new ReimbursementDocument(request, category, content, contentType, fileName, uploadedAt);
+    return new ReimbursementDocument(
+        request, category, storageReference, contentType, fileName, fileSize, uploadedAt);
   }
 }

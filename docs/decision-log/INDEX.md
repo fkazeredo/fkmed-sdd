@@ -49,3 +49,4 @@ old one.
 | [0032](DL-0032-upload-transport-headroom.md) | 2026-07-08 | Hardening / docs reconciliation | 0015 | Medium | Cheap | Upload transport headroom for reimbursement documents |
 | [0033](DL-0033-observability-privacy-hardening.md) | 2026-07-08 | Hardening / docs reconciliation | 0001, 0003, 0015 | Medium | Cheap | Observability privacy hardening before a full authorization matrix |
 | [0034](DL-0034-post-phase-6-documentation-reconciliation.md) | 2026-07-08 | Hardening / docs reconciliation | Docs/governance | Medium | Cheap | Post-Phase 6 documentation reconciliation |
+| [0035](DL-0035-storage-reference-routing-and-transaction-semantics.md) | 2026-07-08 | Post-6 / configurable file storage | 0019 | High | Moderate | Storage reference routing and transaction semantics |

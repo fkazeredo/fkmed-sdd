@@ -52,22 +52,23 @@ preparacao de producao.
 
 ## 2. Estado atual em numeros
 
-Estado documentado mais recente: **v0.12.0, 2026-07-08**, Fase 6 ("Reembolso") mergeada.
-Esta fatia de hardening/documentacao nao muda a versao do produto, mas atualiza gates,
+Estado documentado mais recente: **v0.13.0, 2026-07-09**, Fase 6 concluida e hardening
+pos-fase com armazenamento de arquivos configuravel. A fatia tambem atualiza gates,
 observabilidade, limites de upload e documentacao operacional.
 
 | Metrica | Valor |
 |---|---:|
 | Commits no historico local antes desta fatia | 186 |
-| Specs de produto | 18 |
-| ADRs de projeto | 22 |
-| Decision logs | 34 |
-| Migracoes Flyway | 27 |
-| Arquivos Java em `backend/src/main/java` | 503 |
+| Specs de produto | 19 |
+| ADRs de projeto | 23 |
+| Decision logs | 35 |
+| Migracoes Flyway | 28 |
+| Arquivos Java em `backend/src/main/java` | 515 |
 | Arquivos TS/HTML/SCSS/CSS em `frontend/src` | 250 |
-| Ultima bateria backend local registrada | 763 testes |
+| Ultima bateria backend local registrada | 781 testes |
 | Ultima bateria frontend local registrada | 524 testes |
-| Ultima E2E registrada na Fase 6 | 33 jornadas Playwright |
+| Ultima bateria E2E local registrada | 33/33 jornadas Playwright |
+| Caderno de QA humano | 42 jornadas guiadas + 241 casos atomicos |
 
 Os numeros acima saem do repositorio e dos logs versionados. A contagem exata de testes
 sempre deve ser confirmada pela ultima execucao dos gates.
@@ -93,6 +94,8 @@ Regras praticas:
 - `qa` valida dinheiro, LGPD, autorizacao, auditoria, documentos clinicos, jobs,
   concorrencia, integracoes e jornadas amplas;
 - worktree e excecao, nao reflexo automatico;
+- uma fatia autorizada e verde termina com commit, push da feature branch e PR para `develop`, sem
+  uma segunda confirmacao; `local-only`/`no PR` nao publica e `draft` abre um Draft PR;
 - specs, ADRs, decision logs, manual, caderno de QA, changelog e roadmap-status continuam
   vivos.
 
@@ -159,6 +162,7 @@ Aprendizado atual:
 |---|---|
 | Backend | Java 21, Spring Boot 4.1, Spring Modulith, Spring Security, Spring Authorization Server |
 | Banco | PostgreSQL 16, Flyway |
+| Arquivos | Adapter configuravel: PostgreSQL binario, filesystem local ou Amazon S3 |
 | Frontend | Angular 22, PrimeNG, Tailwind 4, ngx-translate |
 | Testes backend | JUnit 5, Testcontainers, ArchUnit, Spring Modulith verify, PIT, JaCoCo |
 | Testes frontend | Vitest, Playwright |
@@ -174,6 +178,17 @@ Prerequisitos: Docker, Node.js/npm compativel com `frontend/package.json` e JDK 
 docker compose up -d
 cd frontend && npm ci && npm start
 ```
+
+Uploads no stack de desenvolvimento ficam no volume Docker montado em `/fkmed/uploads`. O destino
+e configuravel no `.env`:
+
+```dotenv
+FKMED_STORAGE_BACKEND=filesystem
+FKMED_STORAGE_FILESYSTEM_ROOT=/fkmed/uploads
+```
+
+Valores aceitos: `postgres`, `filesystem` e `s3`. O profile `prod` usa S3 e exige
+`FKMED_STORAGE_S3_BUCKET` e `AWS_REGION`; consulte `.env.example` e ADR-0023.
 
 URLs principais:
 

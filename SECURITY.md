@@ -45,3 +45,8 @@ allowlisted in `.gitleaks.toml`. Each row lists what blocks it in production:
   `docs/api/openapi.json`, so exposing it app-level leaks nothing).
 - The OIDC signing key is a persisted PKCS#8 RSA key injected via `OIDC_JWK_PRIVATE_KEY`
   (DECISIONS-BASELINE §0020) — never generated ephemeral in prod.
+- Uploaded files use a private Amazon S3 bucket in production (ADR-0023). Objects are encrypted
+  with SSE-S3 by default or SSE-KMS when `FKMED_STORAGE_S3_KMS_KEY_ID` is configured. AWS
+  credentials come from the SDK default provider chain; prefer an IAM role over static keys.
+- Storage references and server-generated object keys never include client filenames. Bucket
+  names, object paths, credentials and provider errors are not returned in API responses.

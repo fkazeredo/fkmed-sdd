@@ -59,6 +59,7 @@ this app:
 - login failures/lockouts as aggregate counters;
 - notification dispatch outcomes;
 - reimbursement submissions and upload rejections by reason;
+- file-storage operations and failures tagged only by backend/operation/outcome;
 - finance validation outcomes;
 - support FAQ empty searches and Libras requests.
 

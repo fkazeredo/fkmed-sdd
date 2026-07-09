@@ -57,6 +57,9 @@ card server-side; sensitive beneficiary identifiers are not trusted from the fro
 - TLS terminates at the production nginx proxy; Postgres is not publicly exposed; Grafana is bound
   to loopback.
 - Production proxy config does not route `/actuator/*` or `/v3/api-docs/**` to the public origin.
+- Production uploads use a private encrypted S3 bucket through `FileStorage` (ADR-0023). The SDK
+  default credential chain is used, IAM roles are preferred, and `StorageProductionValidator`
+  refuses prod without the S3 backend, bucket and region.
 
 ## Privacy and LGPD
 
@@ -80,6 +83,7 @@ Always apply low-cost hygiene:
 - return neutral auth errors to prevent account enumeration;
 - avoid exposing internal exception details in API errors;
 - keep upload validation and authorization server-side.
+- never derive filesystem paths or S3 keys from client filenames.
 
 ## Multi-Tenancy
 

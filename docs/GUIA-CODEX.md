@@ -18,6 +18,12 @@ produto. A diferenca fica nos arquivos de entrada de cada ferramenta.
 canonica que manda ler e respeitar `CLAUDE.md`, salvo conflito com instrucoes superiores do
 proprio Codex.
 
+Para ambas as ferramentas, autorizar a implementacao ou conclusao de uma fatia inclui o fechamento
+com commit convencional, push da feature branch e abertura do PR para `develop` depois dos gates
+verdes. Nao e preciso pedir uma segunda confirmacao, salvo quando o owner disser `local-only`,
+ou `no PR`; `draft` significa abrir um Draft PR. Merge, tag e force-push continuam fora da
+autonomia normal.
+
 Assim, o projeto fica com duas camadas:
 
 ```text

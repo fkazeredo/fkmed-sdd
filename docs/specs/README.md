@@ -26,6 +26,7 @@ slice (`/slice` gate).
 | [0016](0016-reimbursement-analysis-and-tracking.md) | Reimbursement Analysis and Tracking | reimbursement | Approved |
 | [0017](0017-reimbursement-preview.md) | Reimbursement Preview | reimbursement | Approved |
 | [0018](0018-operator-simulation-api.md) | Operator Simulation API | operator-sim (dev-only) | Approved |
+| [0019](0019-file-storage-adapters.md) | Configurable File Storage Adapters | upload / infrastructure | Approved |
 
 ## Product-wide UI norms (referenced by every spec)
 

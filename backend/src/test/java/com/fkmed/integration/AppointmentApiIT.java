@@ -207,6 +207,12 @@ class AppointmentApiIT extends AbstractIntegrationTest {
             Long.class,
             appointmentId);
     assertThat(attachments).isEqualTo(1);
+    String reference =
+        jdbc.queryForObject(
+            "select storage_reference from appointment_attachment where appointment_id=?::uuid",
+            String.class,
+            appointmentId);
+    assertThat(reference).startsWith("postgres:appointment-order/");
   }
 
   @Test

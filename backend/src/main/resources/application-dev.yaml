@@ -3,6 +3,8 @@
 # by MARIA's seeded database account (Flyway V3). SMTP is wired only in the docker dev/E2E stacks
 # (Mailpit via SPRING_MAIL_HOST), so plain unit/integration runs use the LoggingMailSender.
 app:
+  storage:
+    backend: ${FKMED_STORAGE_BACKEND:filesystem}
   security:
     allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:4200}
   # SPEC-0018 operator-simulation API (ADR-0017/DL-0021): enabled only in dev/e2e; the seeded

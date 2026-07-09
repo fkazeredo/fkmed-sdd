@@ -2,7 +2,7 @@
 
 > Artefato vivo em **pt-BR** (idioma do produto). Atualizado via `/manual` ao fechar toda
 > fatia com mudança visível ao usuário — a fatia só está "pronta" quando este manual
-> reflete a mudança. Versão do produto: **0.12.0** (pré-release; tag pendente do owner).
+> reflete a mudança. Versão do produto: **0.13.0** (pré-release; tag pendente do owner).
 
 ## Sobre o portal
 
@@ -338,10 +338,15 @@ Alguns itens são deliberadamente fora do escopo atual:
 - malware scanning/quarentena de uploads;
 - rotina de backup/restore automatizada versionada.
 
+Os arquivos enviados já podem ser armazenados em PostgreSQL, filesystem privado ou Amazon S3,
+conforme a configuração do ambiente. Essa escolha é transparente para o usuário e não altera os
+limites, formatos ou telas de upload descritos neste manual.
+
 ## Histórico de atualizações
 
 | Data | Versão | Mudança |
 |---|---|---|
+| 2026-07-09 | 0.13.0 | Armazenamento configurável de uploads: PostgreSQL binário, filesystem privado em desenvolvimento e Amazon S3 em produção, sem alterar os fluxos e limites mostrados ao beneficiário |
 | 2026-07-08 | 0.12.0 | Reembolso (fecha a Fase 6): solicitação com termo, uploads, protocolo e análise automática; histórico/detalhe com timeline, pendências, glosa/negativa, correção bancária e extrato pago; prévia de reembolso com disclaimer e ações de operator-sim para aprovar, pagar e concluir prévias |
 | 2026-07-07 | 0.11.0 | Plano e finanças (fecha a Fase 5): Atendimento — canais oficiais (Central 24h, WhatsApp, Ouvidoria, ANS), seção antifraude (destino do banner de alerta da Início) e FAQ pesquisável por categoria; Central de Libras com registro do pedido e confirmação por horário |
 | 2026-07-06 | 0.10.0 | Plano e finanças: Finanças (titular) — boletos (abas em aberto/pagos, valor atualizado com multa+juros no vencido, copiar linha/PIX, 2ª via PDF com marca PAGO), validador antifraude, extrato de coparticipação, informe de IR e declaração de quitação Lei 12.007 |

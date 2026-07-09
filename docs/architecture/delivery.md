@@ -70,12 +70,22 @@ Production is represented by `compose.prod.yaml`: TLS-terminating nginx proxy, o
 SPA/API/OIDC, Postgres without public port and Grafana bound to loopback. The proxy owns HSTS/CSP
 headers and request-body limits.
 
+File storage is environment-selected (SPEC-0019/ADR-0023):
+
+- base/test default: `FKMED_STORAGE_BACKEND=postgres`;
+- `dev`: filesystem, `/fkmed/uploads`, persisted by the `file-storage` Docker volume;
+- isolated E2E: filesystem on disposable tmpfs;
+- `prod`: S3, requiring `FKMED_STORAGE_S3_BUCKET` and `AWS_REGION`.
+
+S3 credentials use the AWS SDK default provider chain. Prefer deployment IAM roles; when local
+static credentials are unavoidable, keep them only in ignored `.env` files or a secret manager.
+
 Backup/DR remains a baseline target (daily `pg_dump`, document vault copy, retention and restore
 drills per DECISIONS-BASELINE §0021), but no committed `infra/backup/backup.sh` implementation exists
 yet. Do not claim it is implemented until a future production-readiness slice adds and tests it.
 
-Business logic must not depend on cloud SDKs or deployment-specific storage. Introduce abstractions
-when variation becomes real.
+Business logic depends only on `domain.upload.FileStorage`; cloud SDKs and deployment-specific
+storage stay under `infra.storage`.
 
 ## Feature Flags
 

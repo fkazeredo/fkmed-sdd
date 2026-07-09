@@ -3,7 +3,7 @@
 > Read when: writing or changing Angular code, UI behavior, forms, state, HTTP or UX/keyboard
 > handling.
 
-## Stack (current FKMed POC - v0.12.0)
+## Stack (current FKMed POC - v0.13.0)
 
 | Concern | Choice | Version / source |
 |---|---|---|

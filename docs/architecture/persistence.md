@@ -23,6 +23,17 @@ spec/ADR defines the strategy (backfill, expand/contract, background migration, 
 Seeds: essential system data **MAY** go through Flyway; local dev fake data **MUST NOT** mix
 with production migrations; tests create their own data via builders/factories/fixtures.
 
+## File content
+
+Business tables store upload metadata and an opaque provider-qualified `storage_reference`, not
+binary content. `domain.upload.FileStorage` routes references to the PostgreSQL `file_blob`,
+filesystem or S3 adapter (SPEC-0019/ADR-0023). The configured backend controls only new writes;
+changing it is not a bulk migration.
+
+PostgreSQL writes participate in the current transaction. Filesystem/S3 writes are compensated on
+rollback, while deletion of replaced content runs only after commit. A cleanup failure can leave an
+orphan but must never leave committed metadata pointing to content deleted before commit.
+
 ## Transactions and consistency
 
 `@Transactional` at the Application Service method representing the use case. Never pretend

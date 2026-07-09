@@ -86,9 +86,12 @@ around the same shared truth: this file, specs, ADRs and architecture docs.
    `docs/architecture/testing.md`.
 9. **Git & secret safety** (DECISIONS-BASELINE §0023). Work happens on a `feature/*` or
    `bugfix/*` branch with local commits. When the slice is complete and green, push the
-   branch and open a PR targeting `develop`. The agent never merges to `develop` or `main`,
-   never force-pushes, and creates tags only on the owner's explicit request. Never commit a
-   secret, key, certificate or `.env`.
+   branch and open a PR targeting `develop`. Authorization to implement/finish a slice already
+   includes its conventional commit(s), feature-branch push and PR creation; do not wait for a
+   second owner prompt. `local-only` or `no PR` suppress push/PR; `draft` means push and open a
+   **Draft PR**, not stop locally. The agent never merges to `develop` or `main`, never force-pushes,
+   and creates tags only on the owner's explicit request. Never commit a secret, key, certificate
+   or `.env`.
 
 ## Language policy
 
@@ -108,12 +111,17 @@ around the same shared truth: this file, specs, ADRs and architecture docs.
 - i18n messages added for user-facing text in the product locale(s). Global error handling
   respected.
 - ADR created/updated when architecture changes.
+- Every code/migration slice makes an explicit SemVer decision before PR: MINOR for a new delivered
+  capability/slice-group, PATCH for fixes, no bump for docs-only or work already included in the
+  current unreleased version. Any bump moves `pom.xml`, `OpenApiConfig`, OpenAPI snapshot and
+  changelog in lockstep (baseline §0015).
 - User manual (`docs/MANUAL.md`) updated with user-facing capabilities; run `/manual` when
   applicable.
 - `docs/ROADMAP-STATUS.md` receives one concise line for a closed meaningful slice.
-- Build and tests run **once at final delivery** — the full battery together (spec tests +
-  general homologation), never incrementally per change. Never hide failed commands or skipped
-  checks.
+- The expensive full battery is first run together at final delivery, not repeatedly after each
+  edit. Test anchors and focused regressions MAY run earlier when they provide useful evidence. If
+  a final gate is red, fix it and rerun the failed/affected gate until green; do not rerun unrelated
+  green gates unless the fix can affect them. Report every failed and skipped command honestly.
 
 ## Final response after implementation
 
@@ -167,8 +175,9 @@ cd frontend && npm run lint && npm test && npm run build
 ```
 
 Destructive and remote operations are governed by `.claude/settings.json`: pushing a feature
-branch and opening a PR to `develop` are allowed; merging PRs, merging into protected
-branches, releases, tags without explicit request and force-pushes are not agent actions.
+branch and opening a PR to `develop` are the normal automatic close of an authorized green slice;
+they do not require a separate owner prompt. Merging PRs, merging into protected branches, releases,
+tags without explicit request and force-pushes are not agent actions.
 
 ## Command - User manual [`/manual`]
 

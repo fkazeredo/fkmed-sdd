@@ -21,6 +21,9 @@ This repository is shared between Claude Code and Codex.
   worktrees unless the owner explicitly asks or the risk clearly justifies it.
 - Use repo skill `$fkmed-lean-sdd` when implementing a slice, converting a `.md` plan into
   code, closing a slice, or aligning a task with FKMed Lean SDD.
+- Authorization to implement or finish a slice includes conventional commit(s), pushing its
+  feature branch and opening the PR to `develop` after green gates. Do not ask again unless the
+  owner explicitly says `local-only` or `no PR`; `draft` means open a Draft PR.
 - Chat with the owner in pt-BR. Keep code identifiers, commits, specs and ADRs in en-US
   unless a project doc explicitly says otherwise.
 
@@ -34,7 +37,7 @@ This repository is shared between Claude Code and Codex.
 ## Safety
 
 - Do not touch unrelated untracked files or user work.
-- Never merge to protected branches, tag, force-push or weaken gates unless the owner
-  explicitly requests an allowed operation.
+- Never merge to protected branches, tag, force-push or weaken gates. A normal feature-branch push
+  and PR creation are required workflow closure, not protected-branch merge authorization.
 - If behavior, contract, data, security or architecture is ambiguous, ask the owner before
   coding.

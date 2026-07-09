@@ -10,7 +10,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * Base of the MockMvc integration suite: real Postgres (Testcontainers), Flyway migrations and the
  * dev profile (the SPEC-0002 login seam under test in this slice).
  */
-@SpringBootTest
+@SpringBootTest(properties = "app.storage.backend=postgres")
 @AutoConfigureMockMvc
 @ActiveProfiles("dev")
 public abstract class AbstractIntegrationTest {

@@ -9,8 +9,9 @@ import java.util.UUID;
 import lombok.Getter;
 
 /**
- * The stored medical-order attachment of an exam appointment (SPEC-0009 BR4): the content-validated
- * bytes and the content type sniffed from them ({@link MedicalOrderContent}). One per appointment.
+ * The stored medical-order attachment of an exam appointment (SPEC-0009 BR4): an opaque storage
+ * reference and the content type sniffed from the upload ({@link MedicalOrderContent}). One per
+ * appointment.
  */
 @Entity
 @Table(name = "appointment_attachment")
@@ -21,8 +22,8 @@ public class AppointmentAttachment {
   @Column(name = "appointment_id")
   private UUID appointmentId;
 
-  @Column(nullable = false)
-  private byte[] content;
+  @Column(name = "storage_reference", nullable = false, length = 220)
+  private String storageReference;
 
   @Column(name = "content_type", nullable = false)
   private String contentType;
@@ -37,9 +38,13 @@ public class AppointmentAttachment {
   protected AppointmentAttachment() {}
 
   private AppointmentAttachment(
-      UUID appointmentId, byte[] content, String contentType, String fileName, Instant uploadedAt) {
+      UUID appointmentId,
+      String storageReference,
+      String contentType,
+      String fileName,
+      Instant uploadedAt) {
     this.appointmentId = appointmentId;
-    this.content = content;
+    this.storageReference = storageReference;
     this.contentType = contentType;
     this.fileName = fileName;
     this.uploadedAt = uploadedAt;
@@ -47,8 +52,12 @@ public class AppointmentAttachment {
 
   /** Stores the validated medical order for the given appointment. */
   static AppointmentAttachment of(
-      UUID appointmentId, MedicalOrderContent order, String fileName, Instant uploadedAt) {
+      UUID appointmentId,
+      String storageReference,
+      MedicalOrderContent order,
+      String fileName,
+      Instant uploadedAt) {
     return new AppointmentAttachment(
-        appointmentId, order.content(), order.contentType(), fileName, uploadedAt);
+        appointmentId, storageReference, order.contentType(), fileName, uploadedAt);
   }
 }

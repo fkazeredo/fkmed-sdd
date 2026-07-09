@@ -58,6 +58,17 @@ app:
     privacy-version: ${LEGAL_PRIVACY_VERSION:1.0}
   mail:
     from: ${MAIL_FROM:nao-responder@fkmed.local}
+  storage:
+    backend: ${FKMED_STORAGE_BACKEND:postgres}
+    filesystem:
+      root: ${FKMED_STORAGE_FILESYSTEM_ROOT:/fkmed/uploads}
+    s3:
+      bucket: ${FKMED_STORAGE_S3_BUCKET:}
+      region: ${AWS_REGION:}
+      prefix: ${FKMED_STORAGE_S3_PREFIX:fkmed}
+      kms-key-id: ${FKMED_STORAGE_S3_KMS_KEY_ID:}
+      endpoint: ${FKMED_STORAGE_S3_ENDPOINT:}
+      path-style: ${FKMED_STORAGE_S3_PATH_STYLE:false}
 
 server:
   port: 8080

@@ -160,6 +160,7 @@ public class ReimbursementRequest {
       AdhesionTerm term,
       LocalDate expectedPaymentDate,
       UUID createdBy,
+      List<StoredDocument> documents,
       Instant now) {
     Objects.requireNonNull(command, "command is required");
     Objects.requireNonNull(protocol, "protocol is required");
@@ -193,7 +194,7 @@ public class ReimbursementRequest {
     request.createdBy = createdBy;
     request.createdAt = now;
     request.addSessions(command.sessions());
-    request.addDocuments(command.documents(), now);
+    request.addDocuments(documents, now);
     request.timelineEvents.add(
         TimelineEvent.of(
             request, now, ReimbursementStatus.EM_ANALISE, "Solicitacao recebida - em analise."));
@@ -222,7 +223,7 @@ public class ReimbursementRequest {
   }
 
   void resolvePendency(
-      List<UploadedDocument> newDocuments,
+      List<StoredDocument> newDocuments,
       ReimbursementCalculation calculation,
       LocalDate expectedDate,
       Instant now) {
@@ -322,15 +323,16 @@ public class ReimbursementRequest {
     }
   }
 
-  private void addDocuments(List<UploadedDocument> uploaded, Instant now) {
-    for (UploadedDocument document : uploaded == null ? List.<UploadedDocument>of() : uploaded) {
+  private void addDocuments(List<StoredDocument> stored, Instant now) {
+    for (StoredDocument document : stored == null ? List.<StoredDocument>of() : stored) {
       documents.add(
           ReimbursementDocument.of(
               this,
               document.category(),
-              document.content(),
+              document.storageReference(),
               document.contentType(),
               document.fileName(),
+              document.fileSize(),
               now));
     }
   }

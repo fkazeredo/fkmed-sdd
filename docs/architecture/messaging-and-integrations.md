@@ -69,8 +69,13 @@ Current upload consumers:
 - reimbursement documents/previews/pendency documents: JPG/PNG/PDF, 2 MB per file and 20 MB total.
 
 Transport limits must stay above the largest business total with reasonable multipart overhead
-(DL-0032). Future production hardening should add malware scanning/quarantine and external object
-storage/vault if real clinical or financial documents are retained at scale.
+(DL-0032).
+
+Physical content uses `domain.upload.FileStorage` (SPEC-0019/ADR-0023). New writes select
+PostgreSQL binary, filesystem or S3 via `FKMED_STORAGE_BACKEND`; provider-qualified references keep
+old content readable after a backend change. Dev defaults to `/fkmed/uploads`, backend integration
+tests to PostgreSQL and prod to private encrypted S3. Client filenames are metadata only and never
+form paths or object keys. Future production hardening still needs malware scanning/quarantine.
 
 ## Notifications
 

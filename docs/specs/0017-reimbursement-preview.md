@@ -73,7 +73,8 @@ Conclusion of analyzed previews: SPEC-0018 endpoint.
 Migration (number at implementation): `reimbursement_preview` (id, protocol unique,
 beneficiary_id, expense_type_code, situation `EM_ANALISE|CONCLUIDA`, estimated_value,
 concluded_at, created_by, timestamps); `preview_document` (category `BUDGET|MEDICAL_ORDER`,
-file ref, name, size). Reuses SPEC-0015 registries and the plan table.
+provider-qualified storage reference from SPEC-0019, content type, name, size). Reuses SPEC-0015
+registries and the plan table.
 
 ## Validation Rules
 
