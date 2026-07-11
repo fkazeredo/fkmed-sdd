@@ -30,7 +30,7 @@
     <spotless.version>3.7.0</spotless.version>
     <checkstyle.version>10.21.4</checkstyle.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-    <jacoco.version>0.8.12</jacoco.version>
+    <jacoco.version>0.8.15</jacoco.version>
     <pitest.version>1.17.3</pitest.version>
     <pitest-junit5.version>1.2.3</pitest-junit5.version>
     <git-commit-id.version>9.0.2</git-commit-id.version>
