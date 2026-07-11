@@ -24,7 +24,7 @@
     <spring-modulith.version>2.1.0</spring-modulith.version>
     <springdoc.version>3.0.3</springdoc.version>
     <openpdf.version>2.0.3</openpdf.version>
-    <aws-sdk.version>2.46.8</aws-sdk.version>
+    <aws-sdk.version>2.47.5</aws-sdk.version>
     <archunit.version>1.4.2</archunit.version>
     <!-- Gate plugin versions (docs/BOOTSTRAP.md §2) -->
     <spotless.version>3.7.0</spotless.version>
