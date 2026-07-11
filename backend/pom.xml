@@ -28,7 +28,7 @@
     <archunit.version>1.4.2</archunit.version>
     <!-- Gate plugin versions (docs/BOOTSTRAP.md §2) -->
     <spotless.version>3.7.0</spotless.version>
-    <checkstyle.version>10.21.4</checkstyle.version>
+    <checkstyle.version>13.7.0</checkstyle.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <jacoco.version>0.8.12</jacoco.version>
     <pitest.version>1.17.3</pitest.version>
